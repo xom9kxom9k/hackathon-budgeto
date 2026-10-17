@@ -3,19 +3,19 @@
 Node.js 22. Из корня репозитория:
 
 ```bash
-npm ci
+npm install
 npm run lint
 npm run format:check
 npm run typecheck
 npm run build:api
 ```
 
-После установки зависимостей `prepare` активирует Lefthook. Перед коммитом запускаются ESLint и проверка Prettier, для сообщения коммита — Commitlint.
+`npm install` устанавливает Lefthook через `prepare`. На pre-commit запускаются ESLint и Prettier check, на commit-msg — Commitlint.
 
-Коммиты в формате Conventional Commits: `feat(accounts): add account query`, `fix(auth): reject expired session`, `chore(ci): add checks`.
+Conventional Commits: `feat(accounts): add query`, `fix(auth): reject expired session`, `chore(ci): update workflows`.
 
-Исправление форматирования: `npm run format`; исправление некоторых замечаний линтера: `npm run lint:fix`.
+Исправление форматирования: `npm run format`; автоисправления ESLint: `npm run lint:fix`.
 
-GitHub Actions запускает проверки при push в main и для pull request; отдельный workflow проверяет сообщения коммитов PR.
+GitHub Actions проверяет pull request и push в main; отдельный workflow проверяет commit messages.
 
-CI требует `package-lock.json`, который должен обновляться через `npm install` при изменении пакетов. Внешние секреты в PR-проверках не используются.
+**Ограничение:** lockfile ещё не сгенерирован: окружение выполнения не смогло обратиться к npm registry. В CI временно выполняется `npm install` вместо `npm ci`. При следующем доступном npm install закоммитить `package-lock.json`, после чего заменить установку в CI на `npm ci` и включить кэширование. Нельзя считать проверки зелёными до фактического запуска Actions.
