@@ -18,7 +18,7 @@
 npm install
 npm run dev:api
 ```
-Проверка: `GET http://localhost:3000/health`.
+Проверка: `GET http://localhost:3000/api/health`.
 
 ## PostgreSQL (локально)
 ```bash
