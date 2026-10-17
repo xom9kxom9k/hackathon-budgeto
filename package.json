@@ -10,8 +10,8 @@
     "prepare": "lefthook install",
     "lint": "eslint \"apps/**/*.ts\" --max-warnings=0",
     "lint:fix": "npm run lint -- --fix",
-    "format": "prettier --write \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,js,jsx}\"",
+    "format:check": "prettier --check \"apps/**/*.{ts,tsx,js,jsx}\"",
     "commitlint": "commitlint"
   },
   "dependencies": {
