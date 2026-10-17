@@ -1,0 +1,9 @@
+{
+  "monorepo": true,
+  "root": "apps/api",
+  "sourceRoot": "apps/api/src",
+  "compilerOptions": {
+    "tsConfigPath": "apps/api/tsconfig.app.json",
+    "deleteOutDir": true
+  }
+}
