@@ -1,0 +1,11 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      run: npm run lint
+    format-check:
+      run: npm run format:check
+commit-msg:
+  commands:
+    commitlint:
+      run: npx --no-install commitlint --edit {1}
