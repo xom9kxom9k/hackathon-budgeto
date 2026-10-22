@@ -1,0 +1,106 @@
+import { Badge, Button, T } from '@admiral-ds/react-ui';
+import { observer } from 'mobx-react-lite';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+
+import { useStore } from '@/app/hooks/useStores';
+import { StoreName } from '@/app/stores/StoreName';
+import { I18nKey } from '@/shared/i18n';
+import { formatMoney } from '@/shared/lib/formatMoney';
+import { CashflowChart } from '@/widgets/overview/CashflowChart';
+import { TransactionTable } from '@/widgets/transactions/TransactionTable';
+
+export const OverviewPage = observer(function OverviewPage() {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const overviewStore = useStore(StoreName.Overview);
+  const accountsStore = useStore(StoreName.Accounts);
+
+  return (
+    <div className="page-stack">
+      <section className="demo-banner" aria-label={t(I18nKey.PreviewKicker)}>
+        <div>
+          <span className="banner-kicker">{t(I18nKey.PreviewKicker)}</span>
+          <p>{t(I18nKey.PreviewDescription)}</p>
+        </div>
+        <Badge appearance="info" dimension="m">
+          {t(I18nKey.PreviewBadge)}
+        </Badge>
+      </section>
+
+      <section className="overview-heading">
+        <div>
+          <span className="section-kicker">{t(I18nKey.OverviewKicker)}</span>
+          <T font="Header/H2" as="h2">
+            {t(I18nKey.OverviewTitle)}
+          </T>
+          <p>{t(I18nKey.OverviewDescription)}</p>
+        </div>
+        <div className="page-intro-actions">
+          <Button appearance="secondary" dimension="m" onClick={() => navigate('/accounts')}>
+            {t(I18nKey.OverviewOpenAccounts)}
+          </Button>
+          <Button appearance="primary" dimension="m" onClick={() => navigate('/imports')}>
+            {t(I18nKey.OverviewOpenImports)}
+          </Button>
+        </div>
+      </section>
+
+      <section className="overview-anchor-grid" aria-label={t(I18nKey.OverviewAvailableMoney)}>
+        <article className="metric-card metric-card--primary overview-balance-card">
+          <span className="card-kicker">{t(I18nKey.OverviewAvailableMoney)}</span>
+          <strong>{formatMoney(accountsStore.availableBalance)}</strong>
+          <span className="metric-note">{t(I18nKey.OverviewAvailableMoneyDescription)}</span>
+          <Button appearance="tertiary" dimension="m" onClick={() => navigate('/accounts')}>
+            {t(I18nKey.OverviewOpenAccounts)}
+          </Button>
+        </article>
+
+        <article className="plain-panel overview-movement-card">
+          <div className="section-heading section-heading--compact">
+            <div>
+              <span className="section-kicker">{t(I18nKey.OverviewRecentMovement)}</span>
+              <T font="Header/H4" as="h3">
+                {t(I18nKey.OverviewCashflow)}
+              </T>
+            </div>
+            <Badge appearance="info" dimension="s">
+              {t(I18nKey.DemoData)}
+            </Badge>
+          </div>
+          <p className="panel-copy">{t(I18nKey.OverviewRecentMovementDescription)}</p>
+          <div className="movement-values">
+            <div>
+              <span>{t(I18nKey.OverviewIncome)}</span>
+              <strong className="amount amount--positive">+{formatMoney(185000)}</strong>
+            </div>
+            <div>
+              <span>{t(I18nKey.OverviewExpenses)}</span>
+              <strong className="amount amount--negative">-{formatMoney(42480)}</strong>
+            </div>
+          </div>
+          <Button appearance="tertiary" dimension="m" onClick={() => navigate('/transactions')}>
+            {t(I18nKey.OverviewOpenTransactions)}
+          </Button>
+        </article>
+      </section>
+
+      <CashflowChart data={overviewStore.cashflow} compact />
+
+      <section className="content-section">
+        <div className="section-heading">
+          <div>
+            <span className="section-kicker">{t(I18nKey.OverviewRecentRecords)}</span>
+            <T font="Header/H4" as="h2">
+              {t(I18nKey.OverviewLatestTransactions)}
+            </T>
+          </div>
+          <Button appearance="tertiary" dimension="m" onClick={() => navigate('/transactions')}>
+            {t(I18nKey.OverviewOpenTransactions)}
+          </Button>
+        </div>
+        <TransactionTable transactions={overviewStore.transactions.slice(0, 3)} />
+      </section>
+    </div>
+  );
+});
