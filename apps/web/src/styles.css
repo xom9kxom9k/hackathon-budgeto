@@ -965,7 +965,23 @@ input:focus-visible {
   gap: 16px;
 }
 .profile-card h2 {
-  margin: 0 0 8px;
+  margin: 0;
+}
+.profile-card-details {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  min-width: 0;
+  gap: 8px;
+}
+.profile-card-details .panel-copy {
+  margin: 0;
+}
+.profile-card-status {
+  margin-top: 4px;
+}
+.profile-card-actions {
+  margin-top: 8px;
 }
 .finance-breadcrumbs {
   min-width: 0;

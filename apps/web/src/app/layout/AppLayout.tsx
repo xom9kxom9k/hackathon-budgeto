@@ -33,7 +33,6 @@ import {
   SidebarCollapseIcon,
   SidebarExpandIcon,
   SunIcon,
-  UserIcon,
   VaultIcon,
 } from '@/shared/ui/BudgetoIcons';
 
@@ -364,8 +363,9 @@ export const AppLayout = observer(function AppLayout() {
               onClick={() => navigate('/profile')}
               showTooltip
               title={t(I18nKey.NavigationProfile)}
-              icon={<UserIcon />}
-              userName={authStore.user?.email ?? t(I18nKey.NavigationProfile)}
+              userName={
+                authStore.user?.displayName ?? authStore.user?.email ?? t(I18nKey.NavigationProfile)
+              }
             />
           </div>
         </header>

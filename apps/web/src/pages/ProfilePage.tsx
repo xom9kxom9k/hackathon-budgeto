@@ -39,7 +39,7 @@ export const ProfilePage = observer(function ProfilePage() {
       <section className="profile-grid">
         <article className="plain-panel profile-card">
           <Avatar dimension="l" showTooltip={false} userName={displayName} />
-          <div>
+          <div className="profile-card-details">
             <T font="Header/H4" as="h2">
               {displayName}
             </T>
@@ -51,14 +51,18 @@ export const ProfilePage = observer(function ProfilePage() {
                   .join(' · ')}
               </p>
             ) : null}
-            <StatusIndicator dimension="s" text={t(I18nKey.AuthSessionActive)} />
-            <Button
-              appearance="secondary"
-              dimension="m"
-              onClick={() => navigate('/welcome', { state: { from: { pathname: '/profile' } } })}
-            >
-              {t(I18nKey.WelcomeEdit)}
-            </Button>
+            <div className="profile-card-status">
+              <StatusIndicator dimension="s" text={t(I18nKey.AuthSessionActive)} />
+            </div>
+            <div className="profile-card-actions">
+              <Button
+                appearance="secondary"
+                dimension="m"
+                onClick={() => navigate('/welcome', { state: { from: { pathname: '/profile' } } })}
+              >
+                {t(I18nKey.WelcomeEdit)}
+              </Button>
+            </div>
           </div>
         </article>
         <article className="plain-panel">
