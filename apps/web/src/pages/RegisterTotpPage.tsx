@@ -44,7 +44,7 @@ export const RegisterTotpPage = observer(function RegisterTotpPage() {
     }
   }
 
-  if (!authStore.challengeToken || !authStore.otpauthUri) {
+  if (authStore.recoveryCodes.length === 0 && (!authStore.challengeToken || !authStore.otpauthUri)) {
     return (
       <section className="auth-page">
         <div className="auth-card">
