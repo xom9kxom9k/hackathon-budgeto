@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { Account } from '@/entities/account/model/types';
+import { BaseApiClient } from '@/shared/api/BaseApiClient';
 
 import { BaseApiService } from './BaseApiService';
 
@@ -13,10 +14,12 @@ const accountResponseSchema = z.array(
 );
 
 export class AccountsService extends BaseApiService {
-  static override readonly prefix = '/accounts';
+  constructor(apiClient: BaseApiClient) {
+    super(apiClient, '/accounts');
+  }
 
   async list(signal?: AbortSignal): Promise<Account[]> {
-    const response = await this.get('', accountResponseSchema, signal);
+    const response = await this.get(accountResponseSchema, signal);
 
     return response.map((account) => ({
       id: account.id,
