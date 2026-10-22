@@ -9,10 +9,11 @@ import { formatMoney } from '@/shared/lib/formatMoney';
 import type { Transaction } from '@/entities/transaction/model/types';
 
 interface TransactionTableProps {
+  onSelect?: (transaction: Transaction) => void;
   transactions: Transaction[];
 }
 
-export function TransactionTable({ transactions }: TransactionTableProps) {
+export function TransactionTable({ onSelect, transactions }: TransactionTableProps) {
   const { t } = useTranslation();
   const columns = useMemo<Column[]>(
     () => [
@@ -38,8 +39,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     [t],
   );
   const rows = useMemo<TableRow[]>(
-    () => transactions.map((transaction) => ({ ...transaction })),
-    [transactions],
+    () => transactions.map((transaction) => ({ ...transaction, hover: Boolean(onSelect) })),
+    [onSelect, transactions],
   );
 
   if (transactions.length === 0) {
@@ -55,18 +56,28 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           disableColumnResize
           greyHeader
           rowList={rows}
+          onRowClick={
+            onSelect
+              ? (rowId) => {
+                  const transaction = transactions.find((item) => item.id === rowId);
+                  if (transaction) onSelect(transaction);
+                }
+              : undefined
+          }
           showLastRowUnderline
         />
       </div>
       <div className="transaction-list-mobile" aria-label={t(I18nKey.OverviewLatestTransactions)}>
         <AnimatePresence initial={false}>
           {transactions.map((transaction) => (
-            <motion.div
+            <motion.button
               animate={{ opacity: 1, y: 0 }}
               className="transaction-mobile-row"
               initial={{ opacity: 0, y: 4 }}
               key={transaction.id}
               layout
+              onClick={() => onSelect?.(transaction)}
+              type="button"
             >
               <div>
                 <strong>{transaction.merchant}</strong>
@@ -80,7 +91,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 {transaction.amount >= 0 ? '+' : ''}
                 {formatMoney(transaction.amount, transaction.currency)}
               </span>
-            </motion.div>
+            </motion.button>
           ))}
         </AnimatePresence>
       </div>

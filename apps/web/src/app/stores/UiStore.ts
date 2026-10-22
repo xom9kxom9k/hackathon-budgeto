@@ -7,6 +7,7 @@ export type ThemeMode = 'light' | 'dark';
 
 const themeStorageKey = 'budgeto-theme';
 const localeStorageKey = 'budgeto-locale';
+const sidebarStorageKey = 'budgeto-sidebar-collapsed';
 
 function readStorage(key: string): string | null {
   return typeof window === 'undefined' ? null : window.localStorage.getItem(key);
@@ -15,6 +16,7 @@ function readStorage(key: string): string | null {
 export class UiStore {
   themeMode: ThemeMode = readStorage(themeStorageKey) === 'dark' ? 'dark' : 'light';
   locale: Language = readStorage(localeStorageKey) === Language.En ? Language.En : Language.Ru;
+  sidebarCollapsed = readStorage(sidebarStorageKey) === 'true';
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -26,7 +28,9 @@ export class UiStore {
 
   setThemeMode(mode: ThemeMode): void {
     this.themeMode = mode;
-    window.localStorage.setItem(themeStorageKey, mode);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(themeStorageKey, mode);
+    }
   }
 
   toggleTheme(): void {
@@ -35,6 +39,19 @@ export class UiStore {
 
   setLocale(locale: Language): void {
     this.locale = locale;
-    window.localStorage.setItem(localeStorageKey, locale);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(localeStorageKey, locale);
+    }
+  }
+
+  setSidebarCollapsed(collapsed: boolean): void {
+    this.sidebarCollapsed = collapsed;
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(sidebarStorageKey, String(collapsed));
+    }
+  }
+
+  toggleSidebar(): void {
+    this.setSidebarCollapsed(!this.sidebarCollapsed);
   }
 }

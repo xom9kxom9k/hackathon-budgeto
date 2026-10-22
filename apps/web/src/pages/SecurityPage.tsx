@@ -1,8 +1,9 @@
-import { Button, T } from '@admiral-ds/react-ui';
+import { Badge, Button, StatusIndicator, T } from '@admiral-ds/react-ui';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { I18nKey } from '@/shared/i18n';
+import { FinanceBreadcrumbs } from '@/shared/ui/FinanceBreadcrumbs';
 import { PageIntro } from '@/shared/ui/PageIntro';
 
 export function SecurityPage() {
@@ -11,6 +12,14 @@ export function SecurityPage() {
 
   return (
     <PageIntro
+      breadcrumbs={
+        <FinanceBreadcrumbs
+          items={[
+            { text: t(I18nKey.BreadcrumbOverview), url: '/overview' },
+            { text: t(I18nKey.NavigationSecurity) },
+          ]}
+        />
+      }
       description={t(I18nKey.SecurityDescription)}
       kicker={t(I18nKey.SecurityKicker)}
       title={t(I18nKey.SecurityTitle)}
@@ -22,6 +31,7 @@ export function SecurityPage() {
             {t(accessRevoked ? I18nKey.SecurityRevoked : I18nKey.SecurityGranted)}
           </T>
           <p className="panel-copy">{t(I18nKey.SecurityAccessDescription)}</p>
+          <StatusIndicator dimension="s" text={t(I18nKey.SecurityAccessReadOnly)} />
           <Button
             appearance={accessRevoked ? 'secondary' : 'danger'}
             dimension="m"
@@ -36,6 +46,24 @@ export function SecurityPage() {
             {t(I18nKey.SecurityJournalEmpty)}
           </T>
           <p className="panel-copy">{t(I18nKey.SecurityJournalDescription)}</p>
+        </article>
+        <article className="plain-panel">
+          <span className="section-kicker">{t(I18nKey.SecuritySessions)}</span>
+          <T font="Header/H5" as="h2">
+            {t(I18nKey.SecurityDevices)}
+          </T>
+          <p className="panel-copy">{t(I18nKey.SecurityJournalDescription)}</p>
+          <Badge appearance="info" dimension="m">
+            {t(I18nKey.DemoData)}
+          </Badge>
+        </article>
+        <article className="plain-panel plain-panel--accent">
+          <span className="section-kicker">{t(I18nKey.SecurityVaultStatus)}</span>
+          <T font="Header/H5" as="h2">
+            {t(I18nKey.VaultIntegrityTitle)}
+          </T>
+          <p className="panel-copy">{t(I18nKey.VaultIntegrityDescription)}</p>
+          <StatusIndicator dimension="s" text={t(I18nKey.DemoData)} />
         </article>
       </section>
     </PageIntro>

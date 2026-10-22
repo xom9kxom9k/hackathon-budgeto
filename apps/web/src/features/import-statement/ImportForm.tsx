@@ -1,4 +1,4 @@
-import { FileInputField, Button } from '@admiral-ds/react-ui';
+import { Badge, Button, FileInputField, StatusIndicator } from '@admiral-ds/react-ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { observer } from 'mobx-react-lite';
 import { Controller, useForm } from 'react-hook-form';
@@ -50,6 +50,19 @@ export const ImportForm = observer(function ImportForm() {
 
   return (
     <section className="import-panel">
+      <ol className="import-flow" aria-label={t(I18nKey.ImportsTitle)}>
+        {[
+          I18nKey.ImportsStepTitle,
+          I18nKey.ImportsStepDetect,
+          I18nKey.ImportsStepReview,
+          I18nKey.ImportsStepApply,
+        ].map((step, index) => (
+          <li className={index === 0 || importStore.preview ? 'is-current' : ''} key={step}>
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            {t(step)}
+          </li>
+        ))}
+      </ol>
       <div className="import-step">
         <span className="step-number">01</span>
         <div>
@@ -89,9 +102,28 @@ export const ImportForm = observer(function ImportForm() {
         </div>
       </form>
       {importStore.preview ? (
-        <div className="state-callout state-callout--success" role="status">
-          <strong>{t(I18nKey.ImportsPreviewReady)}</strong>
-          <span>{t(I18nKey.ImportsPreviewDescription)}</span>
+        <div className="import-preview" role="status">
+          <div className="section-heading section-heading--compact">
+            <div>
+              <span className="section-kicker">{t(I18nKey.ImportsStepPreview)}</span>
+              <h2>{t(I18nKey.ImportsPreviewReady)}</h2>
+            </div>
+            <Badge appearance="success" dimension="m">
+              {t(I18nKey.ImportsDetectedFormat)}: {importStore.preview.extension.toUpperCase()}
+            </Badge>
+          </div>
+          <StatusIndicator dimension="s" text={t(I18nKey.ImportsLocalOnly)} />
+          <p className="panel-copy">{t(I18nKey.ImportsPreviewDescription)}</p>
+          <dl className="detail-definition-list">
+            <div>
+              <dt>{t(I18nKey.ImportsFileLabel)}</dt>
+              <dd>{importStore.preview.fileName}</dd>
+            </div>
+            <div>
+              <dt>{t(I18nKey.Amount)}</dt>
+              <dd>{Math.round(importStore.preview.fileSize / 1024)} KB</dd>
+            </div>
+          </dl>
         </div>
       ) : null}
     </section>

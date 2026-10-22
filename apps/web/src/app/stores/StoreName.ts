@@ -3,5 +3,6 @@ export enum StoreName {
   Ui = 'ui',
   Health = 'health',
   Overview = 'overview',
+  Accounts = 'accounts',
   Import = 'import',
 }

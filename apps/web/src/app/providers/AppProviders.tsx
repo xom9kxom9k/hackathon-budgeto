@@ -27,6 +27,11 @@ export const AppProviders = observer(function AppProviders({ children }: PropsWi
     document.documentElement.lang = locale;
   }, [locale]);
 
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeMode;
+    document.documentElement.style.colorScheme = themeMode;
+  }, [themeMode]);
+
   return (
     <StoreProvider store={rootStore}>
       <I18nextProvider i18n={i18n}>
@@ -34,7 +39,11 @@ export const AppProviders = observer(function AppProviders({ children }: PropsWi
           <DropdownProvider>
             <MotionConfig reducedMotion="user">
               <div className={`app-root admiral-theme-${themeMode}`}>
-                {themeMode === 'dark' ? <DarkThemeCssVars /> : <LightThemeCssVars />}
+                {themeMode === 'dark' ? (
+                  <DarkThemeCssVars key="dark-theme-vars" />
+                ) : (
+                  <LightThemeCssVars key="light-theme-vars" />
+                )}
                 <FontsVTBGroup />
                 <GlobalLoader />
                 <div data-app-content>{children}</div>

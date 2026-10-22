@@ -4,6 +4,7 @@ import { AccountsService } from '@/shared/services/AccountsService';
 import { HealthService } from '@/shared/services/HealthService';
 
 import { HealthStore } from './HealthStore';
+import { AccountsStore } from './AccountsStore';
 import { ImportStore } from './ImportStore';
 import { LoaderStore } from './LoaderStore';
 import { OverviewStore } from './OverviewStore';
@@ -15,6 +16,7 @@ export interface StoreMap {
   [StoreName.Ui]: UiStore;
   [StoreName.Health]: HealthStore;
   [StoreName.Overview]: OverviewStore;
+  [StoreName.Accounts]: AccountsStore;
   [StoreName.Import]: ImportStore;
 }
 
@@ -28,6 +30,7 @@ export class RootStore {
   readonly ui: UiStore;
   readonly health: HealthStore;
   readonly overview: OverviewStore;
+  readonly accounts: AccountsStore;
   readonly import: ImportStore;
   readonly apiClient: BaseApiClient;
   readonly services: ServiceRegistry;
@@ -43,12 +46,14 @@ export class RootStore {
     };
     this.health = new HealthStore(this.services.health);
     this.overview = new OverviewStore();
+    this.accounts = new AccountsStore();
     this.import = new ImportStore();
     this.stores = {
       [StoreName.Loader]: this.loader,
       [StoreName.Ui]: this.ui,
       [StoreName.Health]: this.health,
       [StoreName.Overview]: this.overview,
+      [StoreName.Accounts]: this.accounts,
       [StoreName.Import]: this.import,
     };
   }
