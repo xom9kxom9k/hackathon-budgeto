@@ -1,12 +1,10 @@
 import {
-  Badge,
   Drawer,
   DrawerContent,
   DrawerTitle,
   InputField,
   Option,
   Select,
-  StatusIndicator,
   T,
 } from '@admiral-ds/react-ui';
 import { observer } from 'mobx-react-lite';
@@ -71,9 +69,6 @@ export const TransactionsPage = observer(function TransactionsPage() {
               {t(I18nKey.ActivityFilters)}
             </T>
           </div>
-          <Badge appearance="info" dimension="s">
-            {t(I18nKey.DemoData)}
-          </Badge>
         </div>
         <div className="filter-grid">
           <InputField
@@ -131,7 +126,6 @@ export const TransactionsPage = observer(function TransactionsPage() {
         <DrawerContent>
           {selectedTransaction ? (
             <div className="preview-drawer-content">
-              <StatusIndicator dimension="s" text={t(I18nKey.Demo)} />
               <T font="Header/H4" as="h3">
                 {selectedTransaction.merchant}
               </T>
@@ -143,10 +137,6 @@ export const TransactionsPage = observer(function TransactionsPage() {
                 <div>
                   <dt>{t(I18nKey.Category)}</dt>
                   <dd>{selectedTransaction.category}</dd>
-                </div>
-                <div>
-                  <dt>{t(I18nKey.ActivitySource)}</dt>
-                  <dd>{t(I18nKey.DemoData)}</dd>
                 </div>
                 <div>
                   <dt>{t(I18nKey.Amount)}</dt>

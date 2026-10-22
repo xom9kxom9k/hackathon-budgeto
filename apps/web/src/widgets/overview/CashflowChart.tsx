@@ -1,4 +1,4 @@
-import { Badge, T } from '@admiral-ds/react-ui';
+import { T } from '@admiral-ds/react-ui';
 import {
   Bar,
   BarChart,
@@ -36,12 +36,9 @@ export function CashflowChart({ compact = false, data }: CashflowChartProps) {
           </T>
           <p className="panel-copy">{t(I18nKey.OverviewCashflowDescription)}</p>
         </div>
-        <Badge appearance="info" dimension="m">
-          {t(I18nKey.DemoData)}
-        </Badge>
       </div>
       {data.length === 0 ? (
-        <div className="state-callout">{t(I18nKey.EmptyState)}</div>
+        <div className="state-callout">{t(I18nKey.OverviewNoCashflow)}</div>
       ) : (
         <>
           <div className="chart-frame" aria-hidden="true">

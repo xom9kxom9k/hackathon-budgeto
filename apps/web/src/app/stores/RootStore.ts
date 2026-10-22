@@ -1,10 +1,12 @@
 import { BaseApiClient } from '@/shared/api/BaseApiClient';
 import { getApiBaseUrl } from '@/shared/config/env';
 import { AccountsService } from '@/shared/services/AccountsService';
+import { AuthService } from '@/shared/services/AuthService';
 import { HealthService } from '@/shared/services/HealthService';
 
 import { HealthStore } from './HealthStore';
 import { AccountsStore } from './AccountsStore';
+import { AuthStore } from './AuthStore';
 import { ImportStore } from './ImportStore';
 import { LoaderStore } from './LoaderStore';
 import { OverviewStore } from './OverviewStore';
@@ -13,6 +15,7 @@ import { UiStore } from './UiStore';
 
 export interface StoreMap {
   [StoreName.Loader]: LoaderStore;
+  [StoreName.Auth]: AuthStore;
   [StoreName.Ui]: UiStore;
   [StoreName.Health]: HealthStore;
   [StoreName.Overview]: OverviewStore;
@@ -23,10 +26,12 @@ export interface StoreMap {
 export interface ServiceRegistry {
   health: HealthService;
   accounts: AccountsService;
+  auth: AuthService;
 }
 
 export class RootStore {
   readonly loader: LoaderStore;
+  readonly auth: AuthStore;
   readonly ui: UiStore;
   readonly health: HealthStore;
   readonly overview: OverviewStore;
@@ -43,13 +48,16 @@ export class RootStore {
     this.services = {
       health: new HealthService(this.apiClient),
       accounts: new AccountsService(this.apiClient),
+      auth: new AuthService(this.apiClient),
     };
+    this.auth = new AuthStore(this.services.auth);
     this.health = new HealthStore(this.services.health);
     this.overview = new OverviewStore();
     this.accounts = new AccountsStore();
     this.import = new ImportStore();
     this.stores = {
       [StoreName.Loader]: this.loader,
+      [StoreName.Auth]: this.auth,
       [StoreName.Ui]: this.ui,
       [StoreName.Health]: this.health,
       [StoreName.Overview]: this.overview,

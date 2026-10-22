@@ -23,6 +23,10 @@ export const AppProviders = observer(function AppProviders({ children }: PropsWi
   const { locale, theme, themeMode } = rootStore.ui;
 
   useEffect(() => {
+    void rootStore.auth.bootstrap();
+  }, [rootStore]);
+
+  useEffect(() => {
     void i18n.changeLanguage(locale);
     document.documentElement.lang = locale;
   }, [locale]);

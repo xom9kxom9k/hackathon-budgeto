@@ -30,4 +30,18 @@ export abstract class BaseApiService {
 
     return this.apiClient.request(normalizedPath, { method: 'GET', signal: requestSignal }, schema);
   }
+
+  protected post<T>(path: string, body: unknown, schema: z.ZodType<T>): Promise<T> {
+    const normalizedPath = path ? `${this.prefix}/${path.replace(/^\//, '')}` : this.prefix;
+
+    return this.apiClient.request(
+      normalizedPath,
+      {
+        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      },
+      schema,
+    );
+  }
 }

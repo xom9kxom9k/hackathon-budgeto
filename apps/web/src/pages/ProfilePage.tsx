@@ -1,6 +1,7 @@
-import { Avatar, Badge, StatusIndicator, T } from '@admiral-ds/react-ui';
+import { Avatar, Button, StatusIndicator, T } from '@admiral-ds/react-ui';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { useStore } from '@/app/hooks/useStores';
 import { StoreName } from '@/app/stores/StoreName';
@@ -10,7 +11,16 @@ import { PageIntro } from '@/shared/ui/PageIntro';
 
 export const ProfilePage = observer(function ProfilePage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const authStore = useStore(StoreName.Auth);
   const uiStore = useStore(StoreName.Ui);
+  const email = authStore.user?.email ?? '';
+  const displayName = authStore.user?.displayName ?? email;
+  const goalKeys: Record<string, I18nKey> = {
+    accounts: I18nKey.WelcomeAccounts,
+    transactions: I18nKey.WelcomeTransactions,
+    imports: I18nKey.WelcomeImports,
+  };
 
   return (
     <PageIntro
@@ -28,16 +38,32 @@ export const ProfilePage = observer(function ProfilePage() {
     >
       <section className="profile-grid">
         <article className="plain-panel profile-card">
-          <Avatar dimension="l" showTooltip={false} userName={t(I18nKey.ProfileUserName)} />
-          <div>
+          <Avatar dimension="l" showTooltip={false} userName={displayName} />
+          <div className="profile-card-details">
             <T font="Header/H4" as="h2">
-              {t(I18nKey.ProfileUserName)}
+              {displayName}
             </T>
-            <StatusIndicator dimension="s" text={t(I18nKey.ProfileDemoStatus)} />
+            {displayName !== email && <p className="panel-copy">{email}</p>}
+            {authStore.user?.goals.length ? (
+              <p className="panel-copy">
+                {authStore.user.goals
+                  .map((goal) => t(goalKeys[goal] ?? I18nKey.WelcomeAccounts))
+                  .join(' · ')}
+              </p>
+            ) : null}
+            <div className="profile-card-status">
+              <StatusIndicator dimension="s" text={t(I18nKey.AuthSessionActive)} />
+            </div>
+            <div className="profile-card-actions">
+              <Button
+                appearance="secondary"
+                dimension="m"
+                onClick={() => navigate('/welcome', { state: { from: { pathname: '/profile' } } })}
+              >
+                {t(I18nKey.WelcomeEdit)}
+              </Button>
+            </div>
           </div>
-          <Badge appearance="info" dimension="m">
-            {t(I18nKey.DemoData)}
-          </Badge>
         </article>
         <article className="plain-panel">
           <span className="section-kicker">{t(I18nKey.ProfilePreferences)}</span>
@@ -53,9 +79,23 @@ export const ProfilePage = observer(function ProfilePage() {
         <article className="plain-panel">
           <span className="section-kicker">{t(I18nKey.ProfileSession)}</span>
           <T font="Header/H5" as="h2">
-            {t(I18nKey.ProfileUserName)}
+            {email}
           </T>
           <p className="panel-copy">{t(I18nKey.ProfileSessionDescription)}</p>
+          <p className="panel-copy">{t(I18nKey.AuthSecurityNote)}</p>
+          <Button
+            appearance="secondary"
+            dimension="m"
+            onClick={async () => {
+              try {
+                await authStore.logout();
+              } finally {
+                navigate('/login', { replace: true });
+              }
+            }}
+          >
+            {t(I18nKey.AuthSignOut)}
+          </Button>
         </article>
       </section>
     </PageIntro>

@@ -1,4 +1,4 @@
-import { Badge, Button, StatusIndicator, T } from '@admiral-ds/react-ui';
+import { Button, StatusIndicator, T } from '@admiral-ds/react-ui';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -53,9 +53,6 @@ export function SecurityPage() {
             {t(I18nKey.SecurityDevices)}
           </T>
           <p className="panel-copy">{t(I18nKey.SecurityJournalDescription)}</p>
-          <Badge appearance="info" dimension="m">
-            {t(I18nKey.DemoData)}
-          </Badge>
         </article>
         <article className="plain-panel plain-panel--accent">
           <span className="section-kicker">{t(I18nKey.SecurityVaultStatus)}</span>
@@ -63,7 +60,7 @@ export function SecurityPage() {
             {t(I18nKey.VaultIntegrityTitle)}
           </T>
           <p className="panel-copy">{t(I18nKey.VaultIntegrityDescription)}</p>
-          <StatusIndicator dimension="s" text={t(I18nKey.DemoData)} />
+          <StatusIndicator dimension="s" text={t(I18nKey.SecurityVaultStatus)} />
         </article>
       </section>
     </PageIntro>

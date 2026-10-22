@@ -31,7 +31,7 @@ describe('ImportForm', () => {
     expect(result.success).toBe(false);
   });
 
-  it('shows a local preview for a valid CSV', async () => {
+  it('shows the file check result for a valid CSV', async () => {
     const user = userEvent.setup();
     renderForm();
     const input = document.querySelector('input[type="file"]');
@@ -40,8 +40,8 @@ describe('ImportForm', () => {
       input as HTMLInputElement,
       new File(['date,amount'], 'statement.csv', { type: 'text/csv' }),
     );
-    await user.click(screen.getByRole('button', { name: /preview/i }));
+    await user.click(screen.getByRole('button', { name: 'Проверить файл' }));
 
-    expect(await screen.findByText('Preview готов')).toBeInTheDocument();
+    expect(await screen.findByText('Файл проверен')).toBeInTheDocument();
   });
 });

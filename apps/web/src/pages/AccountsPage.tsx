@@ -1,4 +1,4 @@
-import { Badge, Button } from '@admiral-ds/react-ui';
+import { Button } from '@admiral-ds/react-ui';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -46,11 +46,6 @@ export const AccountsPage = observer(function AccountsPage() {
           <p>{t(I18nKey.AccountsDescription)}</p>
         </div>
         <div className="page-intro-actions">
-          <span className="page-intro-demo-badge">
-            <Badge appearance="info" dimension="m">
-              {t(I18nKey.DemoData)}
-            </Badge>
-          </span>
           <Button appearance="primary" dimension="m" onClick={() => navigate('/imports')}>
             {t(I18nKey.OverviewOpenImports)}
           </Button>

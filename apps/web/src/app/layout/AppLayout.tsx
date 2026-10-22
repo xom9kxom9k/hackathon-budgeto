@@ -33,7 +33,6 @@ import {
   SidebarCollapseIcon,
   SidebarExpandIcon,
   SunIcon,
-  UserIcon,
   VaultIcon,
 } from '@/shared/ui/BudgetoIcons';
 
@@ -205,15 +204,9 @@ function SidebarSettings({ uiStore, collapsed }: { uiStore: UiStore; collapsed: 
 }
 
 function SidebarFooter({ uiStore, collapsed }: { uiStore: UiStore; collapsed: boolean }) {
-  const { t } = useTranslation();
-
   return (
     <div className="sidebar-footer">
       <SidebarSettings collapsed={collapsed} uiStore={uiStore} />
-      <div className="sidebar-meta">
-        <span>{t(I18nKey.DemoData)}</span>
-        <span className="sidebar-version">web preview / 0.3</span>
-      </div>
     </div>
   );
 }
@@ -222,6 +215,7 @@ export const AppLayout = observer(function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const authStore = useStore(StoreName.Auth);
   const uiStore = useStore(StoreName.Ui);
   const isCompactLayout = useIsCompactLayout();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -369,8 +363,9 @@ export const AppLayout = observer(function AppLayout() {
               onClick={() => navigate('/profile')}
               showTooltip
               title={t(I18nKey.NavigationProfile)}
-              icon={<UserIcon />}
-              userName={t(I18nKey.ProfileUserName)}
+              userName={
+                authStore.user?.displayName ?? authStore.user?.email ?? t(I18nKey.NavigationProfile)
+              }
             />
           </div>
         </header>

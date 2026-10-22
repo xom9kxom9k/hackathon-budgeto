@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 import { BaseApiClient } from './BaseApiClient';
-import { ApiError } from './errors';
 import { LoaderStore } from '@/app/stores/LoaderStore';
 
 describe('BaseApiClient', () => {
@@ -31,10 +30,38 @@ describe('BaseApiClient', () => {
       loaderStore,
       fetchImpl: vi
         .fn<typeof fetch>()
-        .mockResolvedValue(new Response(JSON.stringify({ message: 'nope' }), { status: 500 })),
+        .mockResolvedValue(
+          new Response(JSON.stringify({ code: 'AUTH_CSRF_INVALID' }), { status: 403 }),
+        ),
     });
 
-    await expect(client.request('/health')).rejects.toBeInstanceOf(ApiError);
+    await expect(client.request('/health')).rejects.toMatchObject({
+      code: 'AUTH_CSRF_INVALID',
+    });
     expect(loaderStore.isLoading).toBe(false);
+  });
+
+  it('gets a CSRF token before a write request', async () => {
+    const loaderStore = new LoaderStore();
+    const fetchImpl = vi.fn<typeof fetch>();
+    fetchImpl
+      .mockResolvedValueOnce(new Response(JSON.stringify({ token: 'csrf-token' }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ challengeToken: 'challenge' }), { status: 200 }),
+      );
+    const client = new BaseApiClient({ baseUrl: '/api', fetchImpl, loaderStore });
+
+    await client.request(
+      '/auth/register',
+      { method: 'POST', body: JSON.stringify({ email: 'test@example.com' }) },
+      z.object({ challengeToken: z.string() }),
+    );
+
+    expect(fetchImpl.mock.calls[0][0]).toBe('/api/auth/csrf');
+    expect(fetchImpl.mock.calls[1][0]).toBe('/api/auth/register');
+    expect(fetchImpl.mock.calls[1][1]).toMatchObject({
+      credentials: 'include',
+      headers: expect.objectContaining({ 'X-CSRF-Token': 'csrf-token' }),
+    });
   });
 });

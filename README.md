@@ -16,6 +16,7 @@
 ## Локальный запуск API
 ```bash
 npm install
+npm run migration:run
 npm run dev:api
 ```
 Проверка: `GET http://localhost:3000/api/health`.
@@ -23,8 +24,14 @@ npm run dev:api
 ## PostgreSQL (локально)
 ```bash
 docker compose up -d postgres
+npm run migration:run
 ```
-База пока не подключена к API; схема данных и миграции — следующая задача.
+API использует PostgreSQL без `synchronize`; схема создаётся только через миграции.
+
+Entity-классы принадлежат своим модулям: auth-сущности находятся в
+`apps/api/src/modules/auth/entities`, а `AccountEntity` — в
+`apps/api/src/modules/accounts/entities`. Папка `database` содержит только
+DataSource и миграции.
 
 Подробности: [архитектура](docs/architecture.md), [безопасность](docs/security.md), [бэклог](docs/backlog.md).
 

@@ -20,12 +20,18 @@ export const GlobalLoader = observer(function GlobalLoader() {
     if (loaderStore.isLoading) {
       previousFocusRef.current =
         document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      if (content) content.inert = true;
+      if (content) {
+        content.inert = true;
+        content.setAttribute('aria-busy', 'true');
+      }
       requestAnimationFrame(() => overlayRef.current?.focus());
       return;
     }
 
-    if (content) content.inert = false;
+    if (content) {
+      content.inert = false;
+      content.setAttribute('aria-busy', 'false');
+    }
     previousFocusRef.current?.focus();
     previousFocusRef.current = null;
   }, [loaderStore.isLoading]);

@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 import { useStore } from '@/app/hooks/useStores';
 import { StoreName } from '@/app/stores/StoreName';
+import { translateValidationError } from '@/shared/forms/validation';
 import { I18nKey } from '@/shared/i18n';
 
 const maxFileSize = 20 * 1024 * 1024;
@@ -34,10 +35,10 @@ export const ImportForm = observer(function ImportForm() {
   } = useForm<ImportFormValues>({
     defaultValues: { file: null as unknown as File },
     resolver: zodResolver(importFileSchema),
-    mode: 'onChange',
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
   });
   const selectedFile = watch('file');
-  const errorKey = errors.file?.message as I18nKey | undefined;
 
   const onSubmit = ({ file }: ImportFormValues) => {
     importStore.selectFile(file);
@@ -86,9 +87,15 @@ export const ImportForm = observer(function ImportForm() {
               }}
               onBlur={field.onBlur}
               ref={field.ref}
-              status={errorKey ? 'error' : undefined}
+              status={errors.file ? 'error' : undefined}
               title={t(I18nKey.ImportsFileLabel)}
-              extraText={errorKey ? t(errorKey) : t(I18nKey.ImportsFileHint)}
+              extraText={
+                translateValidationError(
+                  errors.file?.message,
+                  t,
+                  I18nKey.ImportsValidationRequired,
+                ) ?? t(I18nKey.ImportsFileHint)
+              }
             />
           )}
         />
