@@ -5,7 +5,13 @@ import { BaseApiClient } from '@/shared/api/BaseApiClient';
 
 import { BaseApiService } from './BaseApiService';
 
-const userSchema = z.object({ id: z.string(), email: z.string().email() });
+const userSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  displayName: z.string().nullable(),
+  goals: z.array(z.string()),
+  onboardingCompleted: z.boolean(),
+});
 const challengeSchema = z.object({ challengeToken: z.string() });
 const setupSchema = z.object({ challengeToken: z.string(), otpauthUri: z.string() });
 const sessionSchema = z.object({ user: userSchema });
@@ -46,5 +52,10 @@ export class AuthService extends BaseApiService {
 
   async logout(): Promise<void> {
     await this.post('/logout', {}, z.undefined());
+  }
+
+  async completeOnboarding(displayName: string, goals: string[]): Promise<AuthUser> {
+    const response = await this.post('/onboarding', { displayName, goals }, sessionSchema);
+    return response.user;
   }
 }

@@ -176,6 +176,20 @@ export class AuthDomainService {
     return this.toUserView(user);
   }
 
+  async completeOnboarding(
+    userId: string,
+    displayName: string,
+    goals: string[],
+  ): Promise<AuthUserView> {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user) throwAuthError(AuthErrorCode.SessionInvalid);
+    user.displayName = displayName.trim();
+    user.goals = [...new Set(goals)];
+    user.onboardingCompletedAt = new Date();
+    await this.users.save(user);
+    return this.toUserView(user);
+  }
+
   private async withSession(
     userId: string,
     recoveryCodes?: string[],
@@ -294,6 +308,12 @@ export class AuthDomainService {
   }
 
   private toUserView(user: UserEntity): AuthUserView {
-    return { id: user.id, email: user.email };
+    return {
+      id: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      goals: user.goals ?? [],
+      onboardingCompleted: Boolean(user.onboardingCompletedAt),
+    };
   }
 }

@@ -19,6 +19,7 @@ import { RegisterTotpPage } from '@/pages/RegisterTotpPage';
 import { SecurityPage } from '@/pages/SecurityPage';
 import { TransactionsPage } from '@/pages/TransactionsPage';
 import { VaultHistoryPage } from '@/pages/VaultHistoryPage';
+import { WelcomePage } from '@/pages/WelcomePage';
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,14 @@ export const router = createBrowserRouter([
         ],
       },
     ],
+  },
+  {
+    element: (
+      <ProtectedRoute>
+        <PublicLayout />
+      </ProtectedRoute>
+    ),
+    children: [{ path: '/welcome', element: <WelcomePage /> }],
   },
   {
     element: (

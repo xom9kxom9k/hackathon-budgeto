@@ -7,6 +7,7 @@ import { UserEntity } from './entities/user.entity';
 
 import {
   CompleteTotpLoginCommand,
+  CompleteOnboardingCommand,
   CompleteTotpSetupCommand,
   LoginWithPasswordCommand,
   LogoutCommand,
@@ -25,6 +26,15 @@ export class RegisterUserHandler implements ICommandHandler<RegisterUserCommand>
 
   execute(command: RegisterUserCommand) {
     return this.auth.register(command.email, command.password);
+  }
+}
+
+@CommandHandler(CompleteOnboardingCommand)
+export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboardingCommand> {
+  constructor(private readonly auth: AuthDomainService) {}
+
+  execute(command: CompleteOnboardingCommand) {
+    return this.auth.completeOnboarding(command.userId, command.displayName, command.goals);
   }
 }
 
@@ -109,6 +119,7 @@ export class GetSessionUserHandler implements IQueryHandler<GetSessionUserQuery>
 }
 
 export const authCommandHandlers = [
+  CompleteOnboardingHandler,
   RegisterUserHandler,
   CompleteTotpSetupHandler,
   LoginWithPasswordHandler,

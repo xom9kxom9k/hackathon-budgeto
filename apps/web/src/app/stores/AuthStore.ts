@@ -129,6 +129,13 @@ export class AuthStore {
     }
   }
 
+  async completeOnboarding(displayName: string, goals: string[]): Promise<void> {
+    const user = await this.service.completeOnboarding(displayName, goals);
+    runInAction(() => {
+      this.user = user;
+    });
+  }
+
   clearError(): void {
     this.error = null;
   }

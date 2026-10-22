@@ -1,9 +1,9 @@
-import { Badge, Button, InputField, StatusIndicator, T } from '@admiral-ds/react-ui';
+import { Badge, Button, StatusIndicator, T } from '@admiral-ds/react-ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import QRCode from 'qrcode';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -13,12 +13,17 @@ import { translateAuthError } from '@/shared/api/authErrors';
 import { totpSchema, type CodeValues } from '@/shared/forms/authSchemas';
 import { translateValidationError } from '@/shared/forms/validation';
 import { I18nKey } from '@/shared/i18n';
+import { TotpPinInput } from '@/shared/ui/TotpPinInput';
 
 export const RegisterTotpPage = observer(function RegisterTotpPage() {
   const { t } = useTranslation();
   const authStore = useStore(StoreName.Auth);
   const navigate = useNavigate();
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
+  const secret = authStore.otpauthUri
+    ? (new URL(authStore.otpauthUri).searchParams.get('secret') ?? '')
+    : '';
   const form = useForm<CodeValues>({
     mode: 'onSubmit',
     reValidateMode: 'onChange',
@@ -29,6 +34,15 @@ export const RegisterTotpPage = observer(function RegisterTotpPage() {
     if (!authStore.otpauthUri) return;
     void QRCode.toDataURL(authStore.otpauthUri, { margin: 1, width: 220 }).then(setQrCode);
   }, [authStore.otpauthUri]);
+
+  async function copyText(value: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyState('copied');
+    } catch {
+      setCopyState('error');
+    }
+  }
 
   if (!authStore.challengeToken || !authStore.otpauthUri) {
     return (
@@ -50,6 +64,7 @@ export const RegisterTotpPage = observer(function RegisterTotpPage() {
       form.clearErrors('root');
       try {
         await authStore.completeRegistration(code);
+        setCopyState('idle');
         form.reset();
       } catch (error) {
         form.setError('root', { message: translateAuthError(error, t) });
@@ -75,17 +90,38 @@ export const RegisterTotpPage = observer(function RegisterTotpPage() {
                 <img alt={t(I18nKey.AuthScanQr)} src={qrCode} />
               </div>
             )}
-            <p className="totp-manual-label">{t(I18nKey.AuthManualSecret)}</p>
-            <code className="totp-uri">{authStore.otpauthUri}</code>
+            <div className="totp-manual">
+              <p className="totp-manual-label">{t(I18nKey.AuthManualSecret)}</p>
+              <code className="totp-uri">{secret}</code>
+              <Button
+                appearance="secondary"
+                dimension="m"
+                onClick={() => void copyText(secret)}
+                type="button"
+              >
+                {t(copyState === 'copied' ? I18nKey.AuthCopied : I18nKey.AuthCopyKey)}
+              </Button>
+              {copyState === 'error' && (
+                <p className="form-error" role="alert">
+                  {t(I18nKey.AuthCopyFailed)}
+                </p>
+              )}
+            </div>
             <form className="auth-form" onSubmit={submit}>
-              <InputField
-                {...form.register('code')}
-                autoComplete="one-time-code"
-                extraText={translateValidationError(form.formState.errors.code?.message, t)}
-                inputMode="numeric"
-                label={t(I18nKey.AuthCode)}
-                maxLength={6}
-                status={form.formState.errors.code ? 'error' : undefined}
+              <label className="pin-label" htmlFor="register-code">
+                {t(I18nKey.AuthCode)}
+              </label>
+              <Controller
+                control={form.control}
+                name="code"
+                defaultValue=""
+                render={({ field }) => (
+                  <TotpPinInput
+                    {...field}
+                    id="register-code"
+                    error={translateValidationError(form.formState.errors.code?.message, t)}
+                  />
+                )}
               />
               {form.formState.errors.root && (
                 <p aria-live="polite" className="form-error" role="alert">
@@ -114,6 +150,19 @@ export const RegisterTotpPage = observer(function RegisterTotpPage() {
                 <code key={code}>{code}</code>
               ))}
             </div>
+            <Button
+              appearance="secondary"
+              dimension="m"
+              onClick={() => void copyText(authStore.recoveryCodes.join('\n'))}
+              type="button"
+            >
+              {t(copyState === 'copied' ? I18nKey.AuthCopied : I18nKey.AuthCopyRecovery)}
+            </Button>
+            {copyState === 'error' && (
+              <p className="form-error" role="alert">
+                {t(I18nKey.AuthCopyFailed)}
+              </p>
+            )}
             <Badge appearance="info" dimension="m">
               {authStore.user?.email}
             </Badge>

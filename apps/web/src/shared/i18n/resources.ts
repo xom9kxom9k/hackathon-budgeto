@@ -267,6 +267,28 @@ const ru: TranslationMap = {
   [I18nKey.AuthSessionActive]: 'Сессия активна',
   [I18nKey.AuthSecurityNote]:
     'Сессия хранится на сервере. Долговременный токен не сохраняется в браузере.',
+  [I18nKey.AuthCopyKey]: 'Скопировать ключ',
+  [I18nKey.AuthCopied]: 'Скопировано',
+  [I18nKey.AuthCopyFailed]: 'Не удалось скопировать. Выделите и скопируйте вручную.',
+  [I18nKey.AuthCopyRecovery]: 'Скопировать резервные коды',
+  [I18nKey.WelcomeTitle]: 'Давайте начнём',
+  [I18nKey.WelcomeDescription]:
+    'Budgeto собирает финансовую историю в одном месте. Пока доступны просмотр счетов и подготовка выписки к импорту; данные появятся после подключения источника.',
+  [I18nKey.WelcomeAccounts]: 'Счета',
+  [I18nKey.WelcomeAccountsDescription]: 'Смотрите счета и остатки, когда они будут добавлены.',
+  [I18nKey.WelcomeTransactions]: 'Операции',
+  [I18nKey.WelcomeTransactionsDescription]: 'Ищите и разбирайте движения денег.',
+  [I18nKey.WelcomeImports]: 'Выписки',
+  [I18nKey.WelcomeImportsDescription]:
+    'Выберите CSV или XLSX и проверьте файл перед импортом. Загрузка в аккаунт пока недоступна.',
+  [I18nKey.WelcomeName]: 'Как к вам обращаться?',
+  [I18nKey.WelcomeNameHint]: 'Имя будет видно только в вашем профиле.',
+  [I18nKey.WelcomeGoals]: 'Что вам важнее сейчас?',
+  [I18nKey.WelcomeGoalsHint]: 'Выберите от одного до трёх пунктов.',
+  [I18nKey.WelcomeContinue]: 'Перейти в Budgeto',
+  [I18nKey.WelcomeNameRequired]: 'Введите имя — от 1 до 80 символов',
+  [I18nKey.WelcomeGoalRequired]: 'Выберите хотя бы один пункт',
+  [I18nKey.WelcomeEdit]: 'Изменить настройки знакомства',
 };
 
 const en: TranslationMap = {
@@ -536,6 +558,28 @@ const en: TranslationMap = {
   [I18nKey.AuthSessionActive]: 'Session is active',
   [I18nKey.AuthSecurityNote]:
     'The session stays on the server. No long-lived token is stored in the browser.',
+  [I18nKey.AuthCopyKey]: 'Copy key',
+  [I18nKey.AuthCopied]: 'Copied',
+  [I18nKey.AuthCopyFailed]: 'Could not copy. Select and copy it manually.',
+  [I18nKey.AuthCopyRecovery]: 'Copy backup codes',
+  [I18nKey.WelcomeTitle]: 'Let’s get started',
+  [I18nKey.WelcomeDescription]:
+    'Budgeto brings your financial history together. You can view accounts and prepare a statement for import; your data appears once a source is connected.',
+  [I18nKey.WelcomeAccounts]: 'Accounts',
+  [I18nKey.WelcomeAccountsDescription]: 'View your accounts and balances once they are added.',
+  [I18nKey.WelcomeTransactions]: 'Transactions',
+  [I18nKey.WelcomeTransactionsDescription]: 'Find and review money movements.',
+  [I18nKey.WelcomeImports]: 'Statements',
+  [I18nKey.WelcomeImportsDescription]:
+    'Select a CSV or XLSX and review it before import. Uploading to your account is not available yet.',
+  [I18nKey.WelcomeName]: 'What should we call you?',
+  [I18nKey.WelcomeNameHint]: 'Your name is only shown in your profile.',
+  [I18nKey.WelcomeGoals]: 'What matters most to you?',
+  [I18nKey.WelcomeGoalsHint]: 'Choose one to three options.',
+  [I18nKey.WelcomeContinue]: 'Go to Budgeto',
+  [I18nKey.WelcomeNameRequired]: 'Enter a name between 1 and 80 characters',
+  [I18nKey.WelcomeGoalRequired]: 'Choose at least one option',
+  [I18nKey.WelcomeEdit]: 'Edit welcome preferences',
 };
 
 export const resources = {

@@ -2,7 +2,7 @@ import { Button, InputField, T } from '@admiral-ds/react-ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -12,6 +12,7 @@ import { translateAuthError } from '@/shared/api/authErrors';
 import { recoverySchema, totpSchema, type CodeValues } from '@/shared/forms/authSchemas';
 import { translateValidationError } from '@/shared/forms/validation';
 import { I18nKey } from '@/shared/i18n';
+import { TotpPinInput } from '@/shared/ui/TotpPinInput';
 
 export const LoginTotpPage = observer(function LoginTotpPage() {
   const { t } = useTranslation();
@@ -78,15 +79,34 @@ export const LoginTotpPage = observer(function LoginTotpPage() {
         </T>
         <p className="panel-copy">{t(I18nKey.AuthLoginTotpDescription)}</p>
         <form className="auth-form" onSubmit={submit}>
-          <InputField
-            {...form.register('code')}
-            autoComplete="one-time-code"
-            extraText={translateValidationError(form.formState.errors.code?.message, t)}
-            inputMode={useRecovery ? 'text' : 'numeric'}
-            label={t(useRecovery ? I18nKey.AuthRecoveryCode : I18nKey.AuthCode)}
-            maxLength={useRecovery ? 20 : 6}
-            status={form.formState.errors.code ? 'error' : undefined}
-          />
+          {useRecovery ? (
+            <InputField
+              {...form.register('code')}
+              autoComplete="one-time-code"
+              extraText={translateValidationError(form.formState.errors.code?.message, t)}
+              label={t(I18nKey.AuthRecoveryCode)}
+              maxLength={20}
+              status={form.formState.errors.code ? 'error' : undefined}
+            />
+          ) : (
+            <>
+              <label className="pin-label" htmlFor="login-code">
+                {t(I18nKey.AuthCode)}
+              </label>
+              <Controller
+                control={form.control}
+                name="code"
+                defaultValue=""
+                render={({ field }) => (
+                  <TotpPinInput
+                    {...field}
+                    id="login-code"
+                    error={translateValidationError(form.formState.errors.code?.message, t)}
+                  />
+                )}
+              />
+            </>
+          )}
           {form.formState.errors.root && (
             <p aria-live="polite" className="form-error" role="alert">
               {form.formState.errors.root.message}

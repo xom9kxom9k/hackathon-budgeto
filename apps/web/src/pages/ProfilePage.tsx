@@ -15,6 +15,12 @@ export const ProfilePage = observer(function ProfilePage() {
   const authStore = useStore(StoreName.Auth);
   const uiStore = useStore(StoreName.Ui);
   const email = authStore.user?.email ?? '';
+  const displayName = authStore.user?.displayName ?? email;
+  const goalKeys: Record<string, I18nKey> = {
+    accounts: I18nKey.WelcomeAccounts,
+    transactions: I18nKey.WelcomeTransactions,
+    imports: I18nKey.WelcomeImports,
+  };
 
   return (
     <PageIntro
@@ -32,12 +38,27 @@ export const ProfilePage = observer(function ProfilePage() {
     >
       <section className="profile-grid">
         <article className="plain-panel profile-card">
-          <Avatar dimension="l" showTooltip={false} userName={email} />
+          <Avatar dimension="l" showTooltip={false} userName={displayName} />
           <div>
             <T font="Header/H4" as="h2">
-              {email}
+              {displayName}
             </T>
+            {displayName !== email && <p className="panel-copy">{email}</p>}
+            {authStore.user?.goals.length ? (
+              <p className="panel-copy">
+                {authStore.user.goals
+                  .map((goal) => t(goalKeys[goal] ?? I18nKey.WelcomeAccounts))
+                  .join(' · ')}
+              </p>
+            ) : null}
             <StatusIndicator dimension="s" text={t(I18nKey.AuthSessionActive)} />
+            <Button
+              appearance="secondary"
+              dimension="m"
+              onClick={() => navigate('/welcome', { state: { from: { pathname: '/profile' } } })}
+            >
+              {t(I18nKey.WelcomeEdit)}
+            </Button>
           </div>
         </article>
         <article className="plain-panel">

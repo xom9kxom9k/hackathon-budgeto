@@ -39,4 +39,12 @@ export class LogoutCommand {
   constructor(public readonly sessionToken: string | undefined) {}
 }
 
+export class CompleteOnboardingCommand {
+  constructor(
+    public readonly userId: string,
+    public readonly displayName: string,
+    public readonly goals: string[],
+  ) {}
+}
+
 export type AuthChallengeKind = AuthChallengePurpose;

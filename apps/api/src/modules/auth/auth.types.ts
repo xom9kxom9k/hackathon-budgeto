@@ -3,6 +3,9 @@ import type { Request } from 'express';
 export interface AuthUserView {
   id: string;
   email: string;
+  displayName: string | null;
+  goals: string[];
+  onboardingCompleted: boolean;
 }
 
 export interface AuthPrincipal {

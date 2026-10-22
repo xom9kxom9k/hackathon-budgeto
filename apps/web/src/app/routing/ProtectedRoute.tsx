@@ -26,5 +26,9 @@ export const ProtectedRoute = observer(function ProtectedRoute({ children }: Pro
     return <Navigate replace state={{ from: location }} to="/login" />;
   }
 
+  if (authStore.user && !authStore.user.onboardingCompleted && location.pathname !== '/welcome') {
+    return <Navigate replace state={{ from: location }} to="/welcome" />;
+  }
+
   return children;
 });

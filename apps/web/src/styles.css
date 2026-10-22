@@ -230,6 +230,7 @@ input:focus-visible {
 .totp-qr {
   display: grid;
   width: fit-content;
+  margin-inline: auto;
   border: 1px solid var(--admiral-color-Neutral_Neutral20);
   padding: 10px;
   background: var(--admiral-color-Special_StaticWhite);
@@ -251,6 +252,142 @@ input:focus-visible {
   background: var(--admiral-color-Neutral_Neutral05);
   font-size: 12px;
   line-height: 1.45;
+}
+.totp-manual {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.totp-manual .totp-uri {
+  max-width: 100%;
+  user-select: all;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+.pin-label {
+  text-align: center;
+  color: var(--admiral-color-Neutral_Neutral80);
+  font-size: 14px;
+}
+.pin-field {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.pin-input {
+  display: flex;
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  gap: clamp(4px, 1.6vw, 10px);
+  border-radius: 4px;
+}
+.pin-input:focus-within {
+  outline: 2px solid var(--admiral-color-Primary_Primary60Main);
+  outline-offset: 3px;
+}
+.pin-input[data-error='true'] .pin-cell {
+  border-color: var(--admiral-color-Error_Error60Main);
+}
+.pin-cell {
+  display: grid;
+  width: clamp(38px, 10vw, 48px);
+  height: 52px;
+  place-items: center;
+  border: 1px solid var(--admiral-color-Neutral_Neutral40);
+  border-radius: 4px;
+  color: var(--admiral-color-Neutral_Neutral90);
+  background: var(--admiral-color-Neutral_Neutral00);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+.pin-native-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: text;
+}
+.welcome-page {
+  padding: clamp(20px, 5vw, 56px) 0;
+}
+.welcome-content {
+  width: min(100%, 720px);
+  margin: 0 auto;
+}
+.welcome-content h1 {
+  margin: 10px 0 0;
+}
+.welcome-lead {
+  max-width: 640px;
+  color: var(--admiral-color-Neutral_Neutral70);
+  line-height: 1.6;
+}
+.welcome-guide {
+  display: grid;
+  margin: 28px 0;
+  border-top: 1px solid var(--admiral-color-Neutral_Neutral30);
+}
+.welcome-guide-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 18px;
+  border-bottom: 1px solid var(--admiral-color-Neutral_Neutral30);
+  padding: 18px 0;
+}
+.welcome-number {
+  color: var(--admiral-color-Primary_Primary60Main);
+  font-variant-numeric: tabular-nums;
+}
+.welcome-guide-item h2,
+.welcome-guide-item p {
+  margin: 0;
+}
+.welcome-guide-item p {
+  margin-top: 5px;
+  color: var(--admiral-color-Neutral_Neutral70);
+  line-height: 1.5;
+}
+.welcome-form {
+  display: grid;
+  gap: 22px;
+  border: 1px solid var(--admiral-color-Neutral_Neutral20);
+  padding: clamp(18px, 4vw, 30px);
+  background: var(--admiral-color-Neutral_Neutral00);
+}
+.welcome-goals {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+.welcome-goals legend {
+  font-weight: 600;
+}
+.welcome-goals p {
+  margin: 5px 0 12px;
+  color: var(--admiral-color-Neutral_Neutral60);
+  font-size: 13px;
+}
+.welcome-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.welcome-option {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 8px;
+  border: 1px solid var(--admiral-color-Neutral_Neutral30);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.welcome-option:focus-within {
+  outline: 2px solid var(--admiral-color-Primary_Primary60Main);
+  outline-offset: 2px;
 }
 .recovery-panel {
   display: grid;

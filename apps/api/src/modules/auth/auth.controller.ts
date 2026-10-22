@@ -7,6 +7,7 @@ import type { Response } from 'express';
 import { CsrfGuard } from './csrf.guard';
 import {
   CompleteTotpLoginCommand,
+  CompleteOnboardingCommand,
   CompleteTotpSetupCommand,
   LoginWithPasswordCommand,
   LogoutCommand,
@@ -14,7 +15,13 @@ import {
   UseRecoveryCodeCommand,
 } from './auth.commands';
 import { GetCurrentUserQuery } from './auth.queries';
-import { LoginDto, RecoveryChallengeDto, RegisterDto, TotpChallengeDto } from './auth.dto';
+import {
+  CompleteOnboardingDto,
+  LoginDto,
+  RecoveryChallengeDto,
+  RegisterDto,
+  TotpChallengeDto,
+} from './auth.dto';
 import { AuthGuard } from './auth.guard';
 import { csrfCookieName, AuthSessionService, sessionCookieName } from './auth.session';
 import type { AuthenticatedRequest } from './auth.types';
@@ -111,5 +118,17 @@ export class AuthController {
   ) {
     await this.commands.execute(new LogoutCommand(request.cookies?.[sessionCookieName]));
     this.sessions.clearSessionCookie(response);
+  }
+
+  @Post('onboarding')
+  @UseGuards(AuthGuard, CsrfGuard)
+  async completeOnboarding(
+    @Req() request: AuthenticatedRequest,
+    @Body() body: CompleteOnboardingDto,
+  ) {
+    const user = await this.commands.execute(
+      new CompleteOnboardingCommand(request.user!.userId, body.displayName, body.goals),
+    );
+    return { user };
   }
 }
