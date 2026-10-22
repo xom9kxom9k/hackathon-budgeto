@@ -37,6 +37,241 @@ input:focus-visible {
   background: var(--admiral-color-Neutral_Neutral05);
   color: var(--admiral-color-Neutral_Neutral90);
 }
+.route-loading {
+  display: grid;
+  min-height: 100dvh;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  color: var(--admiral-color-Neutral_Neutral70);
+}
+.public-shell {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  background: var(--admiral-color-Neutral_Neutral05);
+}
+.public-header,
+.public-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px clamp(20px, 5vw, 72px);
+}
+.public-header {
+  border-bottom: 1px solid var(--admiral-color-Neutral_Neutral20);
+  background: var(--admiral-color-Neutral_Neutral00);
+}
+.public-brand {
+  display: grid;
+  gap: 3px;
+  color: var(--admiral-color-Primary_Primary60Main);
+  text-decoration: none;
+}
+.public-brand > span {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+.public-brand > small {
+  color: var(--admiral-color-Neutral_Neutral60);
+  font-size: 12px;
+}
+.public-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.public-content {
+  width: min(100%, 1280px);
+  flex: 1;
+  margin: 0 auto;
+  padding: 48px clamp(20px, 5vw, 72px) 72px;
+}
+.public-footer {
+  justify-content: flex-start;
+  border-top: 1px solid var(--admiral-color-Neutral_Neutral20);
+  color: var(--admiral-color-Neutral_Neutral60);
+}
+.public-footer p {
+  max-width: 720px;
+  margin: 0;
+}
+.landing-page {
+  display: grid;
+  gap: 48px;
+}
+.landing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.6fr);
+  gap: clamp(28px, 6vw, 96px);
+  align-items: end;
+  padding: clamp(24px, 5vw, 64px) 0 16px;
+}
+.landing-hero-copy {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 18px;
+}
+.landing-hero-copy h1 {
+  max-width: 780px;
+  margin: 0;
+  color: var(--admiral-color-Neutral_Neutral90);
+}
+.landing-hero-copy > p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--admiral-color-Neutral_Neutral70);
+  font-size: 18px;
+  line-height: 1.5;
+}
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+.landing-aside {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  border-left: 1px solid var(--admiral-color-Neutral_Neutral30);
+  padding: 8px 0 8px 24px;
+}
+.landing-aside-mark {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--admiral-color-Special_StaticWhite);
+  background: var(--admiral-color-Primary_Primary60Main);
+  font-size: 20px;
+  font-weight: 600;
+}
+.landing-aside h2,
+.landing-aside p {
+  margin: 0;
+}
+.landing-aside p {
+  color: var(--admiral-color-Neutral_Neutral70);
+  line-height: 1.5;
+}
+.landing-features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.landing-feature {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  border-top: 1px solid var(--admiral-color-Neutral_Neutral30);
+  padding-top: 18px;
+}
+.landing-feature h2,
+.landing-feature p {
+  margin: 0;
+}
+.landing-feature p {
+  color: var(--admiral-color-Neutral_Neutral70);
+  line-height: 1.5;
+}
+.auth-page {
+  display: grid;
+  min-height: min(720px, calc(100dvh - 220px));
+  place-items: center;
+}
+.auth-card {
+  display: grid;
+  width: min(100%, 480px);
+  align-content: start;
+  gap: 16px;
+  border: 1px solid var(--admiral-color-Neutral_Neutral20);
+  padding: clamp(22px, 4vw, 40px);
+  background: var(--admiral-color-Neutral_Neutral00);
+}
+.auth-card--wide {
+  width: min(100%, 680px);
+}
+.auth-card h1,
+.auth-card p {
+  margin: 0;
+}
+.auth-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 6px;
+}
+.form-error {
+  margin: 0;
+  color: var(--admiral-color-Error_Error60Main);
+  font-size: 14px;
+}
+.auth-switch {
+  color: var(--admiral-color-Neutral_Neutral60);
+  font-size: 14px;
+}
+.auth-switch a,
+.auth-link-button {
+  color: var(--admiral-color-Primary_Primary60Main);
+}
+.auth-link-button {
+  width: fit-content;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: underline;
+}
+.totp-qr {
+  display: grid;
+  width: fit-content;
+  border: 1px solid var(--admiral-color-Neutral_Neutral20);
+  padding: 10px;
+  background: var(--admiral-color-Special_StaticWhite);
+}
+.totp-qr img {
+  display: block;
+  max-width: 100%;
+}
+.totp-manual-label {
+  color: var(--admiral-color-Neutral_Neutral70);
+  font-size: 14px;
+}
+.totp-uri {
+  display: block;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--admiral-color-Neutral_Neutral20);
+  padding: 12px;
+  color: var(--admiral-color-Neutral_Neutral80);
+  background: var(--admiral-color-Neutral_Neutral05);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.recovery-panel {
+  display: grid;
+  gap: 14px;
+}
+.recovery-panel h2,
+.recovery-panel p {
+  margin: 0;
+}
+.recovery-codes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.recovery-codes code {
+  border: 1px solid var(--admiral-color-Neutral_Neutral20);
+  padding: 10px;
+  background: var(--admiral-color-Neutral_Neutral05);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
 .app-shell {
   display: grid;
   align-items: start;
@@ -809,6 +1044,46 @@ input:focus-visible {
 }
 
 @media (max-width: 760px) {
+  .public-header,
+  .public-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+  .public-controls {
+    width: 100%;
+  }
+  .public-controls > *:first-child {
+    flex: 1;
+  }
+  .public-content {
+    padding: 28px 16px 48px;
+  }
+  .landing-hero,
+  .landing-features {
+    grid-template-columns: 1fr;
+  }
+  .landing-hero {
+    gap: 32px;
+    padding-top: 16px;
+  }
+  .landing-aside {
+    border-top: 1px solid var(--admiral-color-Neutral_Neutral30);
+    border-left: 0;
+    padding: 20px 0 0;
+  }
+  .auth-page {
+    min-height: auto;
+    place-items: stretch;
+  }
+  .auth-card {
+    width: 100%;
+    padding: 22px 18px;
+  }
+  .recovery-codes {
+    grid-template-columns: 1fr;
+  }
   .app-shell {
     display: block;
   }

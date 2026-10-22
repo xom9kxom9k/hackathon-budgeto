@@ -1,14 +1,13 @@
 import { makeAutoObservable } from 'mobx';
 
 import type { AccountSummary, Bank, FinancialProduct } from '@/entities/account/model/types';
-import { demoAccounts, demoBanks, demoProducts } from '@/shared/lib/demoData';
 import type { RequestStatus } from '@/shared/types/request';
 
 export class AccountsStore {
   status: RequestStatus = 'success';
-  banks: Bank[] = demoBanks;
-  accounts: AccountSummary[] = demoAccounts;
-  products: FinancialProduct[] = demoProducts;
+  banks: Bank[] = [];
+  accounts: AccountSummary[] = [];
+  products: FinancialProduct[] = [];
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });

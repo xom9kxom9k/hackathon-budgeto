@@ -3,4 +3,6 @@ export interface AccountView {
   name: string;
   currency: string;
 }
-export class ListAccountsQuery {}
+export class ListAccountsQuery {
+  constructor(public readonly userId: string) {}
+}

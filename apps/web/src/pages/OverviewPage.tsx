@@ -1,4 +1,4 @@
-import { Badge, Button, T } from '@admiral-ds/react-ui';
+import { Button, T } from '@admiral-ds/react-ui';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -18,16 +18,6 @@ export const OverviewPage = observer(function OverviewPage() {
 
   return (
     <div className="page-stack">
-      <section className="demo-banner" aria-label={t(I18nKey.PreviewKicker)}>
-        <div>
-          <span className="banner-kicker">{t(I18nKey.PreviewKicker)}</span>
-          <p>{t(I18nKey.PreviewDescription)}</p>
-        </div>
-        <Badge appearance="info" dimension="m">
-          {t(I18nKey.PreviewBadge)}
-        </Badge>
-      </section>
-
       <section className="overview-heading">
         <div>
           <span className="section-kicker">{t(I18nKey.OverviewKicker)}</span>
@@ -49,8 +39,16 @@ export const OverviewPage = observer(function OverviewPage() {
       <section className="overview-anchor-grid" aria-label={t(I18nKey.OverviewAvailableMoney)}>
         <article className="metric-card metric-card--primary overview-balance-card">
           <span className="card-kicker">{t(I18nKey.OverviewAvailableMoney)}</span>
-          <strong>{formatMoney(accountsStore.availableBalance)}</strong>
-          <span className="metric-note">{t(I18nKey.OverviewAvailableMoneyDescription)}</span>
+          <strong>
+            {accountsStore.accounts.length
+              ? formatMoney(accountsStore.availableBalance)
+              : t(I18nKey.EmptyState)}
+          </strong>
+          <span className="metric-note">
+            {accountsStore.accounts.length
+              ? t(I18nKey.OverviewAvailableMoneyDescription)
+              : t(I18nKey.OverviewNoAccounts)}
+          </span>
           <Button appearance="tertiary" dimension="m" onClick={() => navigate('/accounts')}>
             {t(I18nKey.OverviewOpenAccounts)}
           </Button>
@@ -64,21 +62,9 @@ export const OverviewPage = observer(function OverviewPage() {
                 {t(I18nKey.OverviewCashflow)}
               </T>
             </div>
-            <Badge appearance="info" dimension="s">
-              {t(I18nKey.DemoData)}
-            </Badge>
           </div>
           <p className="panel-copy">{t(I18nKey.OverviewRecentMovementDescription)}</p>
-          <div className="movement-values">
-            <div>
-              <span>{t(I18nKey.OverviewIncome)}</span>
-              <strong className="amount amount--positive">+{formatMoney(185000)}</strong>
-            </div>
-            <div>
-              <span>{t(I18nKey.OverviewExpenses)}</span>
-              <strong className="amount amount--negative">-{formatMoney(42480)}</strong>
-            </div>
-          </div>
+          <div className="state-callout">{t(I18nKey.OverviewNoCashflow)}</div>
           <Button appearance="tertiary" dimension="m" onClick={() => navigate('/transactions')}>
             {t(I18nKey.OverviewOpenTransactions)}
           </Button>
