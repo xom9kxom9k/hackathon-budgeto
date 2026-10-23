@@ -961,6 +961,12 @@ input:focus-visible {
   outline: 3px solid var(--admiral-color-Primary_Primary40);
   outline-offset: 2px;
 }
+.field-muted {
+  color: var(--admiral-color-Neutral_Neutral60);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
 .import-row-status {
   min-width: 150px;
   color: var(--admiral-color-Error_Error60Main);

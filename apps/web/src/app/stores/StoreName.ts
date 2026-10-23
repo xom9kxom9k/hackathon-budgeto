@@ -7,5 +7,6 @@ export enum StoreName {
   Accounts = 'accounts',
   Transactions = 'transactions',
   Import = 'import',
+  Categories = 'categories',
   Vault = 'vault',
 }

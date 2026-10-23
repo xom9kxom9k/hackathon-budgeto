@@ -1,6 +1,7 @@
 import { BaseApiClient } from '@/shared/api/BaseApiClient';
 import { getApiBaseUrl } from '@/shared/config/env';
 import { AccountsService } from '@/shared/services/AccountsService';
+import { CategoriesService } from '@/shared/services/CategoriesService';
 import { AuthService } from '@/shared/services/AuthService';
 import { HealthService } from '@/shared/services/HealthService';
 import { ImportService } from '@/shared/services/ImportService';
@@ -10,6 +11,7 @@ import { VaultService } from '@/shared/services/VaultService';
 
 import { HealthStore } from './HealthStore';
 import { AccountsStore } from './AccountsStore';
+import { CategoriesStore } from './CategoriesStore';
 import { AuthStore } from './AuthStore';
 import { ImportStore } from './ImportStore';
 import { TransactionsStore } from './TransactionsStore';
@@ -28,12 +30,14 @@ export interface StoreMap {
   [StoreName.Accounts]: AccountsStore;
   [StoreName.Transactions]: TransactionsStore;
   [StoreName.Import]: ImportStore;
+  [StoreName.Categories]: CategoriesStore;
   [StoreName.Vault]: VaultStore;
 }
 
 export interface ServiceRegistry {
   health: HealthService;
   accounts: AccountsService;
+  categories: CategoriesService;
   transactions: TransactionsService;
   overview: OverviewService;
   auth: AuthService;
@@ -48,6 +52,7 @@ export class RootStore {
   readonly health: HealthStore;
   readonly overview: OverviewStore;
   readonly accounts: AccountsStore;
+  readonly categories: CategoriesStore;
   readonly transactions: TransactionsStore;
   readonly import: ImportStore;
   readonly vault: VaultStore;
@@ -65,6 +70,7 @@ export class RootStore {
     this.services = {
       health: new HealthService(this.apiClient),
       accounts: new AccountsService(this.apiClient),
+      categories: new CategoriesService(this.apiClient),
       transactions: new TransactionsService(this.apiClient),
       overview: new OverviewService(this.apiClient),
       auth: new AuthService(this.apiClient),
@@ -75,6 +81,7 @@ export class RootStore {
     this.health = new HealthStore(this.services.health);
     this.overview = new OverviewStore(this.services.overview);
     this.accounts = new AccountsStore(this.services.accounts);
+    this.categories = new CategoriesStore(this.services.categories);
     this.transactions = new TransactionsStore(this.services.transactions);
     this.vault = new VaultStore(this.services.vault);
     this.import = new ImportStore(this.services.imports, this.vault);
@@ -87,6 +94,7 @@ export class RootStore {
       [StoreName.Accounts]: this.accounts,
       [StoreName.Transactions]: this.transactions,
       [StoreName.Import]: this.import,
+      [StoreName.Categories]: this.categories,
       [StoreName.Vault]: this.vault,
     };
   }
