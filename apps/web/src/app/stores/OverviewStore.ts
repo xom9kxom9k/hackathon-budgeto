@@ -30,6 +30,7 @@ export class OverviewStore {
     this.status = 'loading';
     this.errorCode = null;
     this.requestKey = key;
+    this.period = filters;
     const version = ++this.requestVersion;
     const promise = this.overviewService
       .getSummary(filters)

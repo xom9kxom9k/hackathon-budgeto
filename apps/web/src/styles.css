@@ -1018,6 +1018,47 @@ input:focus-visible {
   display: grid;
   gap: 20px;
 }
+.vault-key-panel {
+  display: grid;
+  gap: 12px;
+}
+.vault-key-unlock,
+.vault-key-unlocked {
+  display: grid;
+  gap: 12px;
+  max-width: 560px;
+}
+.vault-key-unlock label {
+  display: grid;
+  gap: 6px;
+  color: var(--admiral-color-Neutral_Neutral60);
+  font-size: 13px;
+}
+.vault-key-unlock input {
+  min-height: 44px;
+  border: 1px solid var(--admiral-color-Neutral_Neutral40);
+  border-radius: var(--admiral-border-radius-Medium);
+  padding: 0 10px;
+  color: var(--admiral-color-Neutral_Neutral90);
+  background: var(--admiral-color-Neutral_Neutral00);
+  font: inherit;
+}
+.vault-recovery-key,
+.vault-event-hash,
+.vault-event-snapshot {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--admiral-color-Neutral_Neutral20);
+  padding: 10px;
+  color: var(--admiral-color-Neutral_Neutral80);
+  background: var(--admiral-color-Neutral_Neutral05);
+  font-size: 12px;
+}
+.vault-event-snapshot {
+  margin: 16px 0 0;
+  white-space: pre-wrap;
+}
 .timeline-item {
   display: grid;
   grid-template-columns: minmax(140px, 0.3fr) minmax(0, 1fr);

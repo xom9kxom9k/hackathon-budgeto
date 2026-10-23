@@ -91,6 +91,7 @@ describe('ImportForm', () => {
 
   it('marks edited rows for recheck and blocks confirmation until saved', async () => {
     const store = new RootStore();
+    store.get(StoreName.Vault).status = 'unlocked';
     store.get(StoreName.Import).job = {
       id: 'job-1',
       fileName: 'statement.xlsx',

@@ -6,6 +6,7 @@ import { HealthService } from '@/shared/services/HealthService';
 import { ImportService } from '@/shared/services/ImportService';
 import { OverviewService } from '@/shared/services/OverviewService';
 import { TransactionsService } from '@/shared/services/TransactionsService';
+import { VaultService } from '@/shared/services/VaultService';
 
 import { HealthStore } from './HealthStore';
 import { AccountsStore } from './AccountsStore';
@@ -16,6 +17,7 @@ import { LoaderStore } from './LoaderStore';
 import { OverviewStore } from './OverviewStore';
 import { StoreName } from './StoreName';
 import { UiStore } from './UiStore';
+import { VaultStore } from './VaultStore';
 
 export interface StoreMap {
   [StoreName.Loader]: LoaderStore;
@@ -26,6 +28,7 @@ export interface StoreMap {
   [StoreName.Accounts]: AccountsStore;
   [StoreName.Transactions]: TransactionsStore;
   [StoreName.Import]: ImportStore;
+  [StoreName.Vault]: VaultStore;
 }
 
 export interface ServiceRegistry {
@@ -35,6 +38,7 @@ export interface ServiceRegistry {
   overview: OverviewService;
   auth: AuthService;
   imports: ImportService;
+  vault: VaultService;
 }
 
 export class RootStore {
@@ -46,6 +50,7 @@ export class RootStore {
   readonly accounts: AccountsStore;
   readonly transactions: TransactionsStore;
   readonly import: ImportStore;
+  readonly vault: VaultStore;
   readonly apiClient: BaseApiClient;
   readonly services: ServiceRegistry;
   readonly stores: StoreMap;
@@ -64,13 +69,15 @@ export class RootStore {
       overview: new OverviewService(this.apiClient),
       auth: new AuthService(this.apiClient),
       imports: new ImportService(this.apiClient),
+      vault: new VaultService(this.apiClient),
     };
     this.auth = new AuthStore(this.services.auth);
     this.health = new HealthStore(this.services.health);
     this.overview = new OverviewStore(this.services.overview);
     this.accounts = new AccountsStore(this.services.accounts);
     this.transactions = new TransactionsStore(this.services.transactions);
-    this.import = new ImportStore(this.services.imports);
+    this.vault = new VaultStore(this.services.vault);
+    this.import = new ImportStore(this.services.imports, this.vault);
     this.stores = {
       [StoreName.Loader]: this.loader,
       [StoreName.Auth]: this.auth,
@@ -80,6 +87,7 @@ export class RootStore {
       [StoreName.Accounts]: this.accounts,
       [StoreName.Transactions]: this.transactions,
       [StoreName.Import]: this.import,
+      [StoreName.Vault]: this.vault,
     };
   }
 

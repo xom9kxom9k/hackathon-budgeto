@@ -30,9 +30,30 @@ const jobSchema = z.object({
   errorCode: z.string().nullable(),
 });
 const confirmSchema = z.object({ created: z.number(), skipped: z.number() });
+const claimSchema = z.object({
+  sourceRow: z.number(),
+  fingerprint: z.string(),
+  payloadHash: z.string(),
+  canonicalPayload: z.string(),
+  claimDigest: z.string(),
+});
+const claimsSchema = z.object({ claims: z.array(claimSchema) });
+const proofSchema = z.object({
+  sourceRow: z.number(),
+  fingerprint: z.string(),
+  payloadHash: z.string(),
+  ciphertext: z.string(),
+  iv: z.string(),
+  authTag: z.string(),
+  signature: z.string(),
+  publicKeyId: z.string(),
+  keyVersion: z.number(),
+});
 export type ImportJob = z.infer<typeof jobSchema>;
 export type ImportRow = z.infer<typeof rowSchema>;
 export type ImportResult = z.infer<typeof confirmSchema>;
+export type ImportConfirmationClaims = z.infer<typeof claimsSchema>;
+export type VaultProof = z.infer<typeof proofSchema>;
 
 export class ImportService extends BaseApiService {
   constructor(apiClient: BaseApiClient) {
@@ -49,8 +70,11 @@ export class ImportService extends BaseApiService {
   updateRows(jobId: string, rows: ImportRow[]): Promise<ImportJob> {
     return this.patch(`/${jobId}/rows`, { rows }, jobSchema);
   }
-  confirm(jobId: string): Promise<ImportResult> {
-    return this.post(`/${jobId}/confirm`, {}, confirmSchema);
+  getConfirmationClaims(jobId: string): Promise<ImportConfirmationClaims> {
+    return super.get(`/${jobId}/confirmation-claims`, claimsSchema);
+  }
+  confirm(jobId: string, proofs: VaultProof[]): Promise<ImportResult> {
+    return this.post(`/${jobId}/confirm`, { proofs }, confirmSchema);
   }
   private patch<T>(path: string, body: unknown, schema: z.ZodType<T>): Promise<T> {
     return this.request(

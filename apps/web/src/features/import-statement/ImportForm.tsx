@@ -10,6 +10,7 @@ import { StoreName } from '@/app/stores/StoreName';
 import type { ImportRow } from '@/shared/services/ImportService';
 import { translateValidationError } from '@/shared/forms/validation';
 import { I18nKey } from '@/shared/i18n';
+import { VaultKeyPanel } from '@/shared/ui/VaultKeyPanel';
 
 const maxFileSize = 8 * 1024 * 1024;
 const issueTranslations: Record<string, I18nKey> = {
@@ -63,6 +64,7 @@ export const ImportForm = observer(function ImportForm({
 }: ImportFormProps) {
   const { t } = useTranslation();
   const importStore = useStore(StoreName.Import);
+  const vaultStore = useStore(StoreName.Vault);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [filter, setFilter] = useState<RowFilter>('all');
   const [isDirty, setIsDirty] = useState(false);
@@ -97,7 +99,12 @@ export const ImportForm = observer(function ImportForm({
   const isProcessing = importStore.status === 'loading';
   const isConfirmed = importStore.job?.status === 'confirmed';
   const canConfirm = Boolean(
-    preview && rows.length > 0 && !isDirty && invalidRows === 0 && !isProcessing,
+    preview &&
+    rows.length > 0 &&
+    !isDirty &&
+    invalidRows === 0 &&
+    !isProcessing &&
+    vaultStore.status === 'unlocked',
   );
 
   const submit = async () => {
@@ -198,9 +205,11 @@ export const ImportForm = observer(function ImportForm({
           <StatusIndicator
             dimension="s"
             text={
-              importStore.job?.status === 'failed'
-                ? t(I18nKey.ImportsFailed)
-                : t(I18nKey.ImportsRestoreFailed)
+              importStore.errorCode === 'VAULT_KEY_REQUIRED'
+                ? t(I18nKey.VaultKeyRequired)
+                : importStore.job?.status === 'failed'
+                  ? t(I18nKey.ImportsFailed)
+                  : t(I18nKey.ImportsRestoreFailed)
             }
           />
           {importStore.job?.status === 'failed' ? (
@@ -226,6 +235,7 @@ export const ImportForm = observer(function ImportForm({
       ) : null}
       {preview ? (
         <div className="import-preview" role="region" aria-label={t(I18nKey.ImportsStepPreview)}>
+          {!isConfirmed ? <VaultKeyPanel /> : null}
           <div className="section-heading section-heading--compact">
             <div>
               <span className="section-kicker">{t(I18nKey.ImportsStepPreview)}</span>

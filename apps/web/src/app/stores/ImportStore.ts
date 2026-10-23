@@ -6,6 +6,7 @@ import type {
   ImportRow,
   ImportService,
 } from '@/shared/services/ImportService';
+import type { VaultStore } from './VaultStore';
 
 export class ImportStore {
   status: RequestStatus = 'idle';
@@ -13,8 +14,15 @@ export class ImportStore {
   job: ImportJob | null = null;
   result: ImportResult | null = null;
   errorCode: string | null = null;
-  constructor(private readonly service: ImportService) {
-    makeAutoObservable(this, {}, { autoBind: true });
+  constructor(
+    private readonly service: ImportService,
+    private readonly vault?: VaultStore,
+  ) {
+    makeAutoObservable<this, 'service' | 'vault'>(
+      this,
+      { service: false, vault: false },
+      { autoBind: true },
+    );
   }
   get preview() {
     return this.job?.preview ?? null;
@@ -96,7 +104,9 @@ export class ImportStore {
     this.status = 'loading';
     this.errorCode = null;
     try {
-      this.result = await this.service.confirm(this.job.id);
+      const claims = this.vault ? await this.service.getConfirmationClaims(this.job.id) : null;
+      const proofs = claims && this.vault ? await this.vault.createProofs(claims.claims) : [];
+      this.result = await this.service.confirm(this.job.id, proofs);
       this.job = await this.service.getJob(this.job.id);
       this.applyJobStatus(this.job);
     } catch (error) {

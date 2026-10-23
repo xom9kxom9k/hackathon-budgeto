@@ -7,6 +7,22 @@ if (!globalThis.crypto.randomUUID) {
   });
 }
 
+if (!globalThis.IntersectionObserver) {
+  class TestIntersectionObserver {
+    disconnect(): void {}
+    observe(): void {}
+    unobserve(): void {}
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+  }
+
+  Object.defineProperty(globalThis, 'IntersectionObserver', {
+    configurable: true,
+    value: TestIntersectionObserver,
+  });
+}
+
 if (!globalThis.DataTransfer) {
   class TestDataTransfer {
     private readonly fileList: File[] = [];
