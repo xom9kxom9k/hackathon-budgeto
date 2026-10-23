@@ -32,6 +32,7 @@ const jobSchema = z.object({
 const confirmSchema = z.object({ created: z.number(), skipped: z.number() });
 export type ImportJob = z.infer<typeof jobSchema>;
 export type ImportRow = z.infer<typeof rowSchema>;
+export type ImportResult = z.infer<typeof confirmSchema>;
 
 export class ImportService extends BaseApiService {
   constructor(apiClient: BaseApiClient) {
@@ -48,7 +49,7 @@ export class ImportService extends BaseApiService {
   updateRows(jobId: string, rows: ImportRow[]): Promise<ImportJob> {
     return this.patch(`/${jobId}/rows`, { rows }, jobSchema);
   }
-  confirm(jobId: string): Promise<z.infer<typeof confirmSchema>> {
+  confirm(jobId: string): Promise<ImportResult> {
     return this.post(`/${jobId}/confirm`, {}, confirmSchema);
   }
   private patch<T>(path: string, body: unknown, schema: z.ZodType<T>): Promise<T> {

@@ -1,0 +1,24 @@
+import type { ParsedImportRow } from '../../shared/import-parser/types';
+
+export class CreateImportJobCommand {
+  constructor(
+    public readonly userId: string,
+    public readonly fileName: string,
+    public readonly content: Buffer,
+  ) {}
+}
+
+export class UpdateImportRowsCommand {
+  constructor(
+    public readonly userId: string,
+    public readonly jobId: string,
+    public readonly rows: ParsedImportRow[],
+  ) {}
+}
+
+export class ConfirmImportJobCommand {
+  constructor(
+    public readonly userId: string,
+    public readonly jobId: string,
+  ) {}
+}
