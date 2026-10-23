@@ -13,3 +13,7 @@ export class PrepareImportConfirmationQuery {
     public readonly jobId: string,
   ) {}
 }
+
+export class ListImportJobsQuery {
+  constructor(public readonly userId: string) {}
+}

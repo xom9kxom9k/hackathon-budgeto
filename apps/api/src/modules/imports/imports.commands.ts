@@ -31,3 +31,11 @@ export class ConfirmImportWithProofsCommand {
     public readonly proofs: VaultProofDto[],
   ) {}
 }
+
+export class RetryImportJobCommand {
+  constructor(public readonly userId: string, public readonly jobId: string) {}
+}
+
+export class DeleteImportStagingCommand {
+  constructor(public readonly userId: string, public readonly jobId: string) {}
+}

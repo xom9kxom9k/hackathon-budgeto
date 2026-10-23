@@ -23,6 +23,12 @@ export class UserEntity {
   @Column({ type: 'text', array: true, default: '{}' })
   goals!: string[];
 
+  @Column({ type: 'varchar', length: 5, default: 'ru' })
+  locale!: string;
+
+  @Column({ type: 'varchar', length: 64, default: 'UTC' })
+  timezone!: string;
+
   @Column({ name: 'onboarding_completed_at', type: 'timestamptz', nullable: true })
   onboardingCompletedAt!: Date | null;
 

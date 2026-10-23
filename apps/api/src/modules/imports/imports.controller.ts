@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Header,
   Param,
@@ -18,11 +19,14 @@ import type { AuthPrincipal } from '../auth/auth.types';
 import {
   ConfirmImportWithProofsCommand,
   CreateImportJobCommand,
+  DeleteImportStagingCommand,
+  RetryImportJobCommand,
   UpdateImportRowsCommand,
 } from './imports.commands';
 import {
   GetImportJobQuery,
   GetImportTemplateQuery,
+  ListImportJobsQuery,
   PrepareImportConfirmationQuery,
 } from './imports.queries';
 import type { VaultProofDto } from '../vault/vault.dto';
@@ -40,6 +44,11 @@ export class ImportsController {
   @Header('Content-Disposition', 'attachment; filename="budgeto-import-template.xlsx"')
   async template(): Promise<Buffer> {
     return this.queries.execute<GetImportTemplateQuery, Buffer>(new GetImportTemplateQuery());
+  }
+
+  @Get()
+  async list(@CurrentUser() user: AuthPrincipal) {
+    return this.queries.execute(new ListImportJobsQuery(user.userId));
   }
 
   @Post()
@@ -74,6 +83,16 @@ export class ImportsController {
     @Body('proofs') proofs?: VaultProofDto[],
   ): Promise<unknown> {
     return this.commands.execute(new ConfirmImportWithProofsCommand(user.userId, id, proofs ?? []));
+  }
+
+  @Post(':id/retry')
+  async retry(@CurrentUser() user: AuthPrincipal, @Param('id') id: string) {
+    return this.commands.execute(new RetryImportJobCommand(user.userId, id));
+  }
+
+  @Delete(':id/staging')
+  async deleteStaging(@CurrentUser() user: AuthPrincipal, @Param('id') id: string) {
+    return this.commands.execute(new DeleteImportStagingCommand(user.userId, id));
   }
 
   @Get(':id/confirmation-claims')

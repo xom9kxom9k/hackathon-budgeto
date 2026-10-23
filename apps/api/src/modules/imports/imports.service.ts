@@ -58,6 +58,25 @@ export class ImportsService {
     return this.toView(await this.get(userId, jobId));
   }
 
+  async list(userId: string): Promise<unknown[]> {
+    const jobs = await this.jobs.find({ where: { userId }, order: { createdAt: 'DESC' } });
+    return jobs.map((job) => this.toView(job));
+  }
+
+  async retry(userId: string, jobId: string): Promise<unknown> {
+    const job = await this.get(userId, jobId);
+    if (job.status !== ImportJobStatus.Failed) throw new Error('IMPORT_NOT_RETRYABLE');
+    await this.jobs.update(job.id, { status: ImportJobStatus.Queued, errorCode: null });
+    await this.queue.add('parse', { jobId: job.id }, { removeOnComplete: true, removeOnFail: false });
+    return this.toView(await this.get(userId, jobId));
+  }
+
+  async deleteStaging(userId: string, jobId: string): Promise<void> {
+    const job = await this.get(userId, jobId);
+    await unlink(job.filePath).catch(() => undefined);
+    await this.jobs.update(job.id, { filePath: '' });
+  }
+
   async updateRows(userId: string, jobId: string, rows: ParsedImportRow[]): Promise<unknown> {
     const job = await this.get(userId, jobId);
     if (job.status !== ImportJobStatus.Preview) throw new Error('IMPORT_NOT_EDITABLE');
@@ -246,6 +265,11 @@ export class ImportsService {
       status: job.status,
       preview: job.preview,
       errorCode: job.errorCode,
+      createdAt: job.createdAt,
+      confirmedAt: job.confirmedAt,
+      rowCount: (job.preview as ParsedImportPreview | null)?.total ?? 0,
+      created: job.status === ImportJobStatus.Confirmed ? ((job.preview as ParsedImportPreview | null)?.valid ?? 0) : null,
+      skipped: null,
     };
   }
 }
