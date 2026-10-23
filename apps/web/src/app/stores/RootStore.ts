@@ -3,6 +3,7 @@ import { getApiBaseUrl } from '@/shared/config/env';
 import { AccountsService } from '@/shared/services/AccountsService';
 import { AuthService } from '@/shared/services/AuthService';
 import { HealthService } from '@/shared/services/HealthService';
+import { ImportService } from '@/shared/services/ImportService';
 
 import { HealthStore } from './HealthStore';
 import { AccountsStore } from './AccountsStore';
@@ -27,6 +28,7 @@ export interface ServiceRegistry {
   health: HealthService;
   accounts: AccountsService;
   auth: AuthService;
+  imports: ImportService;
 }
 
 export class RootStore {
@@ -49,12 +51,13 @@ export class RootStore {
       health: new HealthService(this.apiClient),
       accounts: new AccountsService(this.apiClient),
       auth: new AuthService(this.apiClient),
+      imports: new ImportService(this.apiClient),
     };
     this.auth = new AuthStore(this.services.auth);
     this.health = new HealthStore(this.services.health);
     this.overview = new OverviewStore();
     this.accounts = new AccountsStore();
-    this.import = new ImportStore();
+    this.import = new ImportStore(this.services.imports);
     this.stores = {
       [StoreName.Loader]: this.loader,
       [StoreName.Auth]: this.auth,

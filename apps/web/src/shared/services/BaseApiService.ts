@@ -44,4 +44,9 @@ export abstract class BaseApiService {
       schema,
     );
   }
+
+  protected request<T>(path: string, options: RequestInit, schema: z.ZodType<T>): Promise<T> {
+    const normalizedPath = path ? `${this.prefix}/${path.replace(/^\//, '')}` : this.prefix;
+    return this.apiClient.request(normalizedPath, options, schema);
+  }
 }
