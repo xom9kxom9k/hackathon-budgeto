@@ -82,7 +82,7 @@ export class RootStore {
     this.overview = new OverviewStore(this.services.overview);
     this.accounts = new AccountsStore(this.services.accounts);
     this.categories = new CategoriesStore(this.services.categories);
-    this.transactions = new TransactionsStore(this.services.transactions);
+    this.transactions = new TransactionsStore(this.services.transactions, this.vault);
     this.vault = new VaultStore(this.services.vault);
     this.import = new ImportStore(this.services.imports, this.vault);
     this.stores = {

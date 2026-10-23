@@ -174,6 +174,7 @@ export enum I18nKey {
   TransactionsPrevious = 'transactions.previous',
   TransactionsNext = 'transactions.next',
   TransactionsPagination = 'transactions.pagination',
+  TransactionsNew = 'transactions.new',
   TransactionNoDescription = 'transaction.noDescription',
   TransactionNoCategory = 'transaction.noCategory',
   ImportsKicker = 'imports.kicker',

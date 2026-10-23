@@ -1,6 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 
 import type { ImportConfirmationClaims, VaultProof } from '@/shared/services/ImportService';
+import type { TransactionClaim } from '@/shared/services/TransactionsService';
 import type { VaultEvent, VaultIntegrity, VaultService } from '@/shared/services/VaultService';
 import { VaultCrypto } from '@/shared/vault/VaultCrypto';
 
@@ -68,7 +69,7 @@ export class VaultStore {
     }
   }
 
-  async createProofs(claims: ImportConfirmationClaims['claims']): Promise<VaultProof[]> {
+  async createProofs(claims: Array<ImportConfirmationClaims['claims'][number] | TransactionClaim>): Promise<VaultProof[]> {
     if (this.status !== 'unlocked') throw new Error('VAULT_KEY_REQUIRED');
     return Promise.all(claims.map((claim) => this.crypto.createProof(claim)));
   }

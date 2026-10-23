@@ -32,6 +32,8 @@ const transactionsResponseSchema = z.object({
   page: z.number().int().positive(),
   pageSize: z.number().int().positive(),
 });
+const transactionDetailSchema = transactionSchema.extend({ reversedAt: z.string().nullable().optional() });
+const claimSchema = z.object({ sourceRow: z.number(), fingerprint: z.string(), payloadHash: z.string(), canonicalPayload: z.string(), claimDigest: z.string() });
 
 export interface TransactionFilters {
   page: number;
@@ -49,6 +51,17 @@ export interface TransactionsPage {
   page: number;
   pageSize: number;
 }
+export type TransactionInput = {
+  date: string;
+  kind: Transaction['kind'];
+  amount: number;
+  accountId: string;
+  destinationAccountId: string | null;
+  categoryId: string | null;
+  note: string | null;
+  operationId: string;
+};
+export type TransactionClaim = z.infer<typeof claimSchema>;
 
 export class TransactionsService extends BaseApiService {
   constructor(apiClient: BaseApiClient) {
@@ -68,5 +81,21 @@ export class TransactionsService extends BaseApiService {
     if (filters.to) params.set('to', filters.to);
 
     return this.get<TransactionsPage>(`?${params.toString()}`, transactionsResponseSchema, signal);
+  }
+
+  prepareClaim(input: TransactionInput): Promise<TransactionClaim> {
+    return this.post('/claims', input, claimSchema);
+  }
+
+  create(input: TransactionInput, proof: unknown): Promise<void> {
+    return this.post('', { ...input, proof }, z.unknown()).then(() => undefined);
+  }
+
+  update(id: string, input: TransactionInput, proof: unknown): Promise<void> {
+    return this.patch(`/${encodeURIComponent(id)}`, { ...input, proof }, z.unknown()).then(() => undefined);
+  }
+
+  reverse(id: string, operationId: string, proof: unknown): Promise<void> {
+    return this.post(`/${encodeURIComponent(id)}/reverse`, { operationId, proof }, z.unknown()).then(() => undefined);
   }
 }
