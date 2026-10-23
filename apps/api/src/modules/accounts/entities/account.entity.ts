@@ -22,6 +22,9 @@ export class AccountEntity {
   @Column({ type: 'varchar', length: 3 })
   currency!: string;
 
+  @Column({ name: 'archived_at', type: 'timestamptz', nullable: true })
+  archivedAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 

@@ -14,7 +14,9 @@ export class ListCategoriesHandler implements IQueryHandler<ListCategoriesQuery>
 
   async execute(query: ListCategoriesQuery): Promise<CategoryView[]> {
     const categories = await this.categories.find({
-      where: query.kind ? { userId: query.userId, kind: query.kind } : { userId: query.userId },
+      where: query.kind
+        ? { userId: query.userId, kind: query.kind, archivedAt: null }
+        : { userId: query.userId, archivedAt: null },
       order: { kind: 'ASC', name: 'ASC' },
     });
 

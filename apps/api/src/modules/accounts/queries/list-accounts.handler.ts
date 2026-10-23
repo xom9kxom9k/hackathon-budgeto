@@ -15,7 +15,7 @@ export class ListAccountsHandler implements IQueryHandler<ListAccountsQuery> {
 
   async execute(query: ListAccountsQuery): Promise<AccountView[]> {
     const accounts = await this.accounts.find({
-      where: { userId: query.userId },
+      where: { userId: query.userId, archivedAt: null },
       order: { createdAt: 'ASC' },
     });
 

@@ -25,8 +25,8 @@ async function processJob(jobId: string): Promise<void> {
   try {
     const preview = await parseBudgetoXlsx(await readFile(job.filePath));
     const [accounts, categories] = await Promise.all([
-      dataSource.getRepository(AccountEntity).find({ where: { userId: job.userId } }),
-      dataSource.getRepository(CategoryEntity).find({ where: { userId: job.userId } }),
+      dataSource.getRepository(AccountEntity).find({ where: { userId: job.userId, archivedAt: null } }),
+      dataSource.getRepository(CategoryEntity).find({ where: { userId: job.userId, archivedAt: null } }),
     ]);
     const accountNames = new Set(
       accounts.map((account) => account.name.toLocaleLowerCase('ru-RU')),

@@ -78,8 +78,8 @@ export class VaultService {
       throw new BadRequestException('IMPORT_NOT_READY');
     }
     const [accounts, categories] = await Promise.all([
-      this.accounts.find({ where: { userId } }),
-      this.categories.find({ where: { userId } }),
+      this.accounts.find({ where: { userId, archivedAt: null } }),
+      this.categories.find({ where: { userId, archivedAt: null } }),
     ]);
     return {
       claims: (job.preview as ParsedImportPreview).rows

@@ -14,7 +14,7 @@ describe('ListCategoriesHandler', () => {
     const result = await handler.execute(new ListCategoriesQuery('user-1'));
 
     expect(find).toHaveBeenCalledWith({
-      where: { userId: 'user-1' },
+      where: { userId: 'user-1', archivedAt: null },
       order: { kind: 'ASC', name: 'ASC' },
     });
     expect(result).toEqual([{ id: 'category-1', name: 'Food', kind: CategoryKind.Expense }]);

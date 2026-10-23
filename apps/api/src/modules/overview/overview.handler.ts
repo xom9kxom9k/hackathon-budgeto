@@ -25,7 +25,7 @@ export class GetOverviewSummaryHandler implements IQueryHandler<GetOverviewSumma
   async execute(query: GetOverviewSummaryQuery): Promise<OverviewSummaryView> {
     const { from, to } = query.filters;
     const [accountsCount, totals, cashflow, recentRows] = await Promise.all([
-      this.accounts.count({ where: { userId: query.userId } }),
+      this.accounts.count({ where: { userId: query.userId, archivedAt: null } }),
       this.loadTotals(query.userId, from, to),
       this.loadCashflow(query.userId, from, to),
       this.loadRecentTransactions(query.userId, from, to),

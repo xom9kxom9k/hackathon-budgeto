@@ -62,8 +62,8 @@ export class ImportsService {
     const job = await this.get(userId, jobId);
     if (job.status !== ImportJobStatus.Preview) throw new Error('IMPORT_NOT_EDITABLE');
     const [accounts, categories] = await Promise.all([
-      this.accounts.find({ where: { userId } }),
-      this.categories.find({ where: { userId } }),
+      this.accounts.find({ where: { userId, archivedAt: null } }),
+      this.categories.find({ where: { userId, archivedAt: null } }),
     ]);
     const checkedRows = rows.map((row) => this.validateRow(row));
     const resolved = this.resolve(
@@ -92,8 +92,8 @@ export class ImportsService {
     const proofByRow = new Map(validatedProofs.map((proof) => [proof.sourceRow, proof]));
     const result = await this.dataSource.transaction(async (manager) => {
       const transactions = manager.getRepository(TransactionEntity);
-      const accounts = await manager.getRepository(AccountEntity).find({ where: { userId } });
-      const categories = await manager.getRepository(CategoryEntity).find({ where: { userId } });
+      const accounts = await manager.getRepository(AccountEntity).find({ where: { userId, archivedAt: null } });
+      const categories = await manager.getRepository(CategoryEntity).find({ where: { userId, archivedAt: null } });
       const createdTransactions: Array<{
         transaction: TransactionEntity;
         proof: (typeof validatedProofs)[number];
