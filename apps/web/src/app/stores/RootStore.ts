@@ -4,6 +4,7 @@ import { AccountsService } from '@/shared/services/AccountsService';
 import { AuthService } from '@/shared/services/AuthService';
 import { HealthService } from '@/shared/services/HealthService';
 import { ImportService } from '@/shared/services/ImportService';
+import { OverviewService } from '@/shared/services/OverviewService';
 import { TransactionsService } from '@/shared/services/TransactionsService';
 
 import { HealthStore } from './HealthStore';
@@ -31,6 +32,7 @@ export interface ServiceRegistry {
   health: HealthService;
   accounts: AccountsService;
   transactions: TransactionsService;
+  overview: OverviewService;
   auth: AuthService;
   imports: ImportService;
 }
@@ -59,12 +61,13 @@ export class RootStore {
       health: new HealthService(this.apiClient),
       accounts: new AccountsService(this.apiClient),
       transactions: new TransactionsService(this.apiClient),
+      overview: new OverviewService(this.apiClient),
       auth: new AuthService(this.apiClient),
       imports: new ImportService(this.apiClient),
     };
     this.auth = new AuthStore(this.services.auth);
     this.health = new HealthStore(this.services.health);
-    this.overview = new OverviewStore();
+    this.overview = new OverviewStore(this.services.overview);
     this.accounts = new AccountsStore(this.services.accounts);
     this.transactions = new TransactionsStore(this.services.transactions);
     this.import = new ImportStore(this.services.imports);
