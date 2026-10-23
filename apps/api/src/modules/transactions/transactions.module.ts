@@ -7,14 +7,17 @@ import { CategoryEntity } from '../categories/entities/category.entity';
 import { TransactionEntity } from './entities/transaction.entity';
 import { TransactionsController } from './transactions.controller';
 import { ListTransactionsHandler } from './queries/list-transactions.handler';
+import { CreateTransactionHandler, GetTransactionHandler, PrepareTransactionClaimHandler, ReverseTransactionHandler, UpdateTransactionHandler } from './commands/transaction.handlers';
+import { VaultModule } from '../vault/vault.module';
 
 @Module({
   imports: [
     CqrsModule,
     AuthModule,
+    VaultModule,
     TypeOrmModule.forFeature([TransactionEntity, AccountEntity, CategoryEntity]),
   ],
   controllers: [TransactionsController],
-  providers: [ListTransactionsHandler],
+  providers: [ListTransactionsHandler, CreateTransactionHandler, UpdateTransactionHandler, ReverseTransactionHandler, GetTransactionHandler, PrepareTransactionClaimHandler],
 })
 export class TransactionsModule {}

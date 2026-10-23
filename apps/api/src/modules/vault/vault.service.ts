@@ -20,6 +20,7 @@ import {
   verifyEd25519,
 } from './vault.crypto';
 import type { VaultProofDto } from './vault.dto';
+import type { TransactionMutationInput } from '../transactions/transactions.commands';
 
 export interface VaultClaim {
   sourceRow: number;
@@ -115,6 +116,32 @@ export class VaultService {
       }
       return { ...proof, claim };
     });
+  }
+
+  createManualClaim(
+    userId: string,
+    input: Omit<TransactionMutationInput, 'proof'>,
+    accountId: string,
+    destinationAccountId: string | null,
+    categoryId: string | null,
+    transactionId?: string,
+  ): VaultClaim {
+    const payload = {
+      date: input.date,
+      kind: input.kind,
+      amount: input.amount.toFixed(2),
+      accountId,
+      destinationAccountId,
+      categoryId,
+      note: input.note?.trim() || null,
+      operationId: input.operationId,
+      transactionId: transactionId ?? null,
+    };
+    return this.claimFromPayload(userId, payload, input.operationId);
+  }
+
+  createReversalClaim(userId: string, transaction: TransactionEntity, operationId: string): VaultClaim {
+    return this.claimFromPayload(userId, { transactionId: transaction.id, reversedAt: new Date().toISOString(), operationId }, operationId);
   }
 
   async appendTransactionEvents(
@@ -333,6 +360,19 @@ export class VaultService {
           sourceRow: row.sourceRow,
         }),
       ),
+    };
+  }
+
+  private claimFromPayload(userId: string, payload: Record<string, unknown>, sourceKey: string): VaultClaim {
+    const canonicalPayload = canonicalize(payload);
+    const payloadHash = sha256(canonicalPayload);
+    const fingerprint = sha256(canonicalize({ userId, sourceKey, payloadHash }));
+    return {
+      sourceRow: 1,
+      fingerprint,
+      payloadHash,
+      canonicalPayload,
+      claimDigest: sha256(canonicalize({ fingerprint, payloadHash, operationId: sourceKey })),
     };
   }
 
