@@ -8,6 +8,7 @@ import { TransactionEntity } from '../transactions/entities/transaction.entity';
 import { ImportJobEntity } from './entities/import-job.entity';
 import { ImportsController } from './imports.controller';
 import { ImportsService } from './imports.service';
+import { importCommandHandlers, importQueryHandlers } from './imports.handlers';
 
 @Module({
   imports: [
@@ -16,6 +17,6 @@ import { ImportsService } from './imports.service';
     TypeOrmModule.forFeature([ImportJobEntity, AccountEntity, CategoryEntity, TransactionEntity]),
   ],
   controllers: [ImportsController],
-  providers: [ImportsService],
+  providers: [ImportsService, ...importCommandHandlers, ...importQueryHandlers],
 })
 export class ImportsModule {}
