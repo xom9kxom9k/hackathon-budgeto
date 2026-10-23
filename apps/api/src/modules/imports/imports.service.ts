@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { Workbook } from 'exceljs';
 import { createImportQueue } from './imports.queue';
 import { ImportJobEntity, ImportJobStatus } from './entities/import-job.entity';
@@ -13,6 +13,7 @@ import { TransactionEntity, TransactionKind } from '../transactions/entities/tra
 import type { ParsedImportPreview, ParsedImportRow } from '../../shared/import-parser/types';
 import type { VaultProofDto } from '../vault/vault.dto';
 import { VaultService } from '../vault/vault.service';
+import { VaultEventType } from '../vault/entities/vault-event.entity';
 
 @Injectable()
 export class ImportsService {
@@ -58,12 +59,35 @@ export class ImportsService {
     return this.toView(await this.get(userId, jobId));
   }
 
+  async list(userId: string): Promise<unknown[]> {
+    const jobs = await this.jobs.find({ where: { userId }, order: { createdAt: 'DESC' } });
+    return jobs.map((job) => this.toView(job));
+  }
+
+  async retry(userId: string, jobId: string): Promise<unknown> {
+    const job = await this.get(userId, jobId);
+    if (job.status !== ImportJobStatus.Failed) throw new Error('IMPORT_NOT_RETRYABLE');
+    await this.jobs.update(job.id, { status: ImportJobStatus.Queued, errorCode: null });
+    await this.queue.add(
+      'parse',
+      { jobId: job.id },
+      { removeOnComplete: true, removeOnFail: false },
+    );
+    return this.toView(await this.get(userId, jobId));
+  }
+
+  async deleteStaging(userId: string, jobId: string): Promise<void> {
+    const job = await this.get(userId, jobId);
+    await unlink(job.filePath).catch(() => undefined);
+    await this.jobs.update(job.id, { filePath: '' });
+  }
+
   async updateRows(userId: string, jobId: string, rows: ParsedImportRow[]): Promise<unknown> {
     const job = await this.get(userId, jobId);
     if (job.status !== ImportJobStatus.Preview) throw new Error('IMPORT_NOT_EDITABLE');
     const [accounts, categories] = await Promise.all([
-      this.accounts.find({ where: { userId } }),
-      this.categories.find({ where: { userId } }),
+      this.accounts.find({ where: { userId, archivedAt: IsNull() } }),
+      this.categories.find({ where: { userId, archivedAt: IsNull() } }),
     ]);
     const checkedRows = rows.map((row) => this.validateRow(row));
     const resolved = this.resolve(
@@ -80,23 +104,43 @@ export class ImportsService {
     jobId: string,
     proofs: VaultProofDto[] = [],
   ): Promise<{ created: number; skipped: number }> {
-    const job = await this.get(userId, jobId);
-    if (job.status === ImportJobStatus.Confirmed) return { created: 0, skipped: 0 };
-    const preview = job.preview as ParsedImportPreview | null;
-    if (!preview || preview.invalid > 0) throw new Error('IMPORT_HAS_INVALID_ROWS');
-    const key = await this.vault.getKey(userId);
-    if (!key) throw new Error('VAULT_KEY_REQUIRED');
-    const { claims } = await this.vault.prepareImportConfirmation(userId, jobId);
-    if (proofs.length !== claims.length) throw new Error('VAULT_PROOFS_REQUIRED');
-    const validatedProofs = this.vault.validateProofs(claims, proofs, key.publicKey);
-    const proofByRow = new Map(validatedProofs.map((proof) => [proof.sourceRow, proof]));
     const result = await this.dataSource.transaction(async (manager) => {
+      const job = await manager
+        .getRepository(ImportJobEntity)
+        .createQueryBuilder('job')
+        .setLock('pessimistic_write')
+        .where('job.id = :jobId AND job.user_id = :userId', { jobId, userId })
+        .getOne();
+      if (!job) throw new NotFoundException('IMPORT_NOT_FOUND');
+      if (job.status === ImportJobStatus.Confirmed) {
+        return { created: job.createdCount, skipped: job.skippedCount };
+      }
+      if (job.status !== ImportJobStatus.Preview) throw new Error('IMPORT_NOT_READY');
+      const preview = job.preview as ParsedImportPreview | null;
+      if (!preview || preview.invalid > 0) throw new Error('IMPORT_HAS_INVALID_ROWS');
+      const key = await this.vault.getKey(userId);
+      if (!key) throw new Error('VAULT_KEY_REQUIRED');
+      const { claims } = await this.vault.prepareImportConfirmation(userId, jobId);
+      if (proofs.length !== claims.length) throw new Error('VAULT_PROOFS_REQUIRED');
+      const validatedProofs = this.vault.validateProofs(
+        claims,
+        proofs,
+        key.publicKey,
+        key.keyVersion,
+      );
+      const proofByRow = new Map(validatedProofs.map((proof) => [proof.sourceRow, proof]));
       const transactions = manager.getRepository(TransactionEntity);
-      const accounts = await manager.getRepository(AccountEntity).find({ where: { userId } });
-      const categories = await manager.getRepository(CategoryEntity).find({ where: { userId } });
+      const accounts = await manager
+        .getRepository(AccountEntity)
+        .find({ where: { userId, archivedAt: IsNull() } });
+      const categories = await manager
+        .getRepository(CategoryEntity)
+        .find({ where: { userId, archivedAt: IsNull() } });
       const createdTransactions: Array<{
         transaction: TransactionEntity;
         proof: (typeof validatedProofs)[number];
+        eventType: VaultEventType;
+        operationId: string;
       }> = [];
       let created = 0;
       let skipped = 0;
@@ -134,8 +178,11 @@ export class ImportsService {
           skipped += 1;
           continue;
         }
-        const transaction = await transactions.save(
-          transactions.create({
+        const insertResult = await transactions
+          .createQueryBuilder()
+          .insert()
+          .into(TransactionEntity)
+          .values({
             userId,
             accountId: account.id,
             destinationAccountId: destination?.id ?? null,
@@ -147,19 +194,36 @@ export class ImportsService {
             fingerprint,
             importJobId: job.id,
             importRow: row.sourceRow,
-          }),
-        );
-        createdTransactions.push({ transaction, proof });
+          })
+          .orIgnore()
+          .execute();
+        if (!insertResult.identifiers.length) {
+          skipped += 1;
+          continue;
+        }
+        const transaction = await transactions.findOneOrFail({
+          where: { userId, fingerprint },
+        });
+        createdTransactions.push({
+          transaction,
+          proof,
+          eventType: VaultEventType.TransactionConfirmed,
+          operationId: proof.claim.operationId,
+        });
         created += 1;
       }
       await this.vault.appendTransactionEvents(manager, userId, createdTransactions);
       await manager.getRepository(ImportJobEntity).update(job.id, {
         status: ImportJobStatus.Confirmed,
         confirmedAt: new Date(),
+        createdCount: created,
+        skippedCount: skipped,
       });
       return { created, skipped };
     });
-    await unlink(job.filePath).catch(() => undefined);
+    const confirmedJob = await this.get(userId, jobId);
+    await unlink(confirmedJob.filePath).catch(() => undefined);
+    if (confirmedJob.filePath) await this.jobs.update(confirmedJob.id, { filePath: '' });
     return result;
   }
 
@@ -246,6 +310,11 @@ export class ImportsService {
       status: job.status,
       preview: job.preview,
       errorCode: job.errorCode,
+      createdAt: job.createdAt,
+      confirmedAt: job.confirmedAt,
+      rowCount: (job.preview as ParsedImportPreview | null)?.total ?? 0,
+      created: job.status === ImportJobStatus.Confirmed ? job.createdCount : null,
+      skipped: job.status === ImportJobStatus.Confirmed ? job.skippedCount : null,
     };
   }
 }

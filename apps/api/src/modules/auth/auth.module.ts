@@ -15,6 +15,8 @@ import { authCommandHandlers, authQueryHandlers } from './auth.handlers';
 import { AuthGuard } from './auth.guard';
 import { CsrfGuard } from './csrf.guard';
 import { AuthSessionService } from './auth.session';
+import { profileCommandHandlers, profileQueryHandlers } from './profile.security';
+import { ProfileSecurityController } from './profile-security.controller';
 
 @Module({
   imports: [
@@ -27,7 +29,7 @@ import { AuthSessionService } from './auth.session';
       AuthChallengeEntity,
     ]),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, ProfileSecurityController],
   providers: [
     AuthCryptoService,
     AuthDomainService,
@@ -36,6 +38,8 @@ import { AuthSessionService } from './auth.session';
     CsrfGuard,
     ...authCommandHandlers,
     ...authQueryHandlers,
+    ...profileCommandHandlers,
+    ...profileQueryHandlers,
   ],
   exports: [AuthGuard],
 })

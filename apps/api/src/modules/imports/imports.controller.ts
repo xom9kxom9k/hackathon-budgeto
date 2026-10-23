@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Header,
   Param,
@@ -18,13 +20,17 @@ import type { AuthPrincipal } from '../auth/auth.types';
 import {
   ConfirmImportWithProofsCommand,
   CreateImportJobCommand,
+  DeleteImportStagingCommand,
+  RetryImportJobCommand,
   UpdateImportRowsCommand,
 } from './imports.commands';
 import {
   GetImportJobQuery,
   GetImportTemplateQuery,
+  ListImportJobsQuery,
   PrepareImportConfirmationQuery,
 } from './imports.queries';
+import { UpdateImportRowsDto } from './imports.dto';
 import type { VaultProofDto } from '../vault/vault.dto';
 
 @Controller('imports')
@@ -42,12 +48,18 @@ export class ImportsController {
     return this.queries.execute<GetImportTemplateQuery, Buffer>(new GetImportTemplateQuery());
   }
 
+  @Get()
+  async list(@CurrentUser() user: AuthPrincipal) {
+    return this.queries.execute(new ListImportJobsQuery(user.userId));
+  }
+
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 8 * 1024 * 1024, files: 1 } }))
   async create(
     @CurrentUser() user: AuthPrincipal,
-    @UploadedFile() file: { originalname: string; buffer: Buffer },
+    @UploadedFile() file?: { originalname: string; buffer: Buffer },
   ): Promise<unknown> {
+    if (!file) throw new BadRequestException('IMPORT_FILE_REQUIRED');
     return this.commands.execute(
       new CreateImportJobCommand(user.userId, file.originalname, file.buffer),
     );
@@ -62,9 +74,9 @@ export class ImportsController {
   async rows(
     @CurrentUser() user: AuthPrincipal,
     @Param('id') id: string,
-    @Body('rows') rows: unknown[],
+    @Body() body: UpdateImportRowsDto,
   ): Promise<unknown> {
-    return this.commands.execute(new UpdateImportRowsCommand(user.userId, id, rows as never[]));
+    return this.commands.execute(new UpdateImportRowsCommand(user.userId, id, body.rows));
   }
 
   @Post(':id/confirm')
@@ -74,6 +86,16 @@ export class ImportsController {
     @Body('proofs') proofs?: VaultProofDto[],
   ): Promise<unknown> {
     return this.commands.execute(new ConfirmImportWithProofsCommand(user.userId, id, proofs ?? []));
+  }
+
+  @Post(':id/retry')
+  async retry(@CurrentUser() user: AuthPrincipal, @Param('id') id: string) {
+    return this.commands.execute(new RetryImportJobCommand(user.userId, id));
+  }
+
+  @Delete(':id/staging')
+  async deleteStaging(@CurrentUser() user: AuthPrincipal, @Param('id') id: string) {
+    return this.commands.execute(new DeleteImportStagingCommand(user.userId, id));
   }
 
   @Get(':id/confirmation-claims')

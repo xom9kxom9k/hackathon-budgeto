@@ -31,6 +31,7 @@ export interface TransactionView {
   account: TransactionPartyView;
   destinationAccount: TransactionPartyView | null;
   category: TransactionCategoryView | null;
+  reversedAt?: string | null;
 }
 
 export interface TransactionsPageView {

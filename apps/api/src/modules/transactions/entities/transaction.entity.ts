@@ -24,4 +24,5 @@ export class TransactionEntity {
   @Column({ name: 'import_job_id', type: 'uuid', nullable: true }) importJobId!: string | null;
   @Column({ name: 'import_row', type: 'int', nullable: true }) importRow!: number | null;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
+  @Column({ name: 'reversed_at', type: 'timestamptz', nullable: true }) reversedAt!: Date | null;
 }

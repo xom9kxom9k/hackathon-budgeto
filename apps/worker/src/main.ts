@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { Worker } from 'bullmq';
-import { DataSource } from 'typeorm';
+import { DataSource, IsNull } from 'typeorm';
 import { readFile } from 'node:fs/promises';
 import { parseBudgetoXlsx } from '../../api/src/shared/import-parser/xlsx-parser';
 import {
@@ -25,8 +25,12 @@ async function processJob(jobId: string): Promise<void> {
   try {
     const preview = await parseBudgetoXlsx(await readFile(job.filePath));
     const [accounts, categories] = await Promise.all([
-      dataSource.getRepository(AccountEntity).find({ where: { userId: job.userId } }),
-      dataSource.getRepository(CategoryEntity).find({ where: { userId: job.userId } }),
+      dataSource
+        .getRepository(AccountEntity)
+        .find({ where: { userId: job.userId, archivedAt: IsNull() } }),
+      dataSource
+        .getRepository(CategoryEntity)
+        .find({ where: { userId: job.userId, archivedAt: IsNull() } }),
     ]);
     const accountNames = new Set(
       accounts.map((account) => account.name.toLocaleLowerCase('ru-RU')),

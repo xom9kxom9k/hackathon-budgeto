@@ -10,6 +10,7 @@ import { StoreName } from '@/app/stores/StoreName';
 import type { ImportRow } from '@/shared/services/ImportService';
 import { translateValidationError } from '@/shared/forms/validation';
 import { I18nKey } from '@/shared/i18n';
+import type { CategoryKind } from '@/shared/services/CategoriesService';
 import { VaultKeyPanel } from '@/shared/ui/VaultKeyPanel';
 
 const maxFileSize = 8 * 1024 * 1024;
@@ -65,6 +66,8 @@ export const ImportForm = observer(function ImportForm({
   const { t } = useTranslation();
   const importStore = useStore(StoreName.Import);
   const vaultStore = useStore(StoreName.Vault);
+  const accountsStore = useStore(StoreName.Accounts);
+  const categoriesStore = useStore(StoreName.Categories);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [filter, setFilter] = useState<RowFilter>('all');
   const [isDirty, setIsDirty] = useState(false);
@@ -79,6 +82,11 @@ export const ImportForm = observer(function ImportForm({
     reValidateMode: 'onChange',
   });
   const preview = importStore.preview;
+
+  useEffect(() => {
+    void accountsStore.load();
+    void categoriesStore.load();
+  }, [accountsStore, categoriesStore]);
 
   useEffect(() => {
     setRows(preview?.rows ?? []);
@@ -119,6 +127,11 @@ export const ImportForm = observer(function ImportForm({
           ? {
               ...row,
               [field]: field === 'amount' ? (value === '' ? null : Number(value)) : value || null,
+              ...(field === 'type' && value === 'transfer'
+                ? { categoryName: null }
+                : field === 'type' && value !== 'transfer'
+                  ? { destinationAccountName: null }
+                  : {}),
               valid: false,
               errors: ['EDIT_REQUIRES_RECHECK'],
             }
@@ -246,6 +259,27 @@ export const ImportForm = observer(function ImportForm({
             </Badge>
           </div>
           <p className="panel-copy">{t(I18nKey.ImportsPreviewDescription)}</p>
+          {accountsStore.status === 'empty' ? (
+            <p className="state-callout">{t(I18nKey.ImportsNoAccounts)}</p>
+          ) : null}
+          {categoriesStore.status === 'empty' ? (
+            <p className="state-callout">{t(I18nKey.ImportsNoCategories)}</p>
+          ) : null}
+          {accountsStore.status === 'error' || categoriesStore.status === 'error' ? (
+            <div className="state-callout state-callout--error">
+              <span>{t(I18nKey.ImportsReferencesLoadError)}</span>
+              <Button
+                appearance="secondary"
+                dimension="s"
+                onClick={() => {
+                  void accountsStore.retry();
+                  void categoriesStore.retry();
+                }}
+              >
+                {t(I18nKey.ImportsRetry)}
+              </Button>
+            </div>
+          ) : null}
           <div className="import-preview-toolbar">
             <label className="filter-select">
               {t(I18nKey.ImportsFilter)}
@@ -320,34 +354,89 @@ export const ImportForm = observer(function ImportForm({
                         />
                       </td>
                       <td data-label={t(I18nKey.Account)}>
-                        <input
+                        <select
                           disabled={isProcessing || isConfirmed}
                           aria-label={`${t(I18nKey.Account)} ${row.sourceRow}`}
                           value={row.accountName ?? ''}
                           onChange={(event) =>
                             updateRow(row.sourceRow, 'accountName', event.target.value)
                           }
-                        />
+                        >
+                          <option value="">{t(I18nKey.ImportsSelectAccount)}</option>
+                          {row.accountName &&
+                          !accountsStore.accounts.some(
+                            (account) => account.name === row.accountName,
+                          ) ? (
+                            <option value={row.accountName} disabled>
+                              {row.accountName} — {t(I18nKey.ImportsReferenceNotFound)}
+                            </option>
+                          ) : null}
+                          {accountsStore.accounts.map((account) => (
+                            <option key={account.id} value={account.name}>
+                              {account.name} · {account.currency}
+                            </option>
+                          ))}
+                        </select>
                       </td>
                       <td data-label={t(I18nKey.ImportsDestinationAccount)}>
-                        <input
-                          disabled={isProcessing || isConfirmed}
-                          aria-label={`${t(I18nKey.ImportsDestinationAccount)} ${row.sourceRow}`}
-                          value={row.destinationAccountName ?? ''}
-                          onChange={(event) =>
-                            updateRow(row.sourceRow, 'destinationAccountName', event.target.value)
-                          }
-                        />
+                        {row.type === 'transfer' ? (
+                          <select
+                            disabled={isProcessing || isConfirmed}
+                            aria-label={`${t(I18nKey.ImportsDestinationAccount)} ${row.sourceRow}`}
+                            value={row.destinationAccountName ?? ''}
+                            onChange={(event) =>
+                              updateRow(row.sourceRow, 'destinationAccountName', event.target.value)
+                            }
+                          >
+                            <option value="">{t(I18nKey.ImportsSelectDestination)}</option>
+                            {row.destinationAccountName &&
+                            !accountsStore.accounts.some(
+                              (account) => account.name === row.destinationAccountName,
+                            ) ? (
+                              <option value={row.destinationAccountName} disabled>
+                                {row.destinationAccountName} — {t(I18nKey.ImportsReferenceNotFound)}
+                              </option>
+                            ) : null}
+                            {accountsStore.accounts.map((account) => (
+                              <option key={account.id} value={account.name}>
+                                {account.name} · {account.currency}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="field-muted">—</span>
+                        )}
                       </td>
                       <td data-label={t(I18nKey.Category)}>
-                        <input
-                          disabled={isProcessing || isConfirmed}
-                          aria-label={`${t(I18nKey.Category)} ${row.sourceRow}`}
-                          value={row.categoryName ?? ''}
-                          onChange={(event) =>
-                            updateRow(row.sourceRow, 'categoryName', event.target.value)
-                          }
-                        />
+                        {row.type === 'transfer' ? (
+                          <span className="field-muted">{t(I18nKey.ImportsCategoryNotUsed)}</span>
+                        ) : (
+                          <select
+                            disabled={isProcessing || isConfirmed || !row.type}
+                            aria-label={`${t(I18nKey.Category)} ${row.sourceRow}`}
+                            value={row.categoryName ?? ''}
+                            onChange={(event) =>
+                              updateRow(row.sourceRow, 'categoryName', event.target.value)
+                            }
+                          >
+                            <option value="">{t(I18nKey.ImportsSelectCategory)}</option>
+                            {row.categoryName &&
+                            !categoriesStore
+                              .byKind(row.type as CategoryKind)
+                              .some((category) => category.name === row.categoryName) ? (
+                              <option value={row.categoryName} disabled>
+                                {row.categoryName} — {t(I18nKey.ImportsReferenceNotFound)}
+                              </option>
+                            ) : null}
+                            {row.type
+                              ? categoriesStore.byKind(row.type as CategoryKind).map((category) => (
+                                  <option key={category.id} value={category.name}>
+                                    {category.name}
+                                  </option>
+                                ))
+                              : null}
+                          </select>
+                        )}
                       </td>
                       <td data-label={t(I18nKey.ImportsNote)}>
                         <input

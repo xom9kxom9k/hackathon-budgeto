@@ -39,6 +39,7 @@ import {
 function getSelectedMenuItem(pathname: string): string {
   if (
     pathname.startsWith('/accounts') ||
+    pathname.startsWith('/categories') ||
     pathname.startsWith('/banks') ||
     pathname.startsWith('/products')
   ) {
@@ -55,6 +56,7 @@ function getSelectedMenuItem(pathname: string): string {
 function getActiveMenuGroup(pathname: string): string | null {
   if (
     pathname.startsWith('/accounts') ||
+    pathname.startsWith('/categories') ||
     pathname.startsWith('/banks') ||
     pathname.startsWith('/products')
   ) {

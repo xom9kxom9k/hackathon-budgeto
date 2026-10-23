@@ -1,7 +1,8 @@
 import { Avatar, Button, StatusIndicator, T } from '@admiral-ds/react-ui';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 import { useStore } from '@/app/hooks/useStores';
 import { StoreName } from '@/app/stores/StoreName';
@@ -11,11 +12,16 @@ import { PageIntro } from '@/shared/ui/PageIntro';
 
 export const ProfilePage = observer(function ProfilePage() {
   const { t } = useTranslation();
+  const location = useLocation();
   const navigate = useNavigate();
   const authStore = useStore(StoreName.Auth);
   const uiStore = useStore(StoreName.Ui);
-  const email = authStore.user?.email ?? '';
-  const displayName = authStore.user?.displayName ?? email;
+  const profileStore = useStore(StoreName.Profile);
+  useEffect(() => {
+    void profileStore.load();
+  }, [profileStore]);
+  const email = profileStore.profile?.email ?? authStore.user?.email ?? '';
+  const displayName = profileStore.profile?.displayName ?? email;
   const goalKeys: Record<string, I18nKey> = {
     accounts: I18nKey.WelcomeAccounts,
     transactions: I18nKey.WelcomeTransactions,
@@ -36,6 +42,11 @@ export const ProfilePage = observer(function ProfilePage() {
       kicker={t(I18nKey.ProfileKicker)}
       title={t(I18nKey.ProfileTitle)}
     >
+      {location.state?.saved === true ? (
+        <p className="profile-edit-success" role="status">
+          {t(I18nKey.ProfileEditSaved)}
+        </p>
+      ) : null}
       <section className="profile-grid">
         <article className="plain-panel profile-card">
           <Avatar dimension="l" showTooltip={false} userName={displayName} />
@@ -44,9 +55,9 @@ export const ProfilePage = observer(function ProfilePage() {
               {displayName}
             </T>
             {displayName !== email && <p className="panel-copy">{email}</p>}
-            {authStore.user?.goals.length ? (
+            {profileStore.profile?.goals.length ? (
               <p className="panel-copy">
-                {authStore.user.goals
+                {profileStore.profile.goals
                   .map((goal) => t(goalKeys[goal] ?? I18nKey.WelcomeAccounts))
                   .join(' · ')}
               </p>
@@ -58,7 +69,7 @@ export const ProfilePage = observer(function ProfilePage() {
               <Button
                 appearance="secondary"
                 dimension="m"
-                onClick={() => navigate('/welcome', { state: { from: { pathname: '/profile' } } })}
+                onClick={() => navigate('/profile/edit')}
               >
                 {t(I18nKey.WelcomeEdit)}
               </Button>

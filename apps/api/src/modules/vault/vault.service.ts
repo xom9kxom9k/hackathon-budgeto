@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash } from 'node:crypto';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, IsNull, Repository } from 'typeorm';
 
 import { AccountEntity } from '../accounts/entities/account.entity';
 import { CategoryEntity, CategoryKind } from '../categories/entities/category.entity';
@@ -15,14 +15,17 @@ import {
   chainDigest,
   canonicalize,
   publicKeyId,
+  proofMessage,
   sha256,
   VAULT_GENESIS_HASH,
   verifyEd25519,
 } from './vault.crypto';
 import type { VaultProofDto } from './vault.dto';
+import type { TransactionMutationInput } from '../transactions/transactions.commands';
 
 export interface VaultClaim {
   sourceRow: number;
+  operationId: string;
   fingerprint: string;
   payloadHash: string;
   canonicalPayload: string;
@@ -55,7 +58,12 @@ export class VaultService {
       throw new BadRequestException('VAULT_PUBLIC_KEY_INVALID');
     }
     const existing = await this.keys.findOne({ where: { userId } });
-    if (existing && existing.publicKey !== publicKey) {
+    if (
+      existing &&
+      (existing.publicKey !== publicKey ||
+        existing.keyVersion !== keyVersion ||
+        canonicalize(existing.encryptedPrivateKey) !== canonicalize(encryptedPrivateKey))
+    ) {
       throw new BadRequestException('VAULT_KEY_ALREADY_REGISTERED');
     }
     await this.keys.upsert({ userId, publicKey, encryptedPrivateKey, keyVersion }, ['userId']);
@@ -78,8 +86,8 @@ export class VaultService {
       throw new BadRequestException('IMPORT_NOT_READY');
     }
     const [accounts, categories] = await Promise.all([
-      this.accounts.find({ where: { userId } }),
-      this.categories.find({ where: { userId } }),
+      this.accounts.find({ where: { userId, archivedAt: IsNull() } }),
+      this.categories.find({ where: { userId, archivedAt: IsNull() } }),
     ]);
     return {
       claims: (job.preview as ParsedImportPreview).rows
@@ -92,14 +100,31 @@ export class VaultService {
     claims: VaultClaim[],
     proofs: VaultProofDto[],
     publicKey: string,
+    keyVersion?: number,
   ): VaultProofInput[] {
+    if (claims.length !== proofs.length) throw new BadRequestException('VAULT_PROOFS_REQUIRED');
     const claimByRow = new Map(claims.map((claim) => [claim.sourceRow, claim]));
-    return proofs.map((proof) => {
+    if (claimByRow.size !== claims.length) throw new BadRequestException('VAULT_PROOF_INVALID');
+    const seenRows = new Set<number>();
+    const validated = proofs.map((proof) => {
       const claim = claimByRow.get(proof.sourceRow);
+      if (seenRows.has(proof.sourceRow)) throw new BadRequestException('VAULT_PROOF_INVALID');
+      seenRows.add(proof.sourceRow);
       let signatureValid = false;
       try {
         signatureValid = Boolean(
-          claim && verifyEd25519(publicKey, claim.claimDigest, proof.signature),
+          claim &&
+          verifyEd25519(
+            publicKey,
+            proofMessage({
+              claimDigest: claim.claimDigest,
+              ciphertext: proof.ciphertext,
+              iv: proof.iv,
+              authTag: proof.authTag,
+              keyVersion: proof.keyVersion,
+            }),
+            proof.signature,
+          ),
         );
       } catch {
         signatureValid = false;
@@ -109,18 +134,60 @@ export class VaultService {
         proof.fingerprint !== claim.fingerprint ||
         proof.payloadHash !== claim.payloadHash ||
         proof.publicKeyId !== publicKeyId(publicKey) ||
+        (keyVersion !== undefined && proof.keyVersion !== keyVersion) ||
         !signatureValid
       ) {
         throw new BadRequestException('VAULT_PROOF_INVALID');
       }
       return { ...proof, claim };
     });
+    if (seenRows.size !== claimByRow.size) throw new BadRequestException('VAULT_PROOF_INVALID');
+    return validated;
+  }
+
+  createManualClaim(
+    userId: string,
+    input: Omit<TransactionMutationInput, 'proof'>,
+    accountId: string,
+    destinationAccountId: string | null,
+    categoryId: string | null,
+    transactionId?: string,
+  ): VaultClaim {
+    const payload = {
+      date: input.date,
+      kind: input.kind,
+      amount: input.amount.toFixed(2),
+      accountId,
+      destinationAccountId,
+      categoryId,
+      note: input.note?.trim() || null,
+      operationId: input.operationId,
+      transactionId: transactionId ?? null,
+    };
+    return this.claimFromPayload(userId, payload, input.operationId);
+  }
+
+  createReversalClaim(
+    userId: string,
+    transaction: TransactionEntity,
+    operationId: string,
+  ): VaultClaim {
+    return this.claimFromPayload(
+      userId,
+      { transactionId: transaction.id, operationId },
+      operationId,
+    );
   }
 
   async appendTransactionEvents(
     manager: EntityManager,
     userId: string,
-    transactions: Array<{ transaction: TransactionEntity; proof: VaultProofInput }>,
+    transactions: Array<{
+      transaction: TransactionEntity;
+      proof: VaultProofInput;
+      eventType: VaultEventType;
+      operationId: string;
+    }>,
   ): Promise<void> {
     if (!transactions.length) return;
     const key = await manager.getRepository(VaultKeyEntity).findOne({ where: { userId } });
@@ -142,23 +209,29 @@ export class VaultService {
     const eventRepository = manager.getRepository(VaultEventEntity);
     for (const item of transactions) {
       sequence += 1;
+      const schemaVersion = 2;
       const eventHash = chainDigest({
-        schemaVersion: 1,
+        schemaVersion,
         userId,
         sequence: String(sequence),
-        eventType: VaultEventType.TransactionConfirmed,
+        eventType: item.eventType,
         transactionId: item.transaction.id,
+        operationId: item.operationId,
         payloadHash: item.proof.payloadHash,
         claimDigest: item.proof.claim.claimDigest,
         ciphertext: item.proof.ciphertext,
+        iv: item.proof.iv,
+        authTag: item.proof.authTag,
+        keyVersion: item.proof.keyVersion,
         previousHash,
       });
       await eventRepository.insert(
         eventRepository.create({
           userId,
           sequence: String(sequence),
-          eventType: VaultEventType.TransactionConfirmed,
+          eventType: item.eventType,
           transactionId: item.transaction.id,
+          operationId: item.operationId,
           importJobId: item.transaction.importJobId,
           importRow: item.transaction.importRow,
           ciphertext: item.proof.ciphertext,
@@ -172,7 +245,7 @@ export class VaultService {
           publicKeyId: item.proof.publicKeyId,
           previousHash,
           eventHash,
-          schemaVersion: 1,
+          schemaVersion,
         }),
       );
       previousHash = eventHash;
@@ -215,12 +288,33 @@ export class VaultService {
         payloadHash: event.payloadHash,
         claimDigest: event.claimDigest,
         ciphertext: event.ciphertext,
+        ...(event.schemaVersion >= 2
+          ? {
+              operationId: event.operationId,
+              iv: event.iv,
+              authTag: event.authTag,
+              keyVersion: event.keyVersion,
+            }
+          : {}),
         previousHash,
       });
       let signatureValid = false;
       try {
         signatureValid = Boolean(
-          key && verifyEd25519(key.publicKey, event.claimDigest, event.signature),
+          key &&
+          verifyEd25519(
+            key.publicKey,
+            event.schemaVersion >= 2
+              ? proofMessage({
+                  claimDigest: event.claimDigest,
+                  ciphertext: event.ciphertext,
+                  iv: event.iv,
+                  authTag: event.authTag,
+                  keyVersion: event.keyVersion,
+                })
+              : event.claimDigest,
+            event.signature,
+          ),
         );
       } catch {
         signatureValid = false;
@@ -322,6 +416,7 @@ export class VaultService {
     const payloadHash = sha256(canonicalPayload);
     return {
       sourceRow: row.sourceRow,
+      operationId: `import:${job.id}:${row.sourceRow}`,
       fingerprint,
       payloadHash,
       canonicalPayload,
@@ -331,8 +426,27 @@ export class VaultService {
           payloadHash,
           importJobId: job.id,
           sourceRow: row.sourceRow,
+          operationId: `import:${job.id}:${row.sourceRow}`,
         }),
       ),
+    };
+  }
+
+  private claimFromPayload(
+    userId: string,
+    payload: Record<string, unknown>,
+    sourceKey: string,
+  ): VaultClaim {
+    const canonicalPayload = canonicalize(payload);
+    const payloadHash = sha256(canonicalPayload);
+    const fingerprint = sha256(canonicalize({ userId, sourceKey, payloadHash }));
+    return {
+      sourceRow: 1,
+      operationId: sourceKey,
+      fingerprint,
+      payloadHash,
+      canonicalPayload,
+      claimDigest: sha256(canonicalize({ fingerprint, payloadHash, operationId: sourceKey })),
     };
   }
 

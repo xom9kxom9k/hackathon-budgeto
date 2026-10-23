@@ -31,6 +31,13 @@ describe('ImportForm', () => {
 
   it('filters invalid rows and translates parser issues', async () => {
     const store = new RootStore();
+    store.get(StoreName.Accounts).accounts = [{ id: 'account-1', name: 'Карта', currency: 'RUB' }];
+    store.get(StoreName.Accounts).status = 'success';
+    store.get(StoreName.Categories).categories = [
+      { id: 'category-1', name: 'Еда', kind: 'expense' },
+      { id: 'category-2', name: 'Зарплата', kind: 'income' },
+    ];
+    store.get(StoreName.Categories).status = 'success';
     store.get(StoreName.Import).job = {
       id: 'job-1',
       fileName: 'statement.xlsx',
@@ -85,12 +92,18 @@ describe('ImportForm', () => {
 
     expect(screen.getByText('Проверьте дату')).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Показать строки'), 'invalid');
-    expect(screen.getByDisplayValue('Карта')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Счёт 2' })).toHaveValue('Карта');
     expect(screen.queryByDisplayValue('2026-01-01')).not.toBeInTheDocument();
   });
 
   it('marks edited rows for recheck and blocks confirmation until saved', async () => {
     const store = new RootStore();
+    store.get(StoreName.Accounts).accounts = [{ id: 'account-1', name: 'Карта', currency: 'RUB' }];
+    store.get(StoreName.Accounts).status = 'success';
+    store.get(StoreName.Categories).categories = [
+      { id: 'category-1', name: 'Еда', kind: 'expense' },
+    ];
+    store.get(StoreName.Categories).status = 'success';
     store.get(StoreName.Vault).status = 'unlocked';
     store.get(StoreName.Import).job = {
       id: 'job-1',

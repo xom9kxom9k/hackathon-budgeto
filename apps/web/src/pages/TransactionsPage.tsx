@@ -20,6 +20,7 @@ import { I18nKey } from '@/shared/i18n';
 import { formatMoney } from '@/shared/lib/formatMoney';
 import { FinanceBreadcrumbs } from '@/shared/ui/FinanceBreadcrumbs';
 import { TransactionTable } from '@/widgets/transactions/TransactionTable';
+import type { TransactionInput } from '@/shared/services/TransactionsService';
 
 const pageSize = 50;
 
@@ -27,6 +28,7 @@ export const TransactionsPage = observer(function TransactionsPage() {
   const { t } = useTranslation();
   const accountsStore = useStore(StoreName.Accounts);
   const transactionsStore = useStore(StoreName.Transactions);
+  const categoriesStore = useStore(StoreName.Categories);
   const [urlFilters, setUrlFilters] = useQueryStates({
     account: parseAsString,
     from: parseAsString,
@@ -37,6 +39,17 @@ export const TransactionsPage = observer(function TransactionsPage() {
     to: parseAsString,
   });
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [draft, setDraft] = useState<TransactionInput>({
+    date: new Date().toISOString().slice(0, 10),
+    kind: 'expense',
+    amount: 0,
+    accountId: '',
+    destinationAccountId: null,
+    categoryId: null,
+    note: null,
+    operationId: crypto.randomUUID(),
+  });
 
   const filters = useMemo(
     () => ({
@@ -66,7 +79,8 @@ export const TransactionsPage = observer(function TransactionsPage() {
 
   useEffect(() => {
     void accountsStore.load();
-  }, [accountsStore]);
+    void categoriesStore.load();
+  }, [accountsStore, categoriesStore]);
 
   useEffect(() => {
     void transactionsStore.load(filters);
@@ -91,6 +105,16 @@ export const TransactionsPage = observer(function TransactionsPage() {
           {t(I18nKey.TransactionsTitle)}
         </T>
         <p>{t(I18nKey.TransactionsDescription)}</p>
+        <Button
+          appearance="primary"
+          dimension="m"
+          onClick={() => {
+            setDraft((value) => ({ ...value, operationId: crypto.randomUUID() }));
+            setEditorOpen(true);
+          }}
+        >
+          {t(I18nKey.TransactionsNew)}
+        </Button>
       </section>
 
       <section className="filter-panel" aria-label={t(I18nKey.ActivityFilters)}>
@@ -259,6 +283,137 @@ export const TransactionsPage = observer(function TransactionsPage() {
               </dl>
             </div>
           ) : null}
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer
+        backdrop
+        closeOnBackdropClick
+        closeOnEscapeKeyDown
+        displayCloseIcon
+        isOpen={editorOpen}
+        locale={{ closeButtonAriaLabel: t(I18nKey.Close) }}
+        onClose={() => setEditorOpen(false)}
+        position="right"
+      >
+        <DrawerTitle>{t(I18nKey.TransactionsNew)}</DrawerTitle>
+        <DrawerContent>
+          <form
+            className="reference-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void transactionsStore.create(draft).then(() => setEditorOpen(false));
+            }}
+          >
+            <label className="filter-select">
+              <span>{t(I18nKey.Operation)}</span>
+              <Select
+                mode="select"
+                value={draft.kind}
+                onSelectedChange={(value) =>
+                  setDraft((current) => ({
+                    ...current,
+                    kind: value as Transaction['kind'],
+                    categoryId: value === 'transfer' ? null : current.categoryId,
+                  }))
+                }
+              >
+                <Option value="income">{t(I18nKey.OverviewIncome)}</Option>
+                <Option value="expense">{t(I18nKey.OverviewExpenses)}</Option>
+                <Option value="transfer">{t(I18nKey.ActivityTransfer)}</Option>
+              </Select>
+            </label>
+            <label className="filter-date">
+              <span>{t(I18nKey.Date)}</span>
+              <input
+                required
+                type="date"
+                value={draft.date}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, date: event.target.value }))
+                }
+              />
+            </label>
+            <InputField
+              label={t(I18nKey.Amount)}
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={draft.amount || ''}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, amount: Number(event.target.value) }))
+              }
+              required
+            />
+            <label className="filter-select">
+              <span>{t(I18nKey.Account)}</span>
+              <Select
+                mode="select"
+                value={draft.accountId}
+                onSelectedChange={(value) =>
+                  setDraft((current) => ({ ...current, accountId: String(value) }))
+                }
+              >
+                {accountsStore.accounts.map((account) => (
+                  <Option key={account.id} value={account.id}>
+                    {account.name} · {account.currency}
+                  </Option>
+                ))}
+              </Select>
+            </label>
+            {draft.kind === 'transfer' ? (
+              <label className="filter-select">
+                <span>{t(I18nKey.ImportsDestinationAccount)}</span>
+                <Select
+                  mode="select"
+                  value={draft.destinationAccountId ?? ''}
+                  onSelectedChange={(value) =>
+                    setDraft((current) => ({ ...current, destinationAccountId: String(value) }))
+                  }
+                >
+                  {accountsStore.accounts
+                    .filter((account) => account.id !== draft.accountId)
+                    .map((account) => (
+                      <Option key={account.id} value={account.id}>
+                        {account.name} · {account.currency}
+                      </Option>
+                    ))}
+                </Select>
+              </label>
+            ) : (
+              <label className="filter-select">
+                <span>{t(I18nKey.Category)}</span>
+                <Select
+                  mode="select"
+                  value={draft.categoryId ?? ''}
+                  onSelectedChange={(value) =>
+                    setDraft((current) => ({ ...current, categoryId: String(value) }))
+                  }
+                >
+                  {categoriesStore.byKind(draft.kind as 'income' | 'expense').map((category) => (
+                    <Option key={category.id} value={category.id}>
+                      {category.name}
+                    </Option>
+                  ))}
+                </Select>
+              </label>
+            )}
+            <InputField
+              label={t(I18nKey.ImportsNote)}
+              value={draft.note ?? ''}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, note: event.target.value || null }))
+              }
+            />
+            <Button
+              appearance="primary"
+              dimension="m"
+              disabled={transactionsStore.status === 'loading' || !draft.accountId || !draft.amount}
+              type="submit"
+            >
+              {t(I18nKey.AccountsSave)}
+            </Button>
+          </form>
         </DrawerContent>
       </Drawer>
     </div>

@@ -1,6 +1,13 @@
 import { generateKeyPairSync, sign } from 'node:crypto';
 
-import { chainDigest, canonicalize, publicKeyId, sha256, verifyEd25519 } from './vault.crypto';
+import {
+  chainDigest,
+  canonicalize,
+  proofMessage,
+  publicKeyId,
+  sha256,
+  verifyEd25519,
+} from './vault.crypto';
 
 describe('vault crypto', () => {
   it('canonicalizes equivalent objects deterministically', () => {
@@ -34,5 +41,25 @@ describe('vault crypto', () => {
     };
 
     expect(chainDigest(input)).not.toBe(chainDigest({ ...input, previousHash: 'changed' }));
+  });
+
+  it('binds proofs to ciphertext, IV, auth tag and key version', () => {
+    const message = proofMessage({
+      claimDigest: 'claim',
+      ciphertext: 'ciphertext',
+      iv: 'iv',
+      authTag: 'tag',
+      keyVersion: 1,
+    });
+
+    expect(message).not.toBe(
+      proofMessage({
+        claimDigest: 'claim',
+        ciphertext: 'changed',
+        iv: 'iv',
+        authTag: 'tag',
+        keyVersion: 1,
+      }),
+    );
   });
 });

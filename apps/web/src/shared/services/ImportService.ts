@@ -32,6 +32,7 @@ const jobSchema = z.object({
 const confirmSchema = z.object({ created: z.number(), skipped: z.number() });
 const claimSchema = z.object({
   sourceRow: z.number(),
+  operationId: z.string(),
   fingerprint: z.string(),
   payloadHash: z.string(),
   canonicalPayload: z.string(),
@@ -52,6 +53,13 @@ const proofSchema = z.object({
 export type ImportJob = z.infer<typeof jobSchema>;
 export type ImportRow = z.infer<typeof rowSchema>;
 export type ImportResult = z.infer<typeof confirmSchema>;
+export type ImportHistoryItem = z.infer<typeof jobSchema> & {
+  createdAt: string;
+  confirmedAt: string | null;
+  rowCount: number;
+  created: number | null;
+  skipped: number | null;
+};
 export type ImportConfirmationClaims = z.infer<typeof claimsSchema>;
 export type VaultProof = z.infer<typeof proofSchema>;
 
@@ -68,7 +76,7 @@ export class ImportService extends BaseApiService {
     return super.get(`/${jobId}`, jobSchema, signal);
   }
   updateRows(jobId: string, rows: ImportRow[]): Promise<ImportJob> {
-    return this.patch(`/${jobId}/rows`, { rows }, jobSchema);
+    return this.patchRows(`/${jobId}/rows`, { rows }, jobSchema);
   }
   getConfirmationClaims(jobId: string): Promise<ImportConfirmationClaims> {
     return super.get(`/${jobId}/confirmation-claims`, claimsSchema);
@@ -76,7 +84,29 @@ export class ImportService extends BaseApiService {
   confirm(jobId: string, proofs: VaultProof[]): Promise<ImportResult> {
     return this.post(`/${jobId}/confirm`, { proofs }, confirmSchema);
   }
-  private patch<T>(path: string, body: unknown, schema: z.ZodType<T>): Promise<T> {
+  list(): Promise<ImportHistoryItem[]> {
+    return super.get(
+      '',
+      z.array(
+        jobSchema.extend({
+          createdAt: z.string(),
+          confirmedAt: z.string().nullable(),
+          rowCount: z.number(),
+          created: z.number().nullable(),
+          skipped: z.number().nullable(),
+        }),
+      ),
+    );
+  }
+  retry(jobId: string): Promise<ImportJob> {
+    return this.post(`/${jobId}/retry`, {}, jobSchema);
+  }
+  deleteStaging(jobId: string): Promise<void> {
+    return this.request(`/${jobId}/staging`, { method: 'DELETE' }, z.unknown()).then(
+      () => undefined,
+    );
+  }
+  private patchRows<T>(path: string, body: unknown, schema: z.ZodType<T>): Promise<T> {
     return this.request(
       path,
       {

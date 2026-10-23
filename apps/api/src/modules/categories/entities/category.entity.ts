@@ -13,4 +13,6 @@ export class CategoryEntity {
   @Column({ name: 'user_id', type: 'uuid' }) userId!: string;
   @Column({ type: 'varchar', length: 160 }) name!: string;
   @Column({ type: 'enum', enum: CategoryKind }) kind!: CategoryKind;
+  @Column({ name: 'archived_at', type: 'timestamptz', nullable: true })
+  archivedAt!: Date | null;
 }

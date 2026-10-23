@@ -357,6 +357,38 @@ input:focus-visible {
   padding: clamp(18px, 4vw, 30px);
   background: var(--admiral-color-Neutral_Neutral00);
 }
+.profile-edit-form {
+  max-width: 720px;
+}
+.profile-edit-field {
+  display: grid;
+  gap: 8px;
+  color: var(--admiral-color-Neutral_Neutral80);
+  font-size: 14px;
+  font-weight: 600;
+}
+.profile-edit-select {
+  min-height: 44px;
+  border: 1px solid var(--admiral-color-Neutral_Neutral40);
+  padding: 0 12px;
+  color: var(--admiral-color-Neutral_Neutral90);
+  background: var(--admiral-color-Neutral_Neutral00);
+  font: inherit;
+}
+.profile-edit-select:focus-visible {
+  outline: 2px solid var(--admiral-color-Primary_Primary60Main);
+  outline-offset: 2px;
+}
+.profile-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.profile-edit-success {
+  margin: 0;
+  color: var(--admiral-color-Success_Success60Main);
+}
 .welcome-goals {
   min-width: 0;
   margin: 0;
@@ -961,6 +993,12 @@ input:focus-visible {
   outline: 3px solid var(--admiral-color-Primary_Primary40);
   outline-offset: 2px;
 }
+.field-muted {
+  color: var(--admiral-color-Neutral_Neutral60);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
 .import-row-status {
   min-width: 150px;
   color: var(--admiral-color-Error_Error60Main);
@@ -1112,6 +1150,16 @@ input:focus-visible {
   color: var(--admiral-color-Special_StaticWhite);
   cursor: wait;
 }
+
+.route-loading {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  min-height: 40vh;
+  padding: 32px;
+}
 .mobile-menu-panel {
   display: flex;
   flex-direction: column;
@@ -1190,6 +1238,43 @@ input:focus-visible {
 }
 .real-account-row span {
   color: var(--admiral-color-Neutral_Neutral60);
+}
+.real-account-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.real-account-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reference-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reference-editor {
+  display: grid;
+  gap: 18px;
+  border: 1px solid var(--admiral-color-Neutral_Neutral20);
+  padding: 20px;
+  background: var(--admiral-color-Neutral_Neutral00);
+}
+.reference-editor h3 {
+  margin: 0;
+}
+.reference-form {
+  display: grid;
+  gap: 16px;
+  max-width: 520px;
+}
+.reference-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .accounts-accordion {
   padding: 0 24px 12px;
