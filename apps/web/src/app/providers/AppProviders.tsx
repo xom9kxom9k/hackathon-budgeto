@@ -7,7 +7,7 @@ import {
 import { MotionConfig } from 'framer-motion';
 import { observer } from 'mobx-react-lite';
 import { NuqsAdapter } from 'nuqs/adapters/react-router/v6';
-import { useEffect, useState, type PropsWithChildren } from 'react';
+import { Suspense, useEffect, useState, type PropsWithChildren } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { RouterProvider } from 'react-router-dom';
 import { ThemeProvider } from 'styled-components';
@@ -16,6 +16,7 @@ import { GlobalLoader } from '@/app/ui/GlobalLoader';
 import { i18n } from '@/shared/i18n';
 
 import { router } from '../router';
+import { RouteLoadingFallback } from '../routing/RouteLoadingFallback';
 import { RootStore } from '../stores/RootStore';
 import { StoreProvider } from '../stores/StoreProvider';
 
@@ -70,7 +71,9 @@ export function AppProviderTree() {
   return (
     <AppProviders>
       <NuqsAdapter>
-        <RouterProvider router={router} />
+        <Suspense fallback={<RouteLoadingFallback />}>
+          <RouterProvider router={router} />
+        </Suspense>
       </NuqsAdapter>
     </AppProviders>
   );
