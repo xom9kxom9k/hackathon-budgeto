@@ -1,4 +1,14 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 
 import { AuthGuard } from '../auth/auth.guard';
@@ -10,14 +20,21 @@ import {
   ListTransactionsQuery,
   TransactionsPageView,
 } from './queries/list-transactions.query';
-import { CreateTransactionCommand, ReverseTransactionCommand, UpdateTransactionCommand } from './transactions.commands';
+import {
+  CreateTransactionCommand,
+  ReverseTransactionCommand,
+  UpdateTransactionCommand,
+} from './transactions.commands';
 import { TransactionMutationDto } from './transactions.dto';
 import { GetTransactionQuery, PrepareTransactionClaimQuery } from './queries/get-transaction.query';
 
 @Controller('transactions')
 @UseGuards(AuthGuard)
 export class TransactionsController {
-  constructor(private readonly queries: QueryBus, private readonly commands: CommandBus) {}
+  constructor(
+    private readonly queries: QueryBus,
+    private readonly commands: CommandBus,
+  ) {}
 
   @Get()
   async list(
@@ -37,7 +54,8 @@ export class TransactionsController {
 
   @Post('claims')
   prepareClaim(@CurrentUser() user: AuthPrincipal, @Body() body: TransactionMutationDto) {
-    const { proof: _proof, ...input } = normalizeInput(body);
+    const { proof, ...input } = normalizeInput(body);
+    void proof;
     return this.queries.execute(new PrepareTransactionClaimQuery(user.userId, input));
   }
 
@@ -47,13 +65,26 @@ export class TransactionsController {
   }
 
   @Patch(':id')
-  update(@CurrentUser() user: AuthPrincipal, @Param('id') id: string, @Body() body: TransactionMutationDto) {
-    return this.commands.execute(new UpdateTransactionCommand(user.userId, id, normalizeInput(body)));
+  update(
+    @CurrentUser() user: AuthPrincipal,
+    @Param('id') id: string,
+    @Body() body: TransactionMutationDto,
+  ) {
+    return this.commands.execute(
+      new UpdateTransactionCommand(user.userId, id, normalizeInput(body)),
+    );
   }
 
   @Post(':id/reverse')
-  reverse(@CurrentUser() user: AuthPrincipal, @Param('id') id: string, @Body('operationId') operationId: string, @Body('proof') proof: TransactionMutationDto['proof']) {
-    return this.commands.execute(new ReverseTransactionCommand(user.userId, id, operationId, proof));
+  reverse(
+    @CurrentUser() user: AuthPrincipal,
+    @Param('id') id: string,
+    @Body('operationId') operationId: string,
+    @Body('proof') proof: TransactionMutationDto['proof'],
+  ) {
+    return this.commands.execute(
+      new ReverseTransactionCommand(user.userId, id, operationId, proof),
+    );
   }
 
   private parseFilters(query: Record<string, string | undefined>): ListTransactionsFilters {

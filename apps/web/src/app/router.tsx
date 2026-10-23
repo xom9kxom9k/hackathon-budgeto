@@ -14,6 +14,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { LoginTotpPage } from '@/pages/LoginTotpPage';
 import { OverviewPage } from '@/pages/OverviewPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { ProfileEditPage } from '@/pages/ProfileEditPage';
 import { ProductDetailPage } from '@/pages/ProductDetailPage';
 import { RegisterPage } from '@/pages/RegisterPage';
 import { RegisterTotpPage } from '@/pages/RegisterTotpPage';
@@ -59,6 +60,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/overview', element: <OverviewPage /> },
       { path: '/profile', element: <ProfilePage /> },
+      { path: '/profile/edit', element: <ProfileEditPage /> },
       { path: '/accounts', element: <AccountsPage /> },
       { path: '/categories', element: <CategoriesPage /> },
       { path: '/banks/:bankId', element: <BankDetailPage /> },

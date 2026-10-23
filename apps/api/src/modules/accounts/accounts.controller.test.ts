@@ -13,6 +13,9 @@ describe('AccountsController', () => {
 
     expect(queries.execute).toHaveBeenCalledOnce();
     expect(commands.execute).toHaveBeenCalledTimes(3);
-    expect(commands.execute).toHaveBeenNthCalledWith(1, expect.objectContaining({ userId: 'user-1' }));
+    expect(commands.execute).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ userId: 'user-1' }),
+    );
   });
 });

@@ -13,7 +13,12 @@ const accountResponseSchema = z.array(
     archivedAt: z.string().nullable().optional(),
   }),
 );
-const accountMutationSchema = z.object({ id: z.string(), name: z.string(), currency: z.string(), archivedAt: z.string().nullable() });
+const accountMutationSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  currency: z.string(),
+  archivedAt: z.string().nullable(),
+});
 
 export class AccountsService extends BaseApiService {
   constructor(apiClient: BaseApiClient) {
@@ -31,11 +36,17 @@ export class AccountsService extends BaseApiService {
   }
 
   create(input: { name: string; currency: string }): Promise<Account> {
-    return this.post('', input, accountMutationSchema).then(({ id, name, currency }) => ({ id, name, currency }));
+    return this.post('', input, accountMutationSchema).then(({ id, name, currency }) => ({
+      id,
+      name,
+      currency,
+    }));
   }
 
   update(id: string, input: { name: string }): Promise<Account> {
-    return this.patch(`/${encodeURIComponent(id)}`, input, accountMutationSchema).then(({ id: accountId, name, currency }) => ({ id: accountId, name, currency }));
+    return this.patch(`/${encodeURIComponent(id)}`, input, accountMutationSchema).then(
+      ({ id: accountId, name, currency }) => ({ id: accountId, name, currency }),
+    );
   }
 
   archive(id: string): Promise<void> {

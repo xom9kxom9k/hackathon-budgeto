@@ -7,7 +7,7 @@ import { ListTransactionsQuery } from './queries/list-transactions.query';
 describe('TransactionsController', () => {
   it('sends the authenticated user and parsed filters to QueryBus', async () => {
     const execute = vi.fn().mockResolvedValue({ items: [], total: 0, page: 2, pageSize: 25 });
-    const controller = new TransactionsController({ execute } as never);
+    const controller = new TransactionsController({ execute } as never, { execute } as never);
 
     await controller.list({ userId: 'user-1' } as never, {
       page: '2',
@@ -34,7 +34,7 @@ describe('TransactionsController', () => {
 
   it('rejects invalid filters before QueryBus', async () => {
     const execute = vi.fn();
-    const controller = new TransactionsController({ execute } as never);
+    const controller = new TransactionsController({ execute } as never, { execute } as never);
 
     await expect(
       controller.list({ userId: 'user-1' } as never, { pageSize: '101' }),

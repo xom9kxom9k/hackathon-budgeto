@@ -23,9 +23,15 @@ export class BaseApiClient {
     this.fetchImpl = (config.fetchImpl ?? globalThis.fetch).bind(globalThis);
   }
 
-  async request<T>(path: string, options: RequestInit = {}, schema?: z.ZodType<T>): Promise<T> {
+  async request<T>(
+    path: string,
+    options: RequestInit = {},
+    schema?: z.ZodType<T>,
+    retryAfterCsrfRefresh = true,
+  ): Promise<T> {
     const method = (options.method ?? 'GET').toUpperCase();
-    if (method !== 'GET' && method !== 'HEAD' && !path.endsWith('/auth/csrf')) {
+    const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(method);
+    if (isMutation && !path.endsWith('/auth/csrf')) {
       await this.ensureCsrfToken();
     }
 
@@ -46,11 +52,22 @@ export class BaseApiClient {
       const payload = bodyText ? this.parseJson(bodyText) : undefined;
 
       if (!response.ok) {
-        throw new ApiError(
+        const error = new ApiError(
           `Request failed with status ${response.status}`,
           response.status,
           payload,
         );
+        if (
+          isMutation &&
+          retryAfterCsrfRefresh &&
+          error.status === 403 &&
+          error.code === 'AUTH_CSRF_INVALID'
+        ) {
+          this.csrfToken = null;
+          await this.ensureCsrfToken();
+          return this.request(path, options, schema, false);
+        }
+        throw error;
       }
 
       return schema ? schema.parse(payload) : (payload as T);

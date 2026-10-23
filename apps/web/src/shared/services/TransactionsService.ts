@@ -32,8 +32,14 @@ const transactionsResponseSchema = z.object({
   page: z.number().int().positive(),
   pageSize: z.number().int().positive(),
 });
-const transactionDetailSchema = transactionSchema.extend({ reversedAt: z.string().nullable().optional() });
-const claimSchema = z.object({ sourceRow: z.number(), fingerprint: z.string(), payloadHash: z.string(), canonicalPayload: z.string(), claimDigest: z.string() });
+const claimSchema = z.object({
+  sourceRow: z.number(),
+  operationId: z.string(),
+  fingerprint: z.string(),
+  payloadHash: z.string(),
+  canonicalPayload: z.string(),
+  claimDigest: z.string(),
+});
 
 export interface TransactionFilters {
   page: number;
@@ -92,10 +98,16 @@ export class TransactionsService extends BaseApiService {
   }
 
   update(id: string, input: TransactionInput, proof: unknown): Promise<void> {
-    return this.patch(`/${encodeURIComponent(id)}`, { ...input, proof }, z.unknown()).then(() => undefined);
+    return this.patch(`/${encodeURIComponent(id)}`, { ...input, proof }, z.unknown()).then(
+      () => undefined,
+    );
   }
 
   reverse(id: string, operationId: string, proof: unknown): Promise<void> {
-    return this.post(`/${encodeURIComponent(id)}/reverse`, { operationId, proof }, z.unknown()).then(() => undefined);
+    return this.post(
+      `/${encodeURIComponent(id)}/reverse`,
+      { operationId, proof },
+      z.unknown(),
+    ).then(() => undefined);
   }
 }

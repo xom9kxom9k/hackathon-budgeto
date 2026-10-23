@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 
 import { CategoryEntity } from '../entities/category.entity';
 import { CategoryView, ListCategoriesQuery } from './list-categories.query';
@@ -15,8 +15,8 @@ export class ListCategoriesHandler implements IQueryHandler<ListCategoriesQuery>
   async execute(query: ListCategoriesQuery): Promise<CategoryView[]> {
     const categories = await this.categories.find({
       where: query.kind
-        ? { userId: query.userId, kind: query.kind, archivedAt: null }
-        : { userId: query.userId, archivedAt: null },
+        ? { userId: query.userId, kind: query.kind, archivedAt: IsNull() }
+        : { userId: query.userId, archivedAt: IsNull() },
       order: { kind: 'ASC', name: 'ASC' },
     });
 

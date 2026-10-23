@@ -25,7 +25,7 @@ describe('imports CQRS boundary', () => {
 
     await controller.create(user, file);
     await controller.get(user, 'job-1');
-    await controller.rows(user, 'job-1', []);
+    await controller.rows(user, 'job-1', { rows: [] });
     await controller.confirm(user, 'job-1');
     await controller.template();
 

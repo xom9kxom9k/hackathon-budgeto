@@ -12,6 +12,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
 import { ImportsModule } from './modules/imports/imports.module';
 import { OverviewModule } from './modules/overview/overview.module';
 import { VaultModule } from './modules/vault/vault.module';
+import { CsrfGuard } from './modules/auth/csrf.guard';
 
 @Module({
   imports: [
@@ -46,6 +47,9 @@ import { VaultModule } from './modules/vault/vault.module';
     VaultModule,
   ],
   controllers: [HealthController],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: CsrfGuard },
+  ],
 })
 export class AppModule {}

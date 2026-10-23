@@ -33,9 +33,15 @@ export class ConfirmImportWithProofsCommand {
 }
 
 export class RetryImportJobCommand {
-  constructor(public readonly userId: string, public readonly jobId: string) {}
+  constructor(
+    public readonly userId: string,
+    public readonly jobId: string,
+  ) {}
 }
 
 export class DeleteImportStagingCommand {
-  constructor(public readonly userId: string, public readonly jobId: string) {}
+  constructor(
+    public readonly userId: string,
+    public readonly jobId: string,
+  ) {}
 }

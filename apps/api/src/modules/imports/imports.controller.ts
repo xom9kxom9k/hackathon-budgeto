@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -29,6 +30,7 @@ import {
   ListImportJobsQuery,
   PrepareImportConfirmationQuery,
 } from './imports.queries';
+import { UpdateImportRowsDto } from './imports.dto';
 import type { VaultProofDto } from '../vault/vault.dto';
 
 @Controller('imports')
@@ -52,11 +54,12 @@ export class ImportsController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 8 * 1024 * 1024, files: 1 } }))
   async create(
     @CurrentUser() user: AuthPrincipal,
-    @UploadedFile() file: { originalname: string; buffer: Buffer },
+    @UploadedFile() file?: { originalname: string; buffer: Buffer },
   ): Promise<unknown> {
+    if (!file) throw new BadRequestException('IMPORT_FILE_REQUIRED');
     return this.commands.execute(
       new CreateImportJobCommand(user.userId, file.originalname, file.buffer),
     );
@@ -71,9 +74,9 @@ export class ImportsController {
   async rows(
     @CurrentUser() user: AuthPrincipal,
     @Param('id') id: string,
-    @Body('rows') rows: unknown[],
+    @Body() body: UpdateImportRowsDto,
   ): Promise<unknown> {
-    return this.commands.execute(new UpdateImportRowsCommand(user.userId, id, rows as never[]));
+    return this.commands.execute(new UpdateImportRowsCommand(user.userId, id, body.rows));
   }
 
   @Post(':id/confirm')

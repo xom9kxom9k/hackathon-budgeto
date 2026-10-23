@@ -123,11 +123,26 @@ export class ImportStore {
   async loadHistory(): Promise<void> {
     if (this.historyStatus === 'success' || this.historyStatus === 'empty') return;
     this.historyStatus = 'loading';
-    try { const history = await this.service.list(); runInAction(() => { this.history = history; this.historyStatus = history.length ? 'success' : 'empty'; }); }
-    catch (error) { runInAction(() => { this.historyStatus = 'error'; this.errorCode = error instanceof Error ? error.message : 'IMPORT_HISTORY_FAILED'; }); }
+    try {
+      const history = await this.service.list();
+      runInAction(() => {
+        this.history = history;
+        this.historyStatus = history.length ? 'success' : 'empty';
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.historyStatus = 'error';
+        this.errorCode = error instanceof Error ? error.message : 'IMPORT_HISTORY_FAILED';
+      });
+    }
   }
-  async retryJob(jobId: string): Promise<void> { await this.service.retry(jobId); await this.loadHistory(); }
-  async deleteStaging(jobId: string): Promise<void> { await this.service.deleteStaging(jobId); }
+  async retryJob(jobId: string): Promise<void> {
+    await this.service.retry(jobId);
+    await this.loadHistory();
+  }
+  async deleteStaging(jobId: string): Promise<void> {
+    await this.service.deleteStaging(jobId);
+  }
   clear(): void {
     this.selectedFile = null;
     this.job = null;

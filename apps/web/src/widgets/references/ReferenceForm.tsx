@@ -20,14 +20,38 @@ export function ReferenceForm({ initial, mode, onCancel, onSubmit, saving }: Ref
   const isAccount = mode === 'account';
 
   return (
-    <form className="reference-form" onSubmit={(event) => { event.preventDefault(); onSubmit(isAccount ? { name, currency } : { name, kind }); }}>
-      <InputField label={isAccount ? t(I18nKey.AccountsName) : t(I18nKey.CategoriesName)} value={name} onChange={(event) => setName(event.target.value)} required />
+    <form
+      className="reference-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit(isAccount ? { name, currency } : { name, kind });
+      }}
+    >
+      <InputField
+        label={isAccount ? t(I18nKey.AccountsName) : t(I18nKey.CategoriesName)}
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        required
+      />
       {isAccount ? (
-        <InputField label={t(I18nKey.AccountsCurrency)} value={currency} maxLength={3} onChange={(event) => setCurrency(event.target.value.toUpperCase())} required disabled={Boolean(initial)} />
+        <InputField
+          label={t(I18nKey.AccountsCurrency)}
+          value={currency}
+          maxLength={3}
+          onChange={(event) => setCurrency(event.target.value.toUpperCase())}
+          required
+          disabled={Boolean(initial)}
+        />
       ) : (
         <label className="filter-select">
           <span>{t(I18nKey.CategoriesKind)}</span>
-          <Select aria-label={t(I18nKey.CategoriesKind)} value={kind} onSelectedChange={(value) => setKind(value as CategoryKind)} mode="select" disabled={Boolean(initial)}>
+          <Select
+            aria-label={t(I18nKey.CategoriesKind)}
+            value={kind}
+            onSelectedChange={(value) => setKind(value as CategoryKind)}
+            mode="select"
+            disabled={Boolean(initial)}
+          >
             <Option value="income">{t(I18nKey.CategoriesIncome)}</Option>
             <Option value="expense">{t(I18nKey.CategoriesExpense)}</Option>
           </Select>
@@ -37,7 +61,13 @@ export function ReferenceForm({ initial, mode, onCancel, onSubmit, saving }: Ref
         <Button type="submit" appearance="primary" dimension="m" disabled={saving || !name.trim()}>
           {isAccount ? t(I18nKey.AccountsSave) : t(I18nKey.CategoriesSave)}
         </Button>
-        <Button type="button" appearance="secondary" dimension="m" onClick={onCancel} disabled={saving}>
+        <Button
+          type="button"
+          appearance="secondary"
+          dimension="m"
+          onClick={onCancel}
+          disabled={saving}
+        >
           {isAccount ? t(I18nKey.AccountsCancel) : t(I18nKey.CategoriesCancel)}
         </Button>
       </div>

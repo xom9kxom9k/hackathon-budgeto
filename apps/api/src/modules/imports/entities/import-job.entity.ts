@@ -28,6 +28,8 @@ export class ImportJobEntity {
   @Column({ name: 'error_code', type: 'varchar', length: 80, nullable: true }) errorCode!:
     string | null;
   @Column({ name: 'confirmed_at', type: 'timestamptz', nullable: true }) confirmedAt!: Date | null;
+  @Column({ name: 'created_count', type: 'integer', default: 0 }) createdCount!: number;
+  @Column({ name: 'skipped_count', type: 'integer', default: 0 }) skippedCount!: number;
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt!: Date;
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' }) updatedAt!: Date;
 }

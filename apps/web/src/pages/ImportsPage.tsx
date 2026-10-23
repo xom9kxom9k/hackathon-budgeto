@@ -44,14 +44,35 @@ export const ImportsPage = observer(function ImportsPage() {
       {importStore.history.length ? (
         <section className="plain-panel import-history-panel">
           <span className="section-kicker">{t(I18nKey.ImportsTitle)}</span>
-          <T font="Header/H4" as="h2">{t(I18nKey.ImportsDescription)}</T>
+          <T font="Header/H4" as="h2">
+            {t(I18nKey.ImportsDescription)}
+          </T>
           <div className="import-history-list">
             {importStore.history.map((item) => (
               <div className="import-history-row" key={item.id}>
-                <div><strong>{item.fileName}</strong><span>{item.status} · {item.rowCount}</span></div>
+                <div>
+                  <strong>{item.fileName}</strong>
+                  <span>
+                    {item.status} · {item.rowCount}
+                  </span>
+                </div>
                 <div className="import-history-actions">
-                  {item.status === 'failed' ? <Button appearance="secondary" dimension="s" onClick={() => void importStore.retryJob(item.id)}>Retry</Button> : null}
-                  <Button appearance="tertiary" dimension="s" onClick={() => void setJobId(item.id)}>Open</Button>
+                  {item.status === 'failed' ? (
+                    <Button
+                      appearance="secondary"
+                      dimension="s"
+                      onClick={() => void importStore.retryJob(item.id)}
+                    >
+                      Retry
+                    </Button>
+                  ) : null}
+                  <Button
+                    appearance="tertiary"
+                    dimension="s"
+                    onClick={() => void setJobId(item.id)}
+                  >
+                    Open
+                  </Button>
                 </div>
               </div>
             ))}

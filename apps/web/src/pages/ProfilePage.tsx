@@ -1,7 +1,7 @@
 import { Avatar, Button, StatusIndicator, T } from '@admiral-ds/react-ui';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 import { useStore } from '@/app/hooks/useStores';
@@ -12,11 +12,14 @@ import { PageIntro } from '@/shared/ui/PageIntro';
 
 export const ProfilePage = observer(function ProfilePage() {
   const { t } = useTranslation();
+  const location = useLocation();
   const navigate = useNavigate();
   const authStore = useStore(StoreName.Auth);
   const uiStore = useStore(StoreName.Ui);
   const profileStore = useStore(StoreName.Profile);
-  useEffect(() => { void profileStore.load(); }, [profileStore]);
+  useEffect(() => {
+    void profileStore.load();
+  }, [profileStore]);
   const email = profileStore.profile?.email ?? authStore.user?.email ?? '';
   const displayName = profileStore.profile?.displayName ?? email;
   const goalKeys: Record<string, I18nKey> = {
@@ -39,6 +42,11 @@ export const ProfilePage = observer(function ProfilePage() {
       kicker={t(I18nKey.ProfileKicker)}
       title={t(I18nKey.ProfileTitle)}
     >
+      {location.state?.saved === true ? (
+        <p className="profile-edit-success" role="status">
+          {t(I18nKey.ProfileEditSaved)}
+        </p>
+      ) : null}
       <section className="profile-grid">
         <article className="plain-panel profile-card">
           <Avatar dimension="l" showTooltip={false} userName={displayName} />
@@ -61,7 +69,7 @@ export const ProfilePage = observer(function ProfilePage() {
               <Button
                 appearance="secondary"
                 dimension="m"
-                onClick={() => navigate('/welcome', { state: { from: { pathname: '/profile' } } })}
+                onClick={() => navigate('/profile/edit')}
               >
                 {t(I18nKey.WelcomeEdit)}
               </Button>

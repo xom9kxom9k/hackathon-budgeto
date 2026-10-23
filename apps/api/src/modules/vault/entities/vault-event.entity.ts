@@ -2,11 +2,13 @@ import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 
 
 export enum VaultEventType {
   TransactionConfirmed = 'transaction_confirmed',
+  TransactionUpdated = 'transaction_updated',
+  TransactionReversed = 'transaction_reversed',
 }
 
 @Entity('vault_events')
 @Index(['userId', 'sequence'], { unique: true })
-@Index(['userId', 'transactionId'], { unique: true })
+@Index(['userId', 'operationId'], { unique: true })
 export class VaultEventEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -22,6 +24,9 @@ export class VaultEventEntity {
 
   @Column({ name: 'transaction_id', type: 'uuid' })
   transactionId!: string;
+
+  @Column({ name: 'operation_id', type: 'varchar', length: 120 })
+  operationId!: string;
 
   @Column({ name: 'import_job_id', type: 'uuid', nullable: true })
   importJobId!: string | null;

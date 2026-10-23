@@ -12,8 +12,12 @@ export class AddReferenceArchiving1710000000004 implements MigrationInterface {
     await queryRunner.query(
       `CREATE UNIQUE INDEX "UQ_categories_active_user_name_kind_ci" ON "categories" ("user_id", lower("name"), "kind") WHERE "archived_at" IS NULL`,
     );
-    await queryRunner.query(`CREATE INDEX "IDX_accounts_user_archived" ON "accounts" ("user_id", "archived_at")`);
-    await queryRunner.query(`CREATE INDEX "IDX_categories_user_archived" ON "categories" ("user_id", "archived_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_accounts_user_archived" ON "accounts" ("user_id", "archived_at")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_categories_user_archived" ON "categories" ("user_id", "archived_at")`,
+    );
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {

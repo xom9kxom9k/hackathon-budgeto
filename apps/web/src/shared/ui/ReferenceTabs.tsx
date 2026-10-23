@@ -11,10 +11,22 @@ export function ReferenceTabs() {
 
   return (
     <div className="reference-tabs" role="tablist" aria-label={t(I18nKey.AccountsTitle)}>
-      <Button appearance={categories ? 'secondary' : 'primary'} dimension="s" role="tab" aria-selected={!categories} onClick={() => navigate('/accounts')}>
+      <Button
+        appearance={categories ? 'secondary' : 'primary'}
+        dimension="s"
+        role="tab"
+        aria-selected={!categories}
+        onClick={() => navigate('/accounts')}
+      >
         {t(I18nKey.AccountsAccounts)}
       </Button>
-      <Button appearance={categories ? 'primary' : 'secondary'} dimension="s" role="tab" aria-selected={categories} onClick={() => navigate('/categories')}>
+      <Button
+        appearance={categories ? 'primary' : 'secondary'}
+        dimension="s"
+        role="tab"
+        aria-selected={categories}
+        onClick={() => navigate('/categories')}
+      >
         {t(I18nKey.CategoriesTitle)}
       </Button>
     </div>

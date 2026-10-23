@@ -69,7 +69,9 @@ export class VaultStore {
     }
   }
 
-  async createProofs(claims: Array<ImportConfirmationClaims['claims'][number] | TransactionClaim>): Promise<VaultProof[]> {
+  async createProofs(
+    claims: Array<ImportConfirmationClaims['claims'][number] | TransactionClaim>,
+  ): Promise<VaultProof[]> {
     if (this.status !== 'unlocked') throw new Error('VAULT_KEY_REQUIRED');
     return Promise.all(claims.map((claim) => this.crypto.createProof(claim)));
   }

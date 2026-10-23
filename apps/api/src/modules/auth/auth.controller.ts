@@ -4,7 +4,6 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 
-import { CsrfGuard } from './csrf.guard';
 import {
   CompleteTotpLoginCommand,
   CompleteOnboardingCommand,
@@ -48,14 +47,12 @@ export class AuthController {
   }
 
   @Post('register')
-  @UseGuards(CsrfGuard)
   async register(@Body() body: RegisterDto) {
     return this.commands.execute(new RegisterUserCommand(body.email, body.password));
   }
 
   @Post('register/totp')
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @UseGuards(CsrfGuard)
   async completeRegistration(
     @Body() body: TotpChallengeDto,
     @Res({ passthrough: true }) response: Response,
@@ -69,14 +66,12 @@ export class AuthController {
 
   @Post('login')
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @UseGuards(CsrfGuard)
   async login(@Body() body: LoginDto) {
     return this.commands.execute(new LoginWithPasswordCommand(body.email, body.password));
   }
 
   @Post('login/totp')
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @UseGuards(CsrfGuard)
   async completeLogin(
     @Body() body: TotpChallengeDto,
     @Res({ passthrough: true }) response: Response,
@@ -90,7 +85,6 @@ export class AuthController {
 
   @Post('login/recovery')
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @UseGuards(CsrfGuard)
   async recovery(
     @Body() body: RecoveryChallengeDto,
     @Res({ passthrough: true }) response: Response,
@@ -110,8 +104,8 @@ export class AuthController {
   }
 
   @Post('logout')
+  @UseGuards(AuthGuard)
   @HttpCode(204)
-  @UseGuards(CsrfGuard)
   async logout(
     @Req() request: AuthenticatedRequest,
     @Res({ passthrough: true }) response: Response,
@@ -121,7 +115,7 @@ export class AuthController {
   }
 
   @Post('onboarding')
-  @UseGuards(AuthGuard, CsrfGuard)
+  @UseGuards(AuthGuard)
   async completeOnboarding(
     @Req() request: AuthenticatedRequest,
     @Body() body: CompleteOnboardingDto,
@@ -131,5 +125,4 @@ export class AuthController {
     );
     return { user };
   }
-
 }

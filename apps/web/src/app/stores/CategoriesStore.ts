@@ -105,7 +105,8 @@ export class CategoriesStore {
       })
       .catch((error: unknown) => {
         this.mutationStatus = 'error';
-        this.mutationErrorCode = error instanceof Error ? error.message : 'CATEGORY_MUTATION_FAILED';
+        this.mutationErrorCode =
+          error instanceof Error ? error.message : 'CATEGORY_MUTATION_FAILED';
       })
       .finally(() => {
         this.mutationPromise = null;

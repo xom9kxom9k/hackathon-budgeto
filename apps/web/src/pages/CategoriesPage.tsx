@@ -25,7 +25,7 @@ export const CategoriesPage = observer(function CategoriesPage() {
   }, [categoriesStore]);
 
   const categories = useMemo(
-    () => filter === 'all' ? categoriesStore.categories : categoriesStore.byKind(filter),
+    () => (filter === 'all' ? categoriesStore.categories : categoriesStore.byKind(filter)),
     [categoriesStore.categories, categoriesStore, filter],
   );
 
@@ -40,27 +40,61 @@ export const CategoriesPage = observer(function CategoriesPage() {
 
   return (
     <div className="page-stack">
-      <FinanceBreadcrumbs items={[{ text: t(I18nKey.BreadcrumbOverview), url: '/overview' }, { text: t(I18nKey.CategoriesTitle) }]} />
+      <FinanceBreadcrumbs
+        items={[
+          { text: t(I18nKey.BreadcrumbOverview), url: '/overview' },
+          { text: t(I18nKey.CategoriesTitle) },
+        ]}
+      />
       <section className="page-intro page-intro--with-action">
         <div>
           <span className="section-kicker">{t(I18nKey.CategoriesKicker)}</span>
           <h2>{t(I18nKey.CategoriesTitle)}</h2>
           <p>{t(I18nKey.CategoriesDescription)}</p>
         </div>
-        <Button appearance="primary" dimension="m" onClick={() => { setEditing(null); setFormOpen(true); }}>{t(I18nKey.CategoriesAdd)}</Button>
+        <Button
+          appearance="primary"
+          dimension="m"
+          onClick={() => {
+            setEditing(null);
+            setFormOpen(true);
+          }}
+        >
+          {t(I18nKey.CategoriesAdd)}
+        </Button>
       </section>
       <ReferenceTabs />
       {formOpen ? (
-        <section className="reference-editor" aria-label={t(editing ? I18nKey.CategoriesEdit : I18nKey.CategoriesAdd)}>
+        <section
+          className="reference-editor"
+          aria-label={t(editing ? I18nKey.CategoriesEdit : I18nKey.CategoriesAdd)}
+        >
           <h3>{t(editing ? I18nKey.CategoriesEdit : I18nKey.CategoriesAdd)}</h3>
-          <ReferenceForm initial={editing ?? undefined} mode="category" onCancel={() => { setFormOpen(false); setEditing(null); }} onSubmit={(value) => { void submitForm(value); }} saving={categoriesStore.mutationStatus === 'saving'} />
+          <ReferenceForm
+            initial={editing ?? undefined}
+            mode="category"
+            onCancel={() => {
+              setFormOpen(false);
+              setEditing(null);
+            }}
+            onSubmit={(value) => {
+              void submitForm(value);
+            }}
+            saving={categoriesStore.mutationStatus === 'saving'}
+          />
         </section>
       ) : null}
-      {categoriesStore.mutationStatus === 'error' ? <div className="state-callout state-callout--error">{t(I18nKey.ReferencesMutationError)}</div> : null}
+      {categoriesStore.mutationStatus === 'error' ? (
+        <div className="state-callout state-callout--error">
+          {t(I18nKey.ReferencesMutationError)}
+        </div>
+      ) : null}
       {categoriesStore.status === 'error' ? (
         <div className="state-callout state-callout--error">
           <span>{t(I18nKey.CategoriesLoadError)}</span>
-          <Button appearance="secondary" dimension="s" onClick={() => categoriesStore.retry()}>{t(I18nKey.AccountsRetry)}</Button>
+          <Button appearance="secondary" dimension="s" onClick={() => categoriesStore.retry()}>
+            {t(I18nKey.AccountsRetry)}
+          </Button>
         </div>
       ) : null}
       <section className="accounts-explorer" aria-label={t(I18nKey.CategoriesTitle)}>
@@ -68,7 +102,12 @@ export const CategoriesPage = observer(function CategoriesPage() {
           <span className="section-kicker">{t(I18nKey.CategoriesKind)}</span>
           <label className="filter-select">
             <span>{t(I18nKey.CategoriesKind)}</span>
-            <Select value={filter} onSelectedChange={(value) => setFilter(value as 'all' | CategoryKind)} aria-label={t(I18nKey.CategoriesKind)} mode="select">
+            <Select
+              value={filter}
+              onSelectedChange={(value) => setFilter(value as 'all' | CategoryKind)}
+              aria-label={t(I18nKey.CategoriesKind)}
+              mode="select"
+            >
               <Option value="all">{t(I18nKey.CategoriesAll)}</Option>
               <Option value="income">{t(I18nKey.CategoriesIncome)}</Option>
               <Option value="expense">{t(I18nKey.CategoriesExpense)}</Option>
@@ -76,13 +115,54 @@ export const CategoriesPage = observer(function CategoriesPage() {
           </label>
         </div>
         {categories.length === 0 ? (
-          <div className="state-callout"><span>{t(I18nKey.CategoriesEmpty)}</span><Button appearance="secondary" dimension="s" onClick={() => navigate('/imports')}>{t(I18nKey.NavigationImports)}</Button></div>
+          <div className="state-callout">
+            <span>{t(I18nKey.CategoriesEmpty)}</span>
+            <Button appearance="secondary" dimension="s" onClick={() => navigate('/imports')}>
+              {t(I18nKey.NavigationImports)}
+            </Button>
+          </div>
         ) : (
           <div className="real-account-list">
             {categories.map((category) => (
               <div className="real-account-row" key={category.id}>
-                <div className="real-account-main"><strong>{category.name}</strong><span>{category.kind === 'income' ? t(I18nKey.CategoriesIncome) : t(I18nKey.CategoriesExpense)}</span></div>
-                <div className="real-account-actions"><StatusIndicator dimension="s" text={category.kind === 'income' ? t(I18nKey.CategoriesIncome) : t(I18nKey.CategoriesExpense)} /><Button appearance="secondary" dimension="s" onClick={() => { setEditing(category); setFormOpen(true); }}>{t(I18nKey.CategoriesEdit)}</Button><Button appearance="secondary" dimension="s" onClick={() => { if (window.confirm(t(I18nKey.CategoriesArchiveConfirm))) void categoriesStore.archive(category.id); }}>{t(I18nKey.CategoriesArchive)}</Button></div>
+                <div className="real-account-main">
+                  <strong>{category.name}</strong>
+                  <span>
+                    {category.kind === 'income'
+                      ? t(I18nKey.CategoriesIncome)
+                      : t(I18nKey.CategoriesExpense)}
+                  </span>
+                </div>
+                <div className="real-account-actions">
+                  <StatusIndicator
+                    dimension="s"
+                    text={
+                      category.kind === 'income'
+                        ? t(I18nKey.CategoriesIncome)
+                        : t(I18nKey.CategoriesExpense)
+                    }
+                  />
+                  <Button
+                    appearance="secondary"
+                    dimension="s"
+                    onClick={() => {
+                      setEditing(category);
+                      setFormOpen(true);
+                    }}
+                  >
+                    {t(I18nKey.CategoriesEdit)}
+                  </Button>
+                  <Button
+                    appearance="secondary"
+                    dimension="s"
+                    onClick={() => {
+                      if (window.confirm(t(I18nKey.CategoriesArchiveConfirm)))
+                        void categoriesStore.archive(category.id);
+                    }}
+                  >
+                    {t(I18nKey.CategoriesArchive)}
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

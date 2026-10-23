@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 
 import { AccountEntity } from '../accounts/entities/account.entity';
 import { CategoryEntity } from '../categories/entities/category.entity';
@@ -25,7 +25,7 @@ export class GetOverviewSummaryHandler implements IQueryHandler<GetOverviewSumma
   async execute(query: GetOverviewSummaryQuery): Promise<OverviewSummaryView> {
     const { from, to } = query.filters;
     const [accountsCount, totals, cashflow, recentRows] = await Promise.all([
-      this.accounts.count({ where: { userId: query.userId, archivedAt: null } }),
+      this.accounts.count({ where: { userId: query.userId, archivedAt: IsNull() } }),
       this.loadTotals(query.userId, from, to),
       this.loadCashflow(query.userId, from, to),
       this.loadRecentTransactions(query.userId, from, to),

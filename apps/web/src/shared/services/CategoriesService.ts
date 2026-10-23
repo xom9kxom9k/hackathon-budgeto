@@ -28,11 +28,17 @@ export class CategoriesService extends BaseApiService {
   }
 
   create(input: { name: string; kind: CategoryKind }): Promise<Category> {
-    return this.post('', input, categoryMutationSchema).then(({ id, name, kind }) => ({ id, name, kind }));
+    return this.post('', input, categoryMutationSchema).then(({ id, name, kind }) => ({
+      id,
+      name,
+      kind,
+    }));
   }
 
   update(id: string, input: { name: string }): Promise<Category> {
-    return this.patch(`/${encodeURIComponent(id)}`, input, categoryMutationSchema).then(({ id: categoryId, name, kind }) => ({ id: categoryId, name, kind }));
+    return this.patch(`/${encodeURIComponent(id)}`, input, categoryMutationSchema).then(
+      ({ id: categoryId, name, kind }) => ({ id: categoryId, name, kind }),
+    );
   }
 
   archive(id: string): Promise<void> {

@@ -1,5 +1,7 @@
 # План Budgeto
 
+> Статус текущей ветки: реализован web/API MVP-контур с PostgreSQL, auth/session/TOTP, XLSX import worker, CSRF, Vault provenance и profile/security flows. CSV, ML, blockchain anchor и полный rollback остаются будущими задачами.
+
 ## Рабочая концепция
 
 Budgeto превращает банковскую выписку в проверяемую финансовую историю. Для каждой операции сохраняются источник, способ обработки и история изменений.

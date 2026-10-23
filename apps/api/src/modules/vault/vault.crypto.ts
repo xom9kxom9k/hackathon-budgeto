@@ -3,7 +3,19 @@ import { createHash, createPublicKey, verify } from 'node:crypto';
 const ED25519_SPKI_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
 
 export function canonicalize(value: Record<string, unknown>): string {
-  return JSON.stringify(value, Object.keys(value).sort());
+  const normalize = (input: unknown): unknown => {
+    if (Array.isArray(input)) return input.map(normalize);
+    if (input && typeof input === 'object') {
+      return Object.fromEntries(
+        Object.entries(input as Record<string, unknown>)
+          .sort(([left], [right]) => left.localeCompare(right))
+          .map(([key, entry]) => [key, normalize(entry)]),
+      );
+    }
+    return input;
+  };
+
+  return JSON.stringify(normalize(value));
 }
 
 export function sha256(value: string): string {
@@ -38,8 +50,22 @@ export function chainDigest(input: {
   claimDigest: string;
   ciphertext: string;
   previousHash: string;
+  operationId?: string;
+  iv?: string;
+  authTag?: string;
+  keyVersion?: number;
 }): string {
   return sha256(canonicalize(input));
+}
+
+export function proofMessage(input: {
+  claimDigest: string;
+  ciphertext: string;
+  iv: string;
+  authTag: string;
+  keyVersion: number;
+}): string {
+  return canonicalize(input);
 }
 
 export const VAULT_GENESIS_HASH = sha256('budgeto:vault:genesis:v1');

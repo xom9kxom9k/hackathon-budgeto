@@ -1,4 +1,14 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 
 import { AuthGuard } from '../auth/auth.guard';
@@ -6,13 +16,20 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import type { AuthPrincipal } from '../auth/auth.types';
 import { CategoryKind } from './entities/category.entity';
 import { CategoryView, ListCategoriesQuery } from './queries/list-categories.query';
-import { ArchiveCategoryCommand, CreateCategoryCommand, UpdateCategoryCommand } from './categories.commands';
+import {
+  ArchiveCategoryCommand,
+  CreateCategoryCommand,
+  UpdateCategoryCommand,
+} from './categories.commands';
 import { CreateCategoryDto, UpdateCategoryDto } from './categories.dto';
 
 @Controller('categories')
 @UseGuards(AuthGuard)
 export class CategoriesController {
-  constructor(private readonly queries: QueryBus, private readonly commands: CommandBus) {}
+  constructor(
+    private readonly queries: QueryBus,
+    private readonly commands: CommandBus,
+  ) {}
 
   @Get()
   list(@CurrentUser() user: AuthPrincipal, @Query('kind') kind?: string): Promise<CategoryView[]> {
@@ -31,7 +48,11 @@ export class CategoriesController {
   }
 
   @Patch(':id')
-  update(@CurrentUser() user: AuthPrincipal, @Param('id') id: string, @Body() body: UpdateCategoryDto) {
+  update(
+    @CurrentUser() user: AuthPrincipal,
+    @Param('id') id: string,
+    @Body() body: UpdateCategoryDto,
+  ) {
     return this.commands.execute(new UpdateCategoryCommand(user.userId, id, body.name));
   }
 

@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 
 import { AccountEntity } from '../entities/account.entity';
 
@@ -15,7 +15,7 @@ export class ListAccountsHandler implements IQueryHandler<ListAccountsQuery> {
 
   async execute(query: ListAccountsQuery): Promise<AccountView[]> {
     const accounts = await this.accounts.find({
-      where: { userId: query.userId, archivedAt: null },
+      where: { userId: query.userId, archivedAt: IsNull() },
       order: { createdAt: 'ASC' },
     });
 

@@ -23,7 +23,10 @@ export class TransactionsStore {
   private requestPromise: Promise<void> | null = null;
   private requestVersion = 0;
 
-  constructor(private readonly transactionsService: TransactionsService, private readonly vaultStore?: VaultStore) {
+  constructor(
+    private readonly transactionsService: TransactionsService,
+    private readonly vaultStore?: VaultStore,
+  ) {
     makeAutoObservable(this, {}, { autoBind: true });
   }
 

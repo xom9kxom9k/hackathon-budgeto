@@ -1,11 +1,37 @@
-# Ближайшие архитектурные задачи
+# Backlog Budgeto
 
-1. Перенос React UI и финансовых тестов из исходного Budgeto без старого SQLite API.
-2. PostgreSQL, миграции, доменная модель и денежные значения с точной десятичной арифметикой.
-3. Auth и session management; изоляция данных разных пользователей, интеграционные тесты.
-4. CQRS command handlers для accounts/transactions и query projections.
-5. Transactional outbox и worker на фоне без обязательной Kafka.
-6. Унифицированный ingest банковских выписок Excel/CSV; политика дублей.
-7. Прототип аналитики и AI с контролируемым доступом.
+## Готово в текущем MVP-контуре
 
-Каждая задача — отдельный PR с тестами и архитектурными решениями (ADR).
+1. PostgreSQL schema и TypeORM migrations для users, sessions, accounts, categories, transactions, imports и Vault.
+2. Auth с password/TOTP/recovery flow, session cookies и user scoping.
+3. Глобальная CSRF-защита mutation endpoints и одноразовое обновление токена на web-клиенте.
+4. CQRS handlers для accounts, categories, transactions, imports, overview, profile и security.
+5. XLSX upload, worker parsing, preview, редактирование строк, retry и confirmation.
+6. Идемпотентное конкурентно-безопасное подтверждение import job с counters created/skipped.
+7. Append-only Vault events, schema-version compatibility, proof validation, hash-chain и operation-based idempotency.
+8. Web flows для references, transactions, imports, Vault, profile, `/profile/edit` и security center.
+9. Strict TypeScript gate для API, worker и web; lint и API unit tests должны запускаться локально.
+
+## P1: следующий рабочий срез
+
+- Добавить PostgreSQL integration tests для migrations, concurrent confirmation, duplicate fingerprints и Vault legacy events.
+- Добавить web tests для Profile Edit, повторной отправки и CSRF refresh после истёкшего токена.
+- Подключить CI quality gate после проверки реального окружения Node, PostgreSQL и Redis.
+- Проверить deployment configuration и безопасное хранение import staging files.
+
+## P2: продуктовые расширения
+
+- CSV и дополнительные XLSX adapters с mapping колонок.
+- Единая canonical schema с currency, merchant и external ID.
+- ML-классификация формата с confidence и ручным mapping.
+- Time Machine, diff и полноценный rollback/version history.
+- S3/MinIO для snapshots и исходных файлов.
+- Security Center для access grants и export controls.
+
+## P3: демонстрационные направления
+
+- AI read-only projections без передачи лишних полей.
+- Blockchain anchor только хэша версии.
+- Tauri-клиент после стабилизации web MVP.
+
+Нереализованные возможности не следует описывать как production-ready.

@@ -64,4 +64,34 @@ describe('BaseApiClient', () => {
       headers: expect.objectContaining({ 'X-CSRF-Token': 'csrf-token' }),
     });
   });
+
+  it('refreshes the CSRF token once after an expired token', async () => {
+    const loaderStore = new LoaderStore();
+    const fetchImpl = vi.fn<typeof fetch>();
+    fetchImpl
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ token: 'stale-token' }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ code: 'AUTH_CSRF_INVALID' }), { status: 403 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ token: 'fresh-token' }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    const client = new BaseApiClient({ baseUrl: '/api', fetchImpl, loaderStore });
+
+    await expect(
+      client.request(
+        '/profile',
+        { method: 'PATCH', body: JSON.stringify({ displayName: 'Ada', goals: [] }) },
+        z.object({ ok: z.boolean() }),
+      ),
+    ).resolves.toEqual({ ok: true });
+
+    expect(fetchImpl).toHaveBeenCalledTimes(4);
+    expect(fetchImpl.mock.calls[3][1]).toMatchObject({
+      headers: expect.objectContaining({ 'X-CSRF-Token': 'fresh-token' }),
+    });
+  });
 });

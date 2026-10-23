@@ -14,13 +14,25 @@ export interface TransactionMutationInput {
 }
 
 export class CreateTransactionCommand {
-  constructor(public readonly userId: string, public readonly input: TransactionMutationInput) {}
+  constructor(
+    public readonly userId: string,
+    public readonly input: TransactionMutationInput,
+  ) {}
 }
 
 export class UpdateTransactionCommand {
-  constructor(public readonly userId: string, public readonly transactionId: string, public readonly input: TransactionMutationInput) {}
+  constructor(
+    public readonly userId: string,
+    public readonly transactionId: string,
+    public readonly input: TransactionMutationInput,
+  ) {}
 }
 
 export class ReverseTransactionCommand {
-  constructor(public readonly userId: string, public readonly transactionId: string, public readonly operationId: string, public readonly proof: VaultProofDto) {}
+  constructor(
+    public readonly userId: string,
+    public readonly transactionId: string,
+    public readonly operationId: string,
+    public readonly proof: VaultProofDto,
+  ) {}
 }

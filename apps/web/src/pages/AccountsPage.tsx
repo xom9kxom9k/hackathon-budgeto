@@ -51,26 +51,49 @@ export const AccountsPage = observer(function AccountsPage() {
           <p>{t(I18nKey.AccountsDescription)}</p>
         </div>
         <div className="page-intro-actions">
-          <Button appearance="primary" dimension="m" onClick={() => { setEditing(null); setFormOpen(true); }}>{t(I18nKey.AccountsAdd)}</Button>
-          <Button appearance="secondary" dimension="m" onClick={() => navigate('/imports')}>{t(I18nKey.OverviewOpenImports)}</Button>
+          <Button
+            appearance="primary"
+            dimension="m"
+            onClick={() => {
+              setEditing(null);
+              setFormOpen(true);
+            }}
+          >
+            {t(I18nKey.AccountsAdd)}
+          </Button>
+          <Button appearance="secondary" dimension="m" onClick={() => navigate('/imports')}>
+            {t(I18nKey.OverviewOpenImports)}
+          </Button>
         </div>
       </section>
 
       <ReferenceTabs />
 
       {formOpen ? (
-        <section className="reference-editor" aria-label={t(editing ? I18nKey.AccountsEdit : I18nKey.AccountsAdd)}>
+        <section
+          className="reference-editor"
+          aria-label={t(editing ? I18nKey.AccountsEdit : I18nKey.AccountsAdd)}
+        >
           <h3>{t(editing ? I18nKey.AccountsEdit : I18nKey.AccountsAdd)}</h3>
           <ReferenceForm
             initial={editing ?? undefined}
             mode="account"
-            onCancel={() => { setFormOpen(false); setEditing(null); }}
-            onSubmit={(value) => { void submitForm(value); }}
+            onCancel={() => {
+              setFormOpen(false);
+              setEditing(null);
+            }}
+            onSubmit={(value) => {
+              void submitForm(value);
+            }}
             saving={accountsStore.mutationStatus === 'saving'}
           />
         </section>
       ) : null}
-      {accountsStore.mutationStatus === 'error' ? <div className="state-callout state-callout--error">{t(I18nKey.ReferencesMutationError)}</div> : null}
+      {accountsStore.mutationStatus === 'error' ? (
+        <div className="state-callout state-callout--error">
+          {t(I18nKey.ReferencesMutationError)}
+        </div>
+      ) : null}
 
       {accountsStore.status === 'error' ? (
         <div className="state-callout state-callout--error">
@@ -82,7 +105,18 @@ export const AccountsPage = observer(function AccountsPage() {
       ) : null}
 
       {accountsStore.status === 'success' || accountsStore.status === 'empty' ? (
-        <AccountsExplorer accounts={accountsStore.accounts} onImport={() => navigate('/imports')} onEdit={(account) => { setEditing(account); setFormOpen(true); }} onArchive={(account) => { if (window.confirm(t(I18nKey.AccountsArchiveConfirm))) void accountsStore.archive(account.id); }} />
+        <AccountsExplorer
+          accounts={accountsStore.accounts}
+          onImport={() => navigate('/imports')}
+          onEdit={(account) => {
+            setEditing(account);
+            setFormOpen(true);
+          }}
+          onArchive={(account) => {
+            if (window.confirm(t(I18nKey.AccountsArchiveConfirm)))
+              void accountsStore.archive(account.id);
+          }}
+        />
       ) : null}
     </div>
   );

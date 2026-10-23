@@ -1,4 +1,14 @@
-import { IsDateString, IsEnum, IsNumber, IsObject, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { TransactionKind } from './entities/transaction.entity';
 import { VaultProofDto } from '../vault/vault.dto';
 

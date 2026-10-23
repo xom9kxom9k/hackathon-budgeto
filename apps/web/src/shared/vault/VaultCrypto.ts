@@ -46,6 +46,16 @@ async function digest(value: string): Promise<string> {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+function proofMessage(input: {
+  claimDigest: string;
+  ciphertext: string;
+  iv: string;
+  authTag: string;
+  keyVersion: number;
+}): string {
+  return JSON.stringify(input, Object.keys(input).sort());
+}
+
 async function encrypt(key: CryptoKey, value: BufferSource): Promise<EncryptedValue> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encrypted = new Uint8Array(
@@ -169,7 +179,15 @@ export class VaultCrypto {
     const signature = await crypto.subtle.sign(
       ED25519,
       this.runtime.privateKey,
-      encoder.encode(claim.claimDigest) as unknown as BufferSource,
+      encoder.encode(
+        proofMessage({
+          claimDigest: claim.claimDigest,
+          ciphertext: encrypted.ciphertext,
+          iv: encrypted.iv,
+          authTag: encrypted.authTag,
+          keyVersion: this.runtime.keyVersion,
+        }),
+      ) as unknown as BufferSource,
     );
     return {
       sourceRow: claim.sourceRow,
