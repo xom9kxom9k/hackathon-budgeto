@@ -1,5 +1,5 @@
 import type { AccountSummary, Bank, FinancialProduct } from '@/entities/account/model/types';
-import type { CashflowPoint, Transaction } from '@/entities/transaction/model/types';
+import type { CashflowPoint } from '@/entities/transaction/model/types';
 
 export const demoBanks: Bank[] = [
   {
@@ -87,7 +87,7 @@ export const demoProducts: FinancialProduct[] = [
   },
 ];
 
-export const demoTransactions: Transaction[] = [
+export const demoTransactions = [
   {
     id: 'demo-001',
     date: '22 окт',

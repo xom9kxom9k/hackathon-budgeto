@@ -1,4 +1,5 @@
 import {
+  Button,
   Drawer,
   DrawerContent,
   DrawerTitle,
@@ -7,8 +8,9 @@ import {
   Select,
   T,
 } from '@admiral-ds/react-ui';
+import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
 import { observer } from 'mobx-react-lite';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStore } from '@/app/hooks/useStores';
@@ -19,31 +21,61 @@ import { formatMoney } from '@/shared/lib/formatMoney';
 import { FinanceBreadcrumbs } from '@/shared/ui/FinanceBreadcrumbs';
 import { TransactionTable } from '@/widgets/transactions/TransactionTable';
 
+const pageSize = 50;
+
 export const TransactionsPage = observer(function TransactionsPage() {
   const { t } = useTranslation();
-  const overviewStore = useStore(StoreName.Overview);
-  const [query, setQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [accountFilter, setAccountFilter] = useState('all');
+  const accountsStore = useStore(StoreName.Accounts);
+  const transactionsStore = useStore(StoreName.Transactions);
+  const [urlFilters, setUrlFilters] = useQueryStates({
+    account: parseAsString,
+    from: parseAsString,
+    kind: parseAsString,
+    page: parseAsInteger.withDefault(1),
+    pageSize: parseAsInteger.withDefault(pageSize),
+    q: parseAsString,
+    to: parseAsString,
+  });
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
-  const filteredTransactions = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase();
+  const filters = useMemo(
+    () => ({
+      accountId: urlFilters.account ?? undefined,
+      from: urlFilters.from ?? undefined,
+      kind:
+        urlFilters.kind === 'income' ||
+        urlFilters.kind === 'expense' ||
+        urlFilters.kind === 'transfer'
+          ? (urlFilters.kind as Transaction['kind'])
+          : undefined,
+      page: urlFilters.page,
+      pageSize: urlFilters.pageSize,
+      query: urlFilters.q ?? undefined,
+      to: urlFilters.to ?? undefined,
+    }),
+    [
+      urlFilters.account,
+      urlFilters.from,
+      urlFilters.kind,
+      urlFilters.page,
+      urlFilters.pageSize,
+      urlFilters.q,
+      urlFilters.to,
+    ],
+  );
 
-    return overviewStore.transactions.filter((transaction) => {
-      const matchesQuery = normalizedQuery
-        ? `${transaction.merchant} ${transaction.category}`
-            .toLocaleLowerCase()
-            .includes(normalizedQuery)
-        : true;
-      const matchesType =
-        typeFilter === 'all' ||
-        (typeFilter === 'income' ? transaction.amount >= 0 : transaction.amount < 0);
-      const matchesAccount = accountFilter === 'all' || transaction.currency === accountFilter;
+  useEffect(() => {
+    void accountsStore.load();
+  }, [accountsStore]);
 
-      return matchesQuery && matchesType && matchesAccount;
-    });
-  }, [accountFilter, overviewStore.transactions, query, typeFilter]);
+  useEffect(() => {
+    void transactionsStore.load(filters);
+  }, [filters, transactionsStore]);
+
+  const updateFilters = (updates: Parameters<typeof setUrlFilters>[0]) => {
+    void setUrlFilters({ ...updates, page: 1 });
+  };
+  const totalPages = Math.max(1, Math.ceil(transactionsStore.total / transactionsStore.pageSize));
 
   return (
     <div className="page-stack">
@@ -54,7 +86,7 @@ export const TransactionsPage = observer(function TransactionsPage() {
         ]}
       />
       <section className="page-intro">
-        <span className="section-kicker">{t(I18nKey.NavigationActivity)}</span>
+        <span className="section-kicker">{t(I18nKey.TransactionsKicker)}</span>
         <T font="Header/H2" as="h2">
           {t(I18nKey.TransactionsTitle)}
         </T>
@@ -75,8 +107,8 @@ export const TransactionsPage = observer(function TransactionsPage() {
             dimension="m"
             label={t(I18nKey.Search)}
             placeholder={t(I18nKey.ActivitySearch)}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            value={urlFilters.q ?? ''}
+            onChange={(event) => void setUrlFilters({ q: event.target.value || null, page: 1 })}
           />
           <label className="filter-select">
             <span>{t(I18nKey.ActivityAllTypes)}</span>
@@ -84,12 +116,17 @@ export const TransactionsPage = observer(function TransactionsPage() {
               aria-label={t(I18nKey.ActivityAllTypes)}
               dimension="m"
               mode="select"
-              onSelectedChange={(value) => setTypeFilter(String(value))}
-              value={typeFilter}
+              onSelectedChange={(value) =>
+                void updateFilters({
+                  kind: value === 'all' ? null : String(value),
+                })
+              }
+              value={urlFilters.kind ?? 'all'}
             >
               <Option value="all">{t(I18nKey.ActivityAllTypes)}</Option>
               <Option value="income">{t(I18nKey.OverviewIncome)}</Option>
               <Option value="expense">{t(I18nKey.OverviewExpenses)}</Option>
+              <Option value="transfer">{t(I18nKey.ActivityTransfer)}</Option>
             </Select>
           </label>
           <label className="filter-select">
@@ -98,19 +135,87 @@ export const TransactionsPage = observer(function TransactionsPage() {
               aria-label={t(I18nKey.ActivityAllAccounts)}
               dimension="m"
               mode="select"
-              onSelectedChange={(value) => setAccountFilter(String(value))}
-              value={accountFilter}
+              onSelectedChange={(value) =>
+                void updateFilters({
+                  account: value === 'all' ? null : String(value),
+                })
+              }
+              value={urlFilters.account ?? 'all'}
             >
               <Option value="all">{t(I18nKey.ActivityAllAccounts)}</Option>
-              <Option value="RUB">RUB</Option>
+              {accountsStore.accounts.map((account) => (
+                <Option key={account.id} value={account.id}>
+                  {account.name} · {account.currency}
+                </Option>
+              ))}
             </Select>
+          </label>
+          <label className="filter-date">
+            <span>{t(I18nKey.ActivityFrom)}</span>
+            <input
+              aria-label={t(I18nKey.ActivityFrom)}
+              type="date"
+              value={urlFilters.from ?? ''}
+              onChange={(event) =>
+                void setUrlFilters({
+                  from: event.target.value || null,
+                  page: 1,
+                })
+              }
+            />
+          </label>
+          <label className="filter-date">
+            <span>{t(I18nKey.ActivityTo)}</span>
+            <input
+              aria-label={t(I18nKey.ActivityTo)}
+              type="date"
+              value={urlFilters.to ?? ''}
+              onChange={(event) => void setUrlFilters({ to: event.target.value || null, page: 1 })}
+            />
           </label>
         </div>
       </section>
 
-      <section className="plain-panel">
-        <TransactionTable onSelect={setSelectedTransaction} transactions={filteredTransactions} />
-      </section>
+      {transactionsStore.status === 'error' ? (
+        <div className="state-callout state-callout--error">
+          <span>{t(I18nKey.TransactionsLoadError)}</span>
+          <Button appearance="secondary" dimension="s" onClick={() => transactionsStore.retry()}>
+            {t(I18nKey.TransactionsRetry)}
+          </Button>
+        </div>
+      ) : null}
+
+      {transactionsStore.status === 'success' || transactionsStore.status === 'empty' ? (
+        <section className="plain-panel">
+          <TransactionTable
+            onSelect={setSelectedTransaction}
+            transactions={transactionsStore.items}
+          />
+          {transactionsStore.status === 'success' && totalPages > 1 ? (
+            <div className="pagination-row" aria-label={t(I18nKey.TransactionsPagination)}>
+              <Button
+                appearance="tertiary"
+                dimension="s"
+                disabled={transactionsStore.page <= 1}
+                onClick={() => void setUrlFilters({ page: transactionsStore.page - 1 })}
+              >
+                {t(I18nKey.TransactionsPrevious)}
+              </Button>
+              <span>
+                {transactionsStore.page} / {totalPages}
+              </span>
+              <Button
+                appearance="tertiary"
+                dimension="s"
+                disabled={transactionsStore.page >= totalPages}
+                onClick={() => void setUrlFilters({ page: transactionsStore.page + 1 })}
+              >
+                {t(I18nKey.TransactionsNext)}
+              </Button>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <Drawer
         backdrop
@@ -127,7 +232,7 @@ export const TransactionsPage = observer(function TransactionsPage() {
           {selectedTransaction ? (
             <div className="preview-drawer-content">
               <T font="Header/H4" as="h3">
-                {selectedTransaction.merchant}
+                {selectedTransaction.note || t(I18nKey.TransactionNoDescription)}
               </T>
               <dl className="detail-definition-list">
                 <div>
@@ -136,7 +241,11 @@ export const TransactionsPage = observer(function TransactionsPage() {
                 </div>
                 <div>
                   <dt>{t(I18nKey.Category)}</dt>
-                  <dd>{selectedTransaction.category}</dd>
+                  <dd>{selectedTransaction.category?.name || t(I18nKey.TransactionNoCategory)}</dd>
+                </div>
+                <div>
+                  <dt>{t(I18nKey.Account)}</dt>
+                  <dd>{selectedTransaction.account.name}</dd>
                 </div>
                 <div>
                   <dt>{t(I18nKey.Amount)}</dt>
@@ -144,7 +253,7 @@ export const TransactionsPage = observer(function TransactionsPage() {
                     className={`amount ${selectedTransaction.amount >= 0 ? 'amount--positive' : 'amount--negative'}`}
                   >
                     {selectedTransaction.amount >= 0 ? '+' : ''}
-                    {formatMoney(selectedTransaction.amount, selectedTransaction.currency)}
+                    {formatMoney(selectedTransaction.amount, selectedTransaction.account.currency)}
                   </dd>
                 </div>
               </dl>

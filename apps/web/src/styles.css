@@ -1212,6 +1212,29 @@ input:focus-visible {
   color: var(--admiral-color-Neutral_Neutral70);
   font-size: 12px;
 }
+.filter-date {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  color: var(--admiral-color-Neutral_Neutral70);
+  font-size: 12px;
+}
+.filter-date input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--admiral-color-Neutral_Neutral40);
+  border-radius: 4px;
+  color: var(--admiral-color-Neutral_Neutral90);
+  background: var(--admiral-color-Neutral_Neutral00);
+  font: inherit;
+}
+.pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 18px;
+}
 .detail-summary-grid {
   display: grid;
   grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.2fr);

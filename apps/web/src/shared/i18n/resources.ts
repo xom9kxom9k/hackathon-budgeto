@@ -123,6 +123,9 @@ const ru: TranslationMap = {
   [I18nKey.ActivityAllAccounts]: 'Все счета',
   [I18nKey.ActivityAllCategories]: 'Все категории',
   [I18nKey.ActivityAllTypes]: 'Все типы',
+  [I18nKey.ActivityTransfer]: 'Перевод',
+  [I18nKey.ActivityFrom]: 'С',
+  [I18nKey.ActivityTo]: 'По',
   [I18nKey.ActivitySelectPeriod]: 'Период',
   [I18nKey.ActivityDetail]: 'Детали операции',
   [I18nKey.ActivitySource]: 'Источник',
@@ -137,6 +140,14 @@ const ru: TranslationMap = {
   [I18nKey.TransactionsTitle]: 'Операции',
   [I18nKey.TransactionsDescription]:
     'Здесь появится рабочая таблица операций с источником каждой строки и историей изменений.',
+  [I18nKey.TransactionsLoadError]:
+    'Не удалось загрузить операции. Проверьте соединение и попробуйте снова.',
+  [I18nKey.TransactionsRetry]: 'Повторить загрузку',
+  [I18nKey.TransactionsPrevious]: 'Назад',
+  [I18nKey.TransactionsNext]: 'Дальше',
+  [I18nKey.TransactionsPagination]: 'Страницы операций',
+  [I18nKey.TransactionNoDescription]: 'Без назначения',
+  [I18nKey.TransactionNoCategory]: 'Без категории',
   [I18nKey.ImportsKicker]: 'Безопасный ingest',
   [I18nKey.ImportsTitle]: 'Импорт выписки',
   [I18nKey.ImportsDescription]:
@@ -459,6 +470,9 @@ const en: TranslationMap = {
   [I18nKey.ActivityAllAccounts]: 'All accounts',
   [I18nKey.ActivityAllCategories]: 'All categories',
   [I18nKey.ActivityAllTypes]: 'All types',
+  [I18nKey.ActivityTransfer]: 'Transfer',
+  [I18nKey.ActivityFrom]: 'From',
+  [I18nKey.ActivityTo]: 'To',
   [I18nKey.ActivitySelectPeriod]: 'Period',
   [I18nKey.ActivityDetail]: 'Transaction details',
   [I18nKey.ActivitySource]: 'Source',
@@ -473,6 +487,14 @@ const en: TranslationMap = {
   [I18nKey.TransactionsTitle]: 'Transactions',
   [I18nKey.TransactionsDescription]:
     'A working table with source rows and change history will appear here.',
+  [I18nKey.TransactionsLoadError]:
+    'Transactions could not be loaded. Check the connection and try again.',
+  [I18nKey.TransactionsRetry]: 'Retry loading',
+  [I18nKey.TransactionsPrevious]: 'Previous',
+  [I18nKey.TransactionsNext]: 'Next',
+  [I18nKey.TransactionsPagination]: 'Transaction pages',
+  [I18nKey.TransactionNoDescription]: 'No description',
+  [I18nKey.TransactionNoCategory]: 'No category',
   [I18nKey.ImportsKicker]: 'Safe ingest',
   [I18nKey.ImportsTitle]: 'Statement import',
   [I18nKey.ImportsDescription]:
