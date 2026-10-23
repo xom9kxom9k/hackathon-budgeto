@@ -6,6 +6,7 @@ import {
 } from '@admiral-ds/react-ui';
 import { MotionConfig } from 'framer-motion';
 import { observer } from 'mobx-react-lite';
+import { NuqsAdapter } from 'nuqs/adapters/react-router/v6';
 import { useEffect, useState, type PropsWithChildren } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { RouterProvider } from 'react-router-dom';
@@ -63,7 +64,9 @@ export const AppProviders = observer(function AppProviders({ children }: PropsWi
 export function AppProviderTree() {
   return (
     <AppProviders>
-      <RouterProvider router={router} />
+      <NuqsAdapter>
+        <RouterProvider router={router} />
+      </NuqsAdapter>
     </AppProviders>
   );
 }

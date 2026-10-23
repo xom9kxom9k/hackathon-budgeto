@@ -44,6 +44,10 @@ export const importFileSchema = z.object({
 });
 type ImportFormValues = z.infer<typeof importFileSchema>;
 type RowFilter = 'all' | 'invalid' | 'valid';
+type ImportFormProps = {
+  onJobCreated: (jobId: string) => void;
+  onNewImport: () => void;
+};
 
 function issueText(code: string, t: (key: I18nKey) => string): string {
   return t(issueTranslations[code] ?? I18nKey.ImportsRowInvalid);
@@ -53,7 +57,10 @@ function rowHasIssues(row: ImportRow): boolean {
   return !row.valid || row.errors.length > 0;
 }
 
-export const ImportForm = observer(function ImportForm() {
+export const ImportForm = observer(function ImportForm({
+  onJobCreated,
+  onNewImport,
+}: ImportFormProps) {
   const { t } = useTranslation();
   const importStore = useStore(StoreName.Import);
   const [rows, setRows] = useState<ImportRow[]>([]);
@@ -88,12 +95,14 @@ export const ImportForm = observer(function ImportForm() {
   );
   const invalidRows = rows.filter(rowHasIssues).length;
   const isProcessing = importStore.status === 'loading';
+  const isConfirmed = importStore.job?.status === 'confirmed';
   const canConfirm = Boolean(
     preview && rows.length > 0 && !isDirty && invalidRows === 0 && !isProcessing,
   );
 
   const submit = async () => {
-    await importStore.createJob();
+    const job = await importStore.createJob();
+    if (job) onJobCreated(job.id);
   };
 
   const updateRow = (sourceRow: number, field: keyof ImportRow, value: string) => {
@@ -185,7 +194,35 @@ export const ImportForm = observer(function ImportForm() {
       </form>
       {isProcessing ? <StatusIndicator dimension="s" text={t(I18nKey.ImportsProcessing)} /> : null}
       {importStore.status === 'error' ? (
-        <StatusIndicator dimension="s" text={t(I18nKey.ImportsFailed)} />
+        <div className="import-error-state">
+          <StatusIndicator
+            dimension="s"
+            text={
+              importStore.job?.status === 'failed'
+                ? t(I18nKey.ImportsFailed)
+                : t(I18nKey.ImportsRestoreFailed)
+            }
+          />
+          {importStore.job?.status === 'failed' ? (
+            <Button appearance="secondary" dimension="s" onClick={onNewImport}>
+              {t(I18nKey.ImportsChooseAnotherFile)}
+            </Button>
+          ) : (
+            <Button appearance="secondary" dimension="s" onClick={() => importStore.retry()}>
+              {t(I18nKey.ImportsRetry)}
+            </Button>
+          )}
+        </div>
+      ) : null}
+      {importStore.result ? (
+        <div className="import-result-state" role="status">
+          <StatusIndicator dimension="s" text={t(I18nKey.ImportsImportComplete)} />
+          <p>{t(I18nKey.ImportsCreatedCount, { count: importStore.result.created })}</p>
+          <p>{t(I18nKey.ImportsSkippedCount, { count: importStore.result.skipped })}</p>
+          <Button appearance="secondary" dimension="s" onClick={onNewImport}>
+            {t(I18nKey.ImportsNewImport)}
+          </Button>
+        </div>
       ) : null}
       {preview ? (
         <div className="import-preview" role="region" aria-label={t(I18nKey.ImportsStepPreview)}>
@@ -240,6 +277,7 @@ export const ImportForm = observer(function ImportForm() {
                       <td data-label={t(I18nKey.ImportsSourceRow)}>{row.sourceRow}</td>
                       <td data-label={t(I18nKey.Date)}>
                         <input
+                          disabled={isProcessing || isConfirmed}
                           aria-label={`${t(I18nKey.Date)} ${row.sourceRow}`}
                           value={row.date ?? ''}
                           onChange={(event) => updateRow(row.sourceRow, 'date', event.target.value)}
@@ -247,6 +285,7 @@ export const ImportForm = observer(function ImportForm() {
                       </td>
                       <td data-label={t(I18nKey.Operation)}>
                         <select
+                          disabled={isProcessing || isConfirmed}
                           aria-label={`${t(I18nKey.Operation)} ${row.sourceRow}`}
                           value={row.type ?? ''}
                           onChange={(event) => updateRow(row.sourceRow, 'type', event.target.value)}
@@ -261,6 +300,7 @@ export const ImportForm = observer(function ImportForm() {
                       </td>
                       <td data-label={t(I18nKey.Amount)}>
                         <input
+                          disabled={isProcessing || isConfirmed}
                           aria-label={`${t(I18nKey.Amount)} ${row.sourceRow}`}
                           inputMode="decimal"
                           value={row.amount ?? ''}
@@ -271,6 +311,7 @@ export const ImportForm = observer(function ImportForm() {
                       </td>
                       <td data-label={t(I18nKey.Account)}>
                         <input
+                          disabled={isProcessing || isConfirmed}
                           aria-label={`${t(I18nKey.Account)} ${row.sourceRow}`}
                           value={row.accountName ?? ''}
                           onChange={(event) =>
@@ -280,6 +321,7 @@ export const ImportForm = observer(function ImportForm() {
                       </td>
                       <td data-label={t(I18nKey.ImportsDestinationAccount)}>
                         <input
+                          disabled={isProcessing || isConfirmed}
                           aria-label={`${t(I18nKey.ImportsDestinationAccount)} ${row.sourceRow}`}
                           value={row.destinationAccountName ?? ''}
                           onChange={(event) =>
@@ -289,6 +331,7 @@ export const ImportForm = observer(function ImportForm() {
                       </td>
                       <td data-label={t(I18nKey.Category)}>
                         <input
+                          disabled={isProcessing || isConfirmed}
                           aria-label={`${t(I18nKey.Category)} ${row.sourceRow}`}
                           value={row.categoryName ?? ''}
                           onChange={(event) =>
@@ -298,6 +341,7 @@ export const ImportForm = observer(function ImportForm() {
                       </td>
                       <td data-label={t(I18nKey.ImportsNote)}>
                         <input
+                          disabled={isProcessing || isConfirmed}
                           aria-label={`${t(I18nKey.ImportsNote)} ${row.sourceRow}`}
                           value={row.note ?? ''}
                           onChange={(event) => updateRow(row.sourceRow, 'note', event.target.value)}
@@ -337,24 +381,26 @@ export const ImportForm = observer(function ImportForm() {
           ) : (
             <p className="state-callout">{t(I18nKey.ImportsNoRows)}</p>
           )}
-          <div className="import-actions">
-            <Button
-              appearance="secondary"
-              dimension="m"
-              disabled={!isDirty || isProcessing}
-              onClick={saveRows}
-            >
-              {isProcessing ? t(I18nKey.ImportsSaving) : t(I18nKey.ImportsSaveRows)}
-            </Button>
-            <Button
-              appearance="primary"
-              dimension="m"
-              disabled={!canConfirm}
-              onClick={() => importStore.confirm()}
-            >
-              {t(I18nKey.ImportsConfirm)}
-            </Button>
-          </div>
+          {!isConfirmed ? (
+            <div className="import-actions">
+              <Button
+                appearance="secondary"
+                dimension="m"
+                disabled={!isDirty || isProcessing}
+                onClick={saveRows}
+              >
+                {isProcessing ? t(I18nKey.ImportsSaving) : t(I18nKey.ImportsSaveRows)}
+              </Button>
+              <Button
+                appearance="primary"
+                dimension="m"
+                disabled={!canConfirm}
+                onClick={() => importStore.confirm()}
+              >
+                {t(I18nKey.ImportsConfirm)}
+              </Button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>

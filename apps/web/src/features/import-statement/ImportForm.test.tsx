@@ -77,7 +77,7 @@ describe('ImportForm', () => {
       <StoreProvider store={store}>
         <I18nextProvider i18n={i18n}>
           <ThemeProvider theme={LIGHT_THEME}>
-            <ImportForm />
+            <ImportForm onJobCreated={() => undefined} onNewImport={() => undefined} />
           </ThemeProvider>
         </I18nextProvider>
       </StoreProvider>,
@@ -124,7 +124,7 @@ describe('ImportForm', () => {
       <StoreProvider store={store}>
         <I18nextProvider i18n={i18n}>
           <ThemeProvider theme={LIGHT_THEME}>
-            <ImportForm />
+            <ImportForm onJobCreated={() => undefined} onNewImport={() => undefined} />
           </ThemeProvider>
         </I18nextProvider>
       </StoreProvider>,

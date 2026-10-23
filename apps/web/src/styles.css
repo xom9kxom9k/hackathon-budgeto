@@ -854,6 +854,24 @@ input:focus-visible {
   border-top: 1px solid var(--admiral-color-Neutral_Neutral20);
   padding-top: 22px;
 }
+.import-error-state,
+.import-result-state {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+.import-result-state {
+  border-left: 3px solid var(--admiral-color-Success_Success50Main);
+  padding: 12px 14px;
+  background: var(--admiral-color-Success_Success10);
+}
+.import-result-state p {
+  margin: 0;
+  color: var(--admiral-color-Neutral_Neutral70);
+  font-size: 14px;
+}
 .import-preview-toolbar {
   display: flex;
   align-items: end;
