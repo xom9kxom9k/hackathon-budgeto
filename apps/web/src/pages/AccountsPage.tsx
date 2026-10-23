@@ -1,6 +1,6 @@
 import { Button } from '@admiral-ds/react-ui';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,27 +9,15 @@ import { StoreName } from '@/app/stores/StoreName';
 import { I18nKey } from '@/shared/i18n';
 import { FinanceBreadcrumbs } from '@/shared/ui/FinanceBreadcrumbs';
 import { AccountsExplorer } from '@/widgets/accounts/AccountsExplorer';
-import {
-  AccountPreviewDrawer,
-  type AccountPreviewTarget,
-} from '@/widgets/accounts/AccountPreviewDrawer';
 
 export const AccountsPage = observer(function AccountsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const accountsStore = useStore(StoreName.Accounts);
-  const [previewTarget, setPreviewTarget] = useState<AccountPreviewTarget | null>(null);
 
-  const openFullPage = (target: AccountPreviewTarget) => {
-    setPreviewTarget(null);
-    navigate(
-      target.type === 'bank'
-        ? `/banks/${target.id}`
-        : target.type === 'account'
-          ? `/accounts/${target.id}`
-          : `/products/${target.id}`,
-    );
-  };
+  useEffect(() => {
+    void accountsStore.load();
+  }, [accountsStore]);
 
   return (
     <div className="page-stack">
@@ -52,25 +40,18 @@ export const AccountsPage = observer(function AccountsPage() {
         </div>
       </section>
 
-      <div className="state-callout state-callout--info">{t(I18nKey.AccountsDemoNote)}</div>
+      {accountsStore.status === 'error' ? (
+        <div className="state-callout state-callout--error">
+          <span>{t(I18nKey.AccountsLoadError)}</span>
+          <Button appearance="secondary" dimension="s" onClick={() => accountsStore.retry()}>
+            {t(I18nKey.AccountsRetry)}
+          </Button>
+        </div>
+      ) : null}
 
-      <AccountsExplorer
-        accounts={accountsStore.accounts}
-        banks={accountsStore.banks}
-        onOpenAccount={(id) => setPreviewTarget({ id, type: 'account' })}
-        onOpenBank={(id) => setPreviewTarget({ id, type: 'bank' })}
-        onOpenProduct={(id) => setPreviewTarget({ id, type: 'product' })}
-        products={accountsStore.products}
-      />
-
-      <AccountPreviewDrawer
-        accounts={accountsStore.accounts}
-        banks={accountsStore.banks}
-        onClose={() => setPreviewTarget(null)}
-        onOpenFull={openFullPage}
-        products={accountsStore.products}
-        target={previewTarget}
-      />
+      {accountsStore.status === 'success' || accountsStore.status === 'empty' ? (
+        <AccountsExplorer accounts={accountsStore.accounts} onImport={() => navigate('/imports')} />
+      ) : null}
     </div>
   );
 });

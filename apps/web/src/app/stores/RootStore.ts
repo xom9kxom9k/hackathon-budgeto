@@ -56,7 +56,7 @@ export class RootStore {
     this.auth = new AuthStore(this.services.auth);
     this.health = new HealthStore(this.services.health);
     this.overview = new OverviewStore();
-    this.accounts = new AccountsStore();
+    this.accounts = new AccountsStore(this.services.accounts);
     this.import = new ImportStore(this.services.imports);
     this.stores = {
       [StoreName.Loader]: this.loader,

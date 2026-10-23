@@ -689,6 +689,12 @@ input:focus-visible {
   font-size: clamp(34px, 5vw, 58px);
   letter-spacing: -0.06em;
 }
+.overview-balance-card .overview-balance-unavailable {
+  max-width: 28ch;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
 .overview-movement-card {
   display: grid;
   align-content: start;
@@ -1087,6 +1093,28 @@ input:focus-visible {
 }
 .accounts-explorer-heading .input-field {
   width: min(100%, 340px);
+}
+.real-account-list {
+  display: grid;
+  gap: 1px;
+  padding: 0 24px 24px;
+  background: var(--admiral-color-Neutral_Neutral20);
+}
+.real-account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  background: var(--admiral-color-Neutral_Neutral00);
+}
+.real-account-row > div:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.real-account-row span {
+  color: var(--admiral-color-Neutral_Neutral60);
 }
 .accounts-accordion {
   padding: 0 24px 12px;

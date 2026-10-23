@@ -1,12 +1,12 @@
 import { Button, T } from '@admiral-ds/react-ui';
 import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useStore } from '@/app/hooks/useStores';
 import { StoreName } from '@/app/stores/StoreName';
 import { I18nKey } from '@/shared/i18n';
-import { formatMoney } from '@/shared/lib/formatMoney';
 import { CashflowChart } from '@/widgets/overview/CashflowChart';
 import { TransactionTable } from '@/widgets/transactions/TransactionTable';
 
@@ -15,6 +15,10 @@ export const OverviewPage = observer(function OverviewPage() {
   const { t } = useTranslation();
   const overviewStore = useStore(StoreName.Overview);
   const accountsStore = useStore(StoreName.Accounts);
+
+  useEffect(() => {
+    void accountsStore.load();
+  }, [accountsStore]);
 
   return (
     <div className="page-stack">
@@ -39,10 +43,8 @@ export const OverviewPage = observer(function OverviewPage() {
       <section className="overview-anchor-grid" aria-label={t(I18nKey.OverviewAvailableMoney)}>
         <article className="metric-card metric-card--primary overview-balance-card">
           <span className="card-kicker">{t(I18nKey.OverviewAvailableMoney)}</span>
-          <strong>
-            {accountsStore.accounts.length
-              ? formatMoney(accountsStore.availableBalance)
-              : t(I18nKey.EmptyState)}
+          <strong className="overview-balance-unavailable">
+            {t(I18nKey.OverviewBalanceUnavailable)}
           </strong>
           <span className="metric-note">
             {accountsStore.accounts.length
