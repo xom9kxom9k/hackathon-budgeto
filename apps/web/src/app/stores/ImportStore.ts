@@ -5,6 +5,7 @@ import type {
   ImportResult,
   ImportRow,
   ImportService,
+  ImportHistoryItem,
 } from '@/shared/services/ImportService';
 import type { VaultStore } from './VaultStore';
 
@@ -14,6 +15,8 @@ export class ImportStore {
   job: ImportJob | null = null;
   result: ImportResult | null = null;
   errorCode: string | null = null;
+  history: ImportHistoryItem[] = [];
+  historyStatus: RequestStatus = 'idle';
   constructor(
     private readonly service: ImportService,
     private readonly vault?: VaultStore,
@@ -117,6 +120,14 @@ export class ImportStore {
     if (!this.job || this.job.status === 'failed' || this.job.status === 'confirmed') return;
     await this.restoreJob(this.job.id);
   }
+  async loadHistory(): Promise<void> {
+    if (this.historyStatus === 'success' || this.historyStatus === 'empty') return;
+    this.historyStatus = 'loading';
+    try { const history = await this.service.list(); runInAction(() => { this.history = history; this.historyStatus = history.length ? 'success' : 'empty'; }); }
+    catch (error) { runInAction(() => { this.historyStatus = 'error'; this.errorCode = error instanceof Error ? error.message : 'IMPORT_HISTORY_FAILED'; }); }
+  }
+  async retryJob(jobId: string): Promise<void> { await this.service.retry(jobId); await this.loadHistory(); }
+  async deleteStaging(jobId: string): Promise<void> { await this.service.deleteStaging(jobId); }
   clear(): void {
     this.selectedFile = null;
     this.job = null;

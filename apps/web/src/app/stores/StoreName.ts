@@ -9,4 +9,6 @@ export enum StoreName {
   Import = 'import',
   Categories = 'categories',
   Vault = 'vault',
+  Profile = 'profile',
+  Security = 'security',
 }
