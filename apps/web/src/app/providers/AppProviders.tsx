@@ -28,6 +28,11 @@ export const AppProviders = observer(function AppProviders({ children }: PropsWi
   }, [rootStore]);
 
   useEffect(() => {
+    if (rootStore.auth.status === 'authenticated') void rootStore.vault.bootstrap();
+    if (rootStore.auth.status === 'anonymous') rootStore.vault.lock();
+  }, [rootStore, rootStore.auth.status]);
+
+  useEffect(() => {
     void i18n.changeLanguage(locale);
     document.documentElement.lang = locale;
   }, [locale]);

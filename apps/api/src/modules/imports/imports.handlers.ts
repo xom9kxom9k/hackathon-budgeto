@@ -2,10 +2,16 @@ import { CommandHandler, ICommandHandler, IQueryHandler, QueryHandler } from '@n
 import { ImportsService } from './imports.service';
 import {
   ConfirmImportJobCommand,
+  ConfirmImportWithProofsCommand,
   CreateImportJobCommand,
   UpdateImportRowsCommand,
 } from './imports.commands';
-import { GetImportJobQuery, GetImportTemplateQuery } from './imports.queries';
+import {
+  GetImportJobQuery,
+  GetImportTemplateQuery,
+  PrepareImportConfirmationQuery,
+} from './imports.queries';
+import { VaultService } from '../vault/vault.service';
 
 @CommandHandler(CreateImportJobCommand)
 export class CreateImportJobHandler implements ICommandHandler<CreateImportJobCommand> {
@@ -34,6 +40,15 @@ export class ConfirmImportJobHandler implements ICommandHandler<ConfirmImportJob
   }
 }
 
+@CommandHandler(ConfirmImportWithProofsCommand)
+export class ConfirmImportWithProofsHandler implements ICommandHandler<ConfirmImportWithProofsCommand> {
+  constructor(private readonly imports: ImportsService) {}
+
+  execute(command: ConfirmImportWithProofsCommand) {
+    return this.imports.confirm(command.userId, command.jobId, command.proofs);
+  }
+}
+
 @QueryHandler(GetImportJobQuery)
 export class GetImportJobHandler implements IQueryHandler<GetImportJobQuery> {
   constructor(private readonly imports: ImportsService) {}
@@ -52,10 +67,24 @@ export class GetImportTemplateHandler implements IQueryHandler<GetImportTemplate
   }
 }
 
+@QueryHandler(PrepareImportConfirmationQuery)
+export class PrepareImportConfirmationHandler implements IQueryHandler<PrepareImportConfirmationQuery> {
+  constructor(private readonly vault: VaultService) {}
+
+  execute(query: PrepareImportConfirmationQuery) {
+    return this.vault.prepareImportConfirmation(query.userId, query.jobId);
+  }
+}
+
 export const importCommandHandlers = [
   CreateImportJobHandler,
   UpdateImportRowsHandler,
   ConfirmImportJobHandler,
+  ConfirmImportWithProofsHandler,
 ];
 
-export const importQueryHandlers = [GetImportJobHandler, GetImportTemplateHandler];
+export const importQueryHandlers = [
+  GetImportJobHandler,
+  GetImportTemplateHandler,
+  PrepareImportConfirmationHandler,
+];

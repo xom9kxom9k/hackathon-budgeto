@@ -16,11 +16,16 @@ import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { AuthPrincipal } from '../auth/auth.types';
 import {
-  ConfirmImportJobCommand,
+  ConfirmImportWithProofsCommand,
   CreateImportJobCommand,
   UpdateImportRowsCommand,
 } from './imports.commands';
-import { GetImportJobQuery, GetImportTemplateQuery } from './imports.queries';
+import {
+  GetImportJobQuery,
+  GetImportTemplateQuery,
+  PrepareImportConfirmationQuery,
+} from './imports.queries';
+import type { VaultProofDto } from '../vault/vault.dto';
 
 @Controller('imports')
 @UseGuards(AuthGuard)
@@ -63,7 +68,16 @@ export class ImportsController {
   }
 
   @Post(':id/confirm')
-  async confirm(@CurrentUser() user: AuthPrincipal, @Param('id') id: string): Promise<unknown> {
-    return this.commands.execute(new ConfirmImportJobCommand(user.userId, id));
+  async confirm(
+    @CurrentUser() user: AuthPrincipal,
+    @Param('id') id: string,
+    @Body('proofs') proofs?: VaultProofDto[],
+  ): Promise<unknown> {
+    return this.commands.execute(new ConfirmImportWithProofsCommand(user.userId, id, proofs ?? []));
+  }
+
+  @Get(':id/confirmation-claims')
+  async confirmationClaims(@CurrentUser() user: AuthPrincipal, @Param('id') id: string) {
+    return this.queries.execute(new PrepareImportConfirmationQuery(user.userId, id));
   }
 }

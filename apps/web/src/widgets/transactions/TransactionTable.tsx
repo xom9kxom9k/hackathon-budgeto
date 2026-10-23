@@ -1,7 +1,7 @@
 import { Table } from '@admiral-ds/react-ui';
 import type { Column, TableRow } from '@admiral-ds/react-ui';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { I18nKey } from '@/shared/i18n';
@@ -15,18 +15,27 @@ interface TransactionTableProps {
 
 export function TransactionTable({ onSelect, transactions }: TransactionTableProps) {
   const { t } = useTranslation();
+  const operationLabel = useCallback(
+    (transaction: Transaction) => transaction.note || t(I18nKey.TransactionNoDescription),
+    [t],
+  );
+  const categoryLabel = useCallback(
+    (transaction: Transaction) => transaction.category?.name || t(I18nKey.TransactionNoCategory),
+    [t],
+  );
   const columns = useMemo<Column[]>(
     () => [
       { name: 'date', title: t(I18nKey.Date), width: 100 },
       { name: 'merchant', title: t(I18nKey.Operation), width: '36%' },
       { name: 'category', title: t(I18nKey.Category), width: '24%' },
+      { name: 'accountName', title: t(I18nKey.Account), width: '24%' },
       {
         name: 'amount',
         title: t(I18nKey.Amount),
         width: 150,
         cellAlign: 'right',
         renderCell: (value: number, row: TableRow) => {
-          const transaction = row as TableRow & Transaction;
+          const transaction = row as TableRow & { currency: string };
           return (
             <span className={`amount ${value >= 0 ? 'amount--positive' : 'amount--negative'}`}>
               {value >= 0 ? '+' : ''}
@@ -39,8 +48,16 @@ export function TransactionTable({ onSelect, transactions }: TransactionTablePro
     [t],
   );
   const rows = useMemo<TableRow[]>(
-    () => transactions.map((transaction) => ({ ...transaction, hover: Boolean(onSelect) })),
-    [onSelect, transactions],
+    () =>
+      transactions.map((transaction) => ({
+        ...transaction,
+        accountName: transaction.account.name,
+        category: categoryLabel(transaction),
+        currency: transaction.account.currency,
+        hover: Boolean(onSelect),
+        merchant: operationLabel(transaction),
+      })),
+    [categoryLabel, onSelect, operationLabel, transactions],
   );
 
   if (transactions.length === 0) {
@@ -80,16 +97,16 @@ export function TransactionTable({ onSelect, transactions }: TransactionTablePro
               type="button"
             >
               <div>
-                <strong>{transaction.merchant}</strong>
+                <strong>{operationLabel(transaction)}</strong>
                 <span>
-                  {transaction.date} · {transaction.category}
+                  {transaction.date} · {categoryLabel(transaction)} · {transaction.account.name}
                 </span>
               </div>
               <span
                 className={`amount ${transaction.amount >= 0 ? 'amount--positive' : 'amount--negative'}`}
               >
                 {transaction.amount >= 0 ? '+' : ''}
-                {formatMoney(transaction.amount, transaction.currency)}
+                {formatMoney(transaction.amount, transaction.account.currency)}
               </span>
             </motion.button>
           ))}

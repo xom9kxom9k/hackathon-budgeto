@@ -4,15 +4,20 @@ import { AccountsService } from '@/shared/services/AccountsService';
 import { AuthService } from '@/shared/services/AuthService';
 import { HealthService } from '@/shared/services/HealthService';
 import { ImportService } from '@/shared/services/ImportService';
+import { OverviewService } from '@/shared/services/OverviewService';
+import { TransactionsService } from '@/shared/services/TransactionsService';
+import { VaultService } from '@/shared/services/VaultService';
 
 import { HealthStore } from './HealthStore';
 import { AccountsStore } from './AccountsStore';
 import { AuthStore } from './AuthStore';
 import { ImportStore } from './ImportStore';
+import { TransactionsStore } from './TransactionsStore';
 import { LoaderStore } from './LoaderStore';
 import { OverviewStore } from './OverviewStore';
 import { StoreName } from './StoreName';
 import { UiStore } from './UiStore';
+import { VaultStore } from './VaultStore';
 
 export interface StoreMap {
   [StoreName.Loader]: LoaderStore;
@@ -21,14 +26,19 @@ export interface StoreMap {
   [StoreName.Health]: HealthStore;
   [StoreName.Overview]: OverviewStore;
   [StoreName.Accounts]: AccountsStore;
+  [StoreName.Transactions]: TransactionsStore;
   [StoreName.Import]: ImportStore;
+  [StoreName.Vault]: VaultStore;
 }
 
 export interface ServiceRegistry {
   health: HealthService;
   accounts: AccountsService;
+  transactions: TransactionsService;
+  overview: OverviewService;
   auth: AuthService;
   imports: ImportService;
+  vault: VaultService;
 }
 
 export class RootStore {
@@ -38,7 +48,9 @@ export class RootStore {
   readonly health: HealthStore;
   readonly overview: OverviewStore;
   readonly accounts: AccountsStore;
+  readonly transactions: TransactionsStore;
   readonly import: ImportStore;
+  readonly vault: VaultStore;
   readonly apiClient: BaseApiClient;
   readonly services: ServiceRegistry;
   readonly stores: StoreMap;
@@ -46,18 +58,26 @@ export class RootStore {
   constructor() {
     this.loader = new LoaderStore();
     this.ui = new UiStore();
-    this.apiClient = new BaseApiClient({ baseUrl: getApiBaseUrl(), loaderStore: this.loader });
+    this.apiClient = new BaseApiClient({
+      baseUrl: getApiBaseUrl(),
+      loaderStore: this.loader,
+    });
     this.services = {
       health: new HealthService(this.apiClient),
       accounts: new AccountsService(this.apiClient),
+      transactions: new TransactionsService(this.apiClient),
+      overview: new OverviewService(this.apiClient),
       auth: new AuthService(this.apiClient),
       imports: new ImportService(this.apiClient),
+      vault: new VaultService(this.apiClient),
     };
     this.auth = new AuthStore(this.services.auth);
     this.health = new HealthStore(this.services.health);
-    this.overview = new OverviewStore();
-    this.accounts = new AccountsStore();
-    this.import = new ImportStore(this.services.imports);
+    this.overview = new OverviewStore(this.services.overview);
+    this.accounts = new AccountsStore(this.services.accounts);
+    this.transactions = new TransactionsStore(this.services.transactions);
+    this.vault = new VaultStore(this.services.vault);
+    this.import = new ImportStore(this.services.imports, this.vault);
     this.stores = {
       [StoreName.Loader]: this.loader,
       [StoreName.Auth]: this.auth,
@@ -65,7 +85,9 @@ export class RootStore {
       [StoreName.Health]: this.health,
       [StoreName.Overview]: this.overview,
       [StoreName.Accounts]: this.accounts,
+      [StoreName.Transactions]: this.transactions,
       [StoreName.Import]: this.import,
+      [StoreName.Vault]: this.vault,
     };
   }
 

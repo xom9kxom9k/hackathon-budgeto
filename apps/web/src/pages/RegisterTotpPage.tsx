@@ -18,6 +18,7 @@ import { TotpPinInput } from '@/shared/ui/TotpPinInput';
 export const RegisterTotpPage = observer(function RegisterTotpPage() {
   const { t } = useTranslation();
   const authStore = useStore(StoreName.Auth);
+  const vaultStore = useStore(StoreName.Vault);
   const navigate = useNavigate();
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
@@ -44,7 +45,10 @@ export const RegisterTotpPage = observer(function RegisterTotpPage() {
     }
   }
 
-  if (authStore.recoveryCodes.length === 0 && (!authStore.challengeToken || !authStore.otpauthUri)) {
+  if (
+    authStore.recoveryCodes.length === 0 &&
+    (!authStore.challengeToken || !authStore.otpauthUri)
+  ) {
     return (
       <section className="auth-page">
         <div className="auth-card">
@@ -64,6 +68,7 @@ export const RegisterTotpPage = observer(function RegisterTotpPage() {
       form.clearErrors('root');
       try {
         await authStore.completeRegistration(code);
+        await vaultStore.create();
         setCopyState('idle');
         form.reset();
       } catch (error) {
@@ -163,6 +168,23 @@ export const RegisterTotpPage = observer(function RegisterTotpPage() {
                 {t(I18nKey.AuthCopyFailed)}
               </p>
             )}
+            {vaultStore.recoveryPhrase ? (
+              <div className="vault-recovery-setup">
+                <T font="Header/H5" as="h2">
+                  {t(I18nKey.VaultKeyRecoveryPhrase)}
+                </T>
+                <p className="panel-copy">{t(I18nKey.VaultKeyRecoveryWarning)}</p>
+                <code className="vault-recovery-key">{vaultStore.recoveryPhrase}</code>
+                <Button
+                  appearance="secondary"
+                  dimension="m"
+                  onClick={() => void copyText(vaultStore.recoveryPhrase ?? '')}
+                  type="button"
+                >
+                  {t(copyState === 'copied' ? I18nKey.AuthCopied : I18nKey.AuthCopyRecovery)}
+                </Button>
+              </div>
+            ) : null}
             <Badge appearance="info" dimension="m">
               {authStore.user?.email}
             </Badge>

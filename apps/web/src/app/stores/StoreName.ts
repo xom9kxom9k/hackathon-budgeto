@@ -5,5 +5,7 @@ export enum StoreName {
   Health = 'health',
   Overview = 'overview',
   Accounts = 'accounts',
+  Transactions = 'transactions',
   Import = 'import',
+  Vault = 'vault',
 }

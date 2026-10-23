@@ -1,23 +1,55 @@
 import { makeAutoObservable } from 'mobx';
 
-import type { AccountSummary, Bank, FinancialProduct } from '@/entities/account/model/types';
+import type {
+  Account,
+  AccountSummary,
+  Bank,
+  FinancialProduct,
+} from '@/entities/account/model/types';
+import type { AccountsService } from '@/shared/services/AccountsService';
 import type { RequestStatus } from '@/shared/types/request';
 
 export class AccountsStore {
-  status: RequestStatus = 'success';
+  status: RequestStatus = 'idle';
+  errorCode: string | null = null;
+  accounts: Account[] = [];
   banks: Bank[] = [];
-  accounts: AccountSummary[] = [];
   products: FinancialProduct[] = [];
+  private loadPromise: Promise<void> | null = null;
 
-  constructor() {
+  constructor(private readonly accountsService: AccountsService) {
     makeAutoObservable(this, {}, { autoBind: true });
   }
 
-  get availableBalance(): number {
-    return this.accounts.reduce((total, account) => total + Math.max(account.balance, 0), 0);
+  async load(): Promise<void> {
+    if (this.status === 'success' || this.status === 'empty') return;
+    if (this.loadPromise) return this.loadPromise;
+
+    this.status = 'loading';
+    this.errorCode = null;
+    this.loadPromise = this.accountsService
+      .list()
+      .then((accounts) => {
+        this.accounts = accounts;
+        this.status = accounts.length ? 'success' : 'empty';
+      })
+      .catch((error: unknown) => {
+        this.status = 'error';
+        this.errorCode = error instanceof Error ? error.message : 'ACCOUNTS_LOAD_FAILED';
+      })
+      .finally(() => {
+        this.loadPromise = null;
+      });
+
+    return this.loadPromise;
   }
 
-  getAccount(accountId: string): AccountSummary | undefined {
+  async retry(): Promise<void> {
+    this.status = 'idle';
+    await this.load();
+  }
+
+  getAccount(accountId: string): Account | undefined {
     return this.accounts.find((account) => account.id === accountId);
   }
 
@@ -30,7 +62,9 @@ export class AccountsStore {
   }
 
   getAccountsForBank(bankId: string): AccountSummary[] {
-    return this.accounts.filter((account) => account.bankId === bankId);
+    return this.accounts.filter(
+      (account): account is AccountSummary => 'bankId' in account && account.bankId === bankId,
+    );
   }
 
   getProductsForAccount(accountId: string): FinancialProduct[] {
