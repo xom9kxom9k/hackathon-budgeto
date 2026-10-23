@@ -6,6 +6,7 @@ import { ProtectedRoute } from '@/app/routing/ProtectedRoute';
 import { PublicOnlyRoute } from '@/app/routing/PublicOnlyRoute';
 import { AccountDetailPage } from '@/pages/AccountDetailPage';
 import { AccountsPage } from '@/pages/AccountsPage';
+import { CategoriesPage } from '@/pages/CategoriesPage';
 import { BankDetailPage } from '@/pages/BankDetailPage';
 import { ImportsPage } from '@/pages/ImportsPage';
 import { LandingPage } from '@/pages/LandingPage';
@@ -59,6 +60,7 @@ export const router = createBrowserRouter([
       { path: '/overview', element: <OverviewPage /> },
       { path: '/profile', element: <ProfilePage /> },
       { path: '/accounts', element: <AccountsPage /> },
+      { path: '/categories', element: <CategoriesPage /> },
       { path: '/banks/:bankId', element: <BankDetailPage /> },
       { path: '/accounts/:accountId', element: <AccountDetailPage /> },
       { path: '/products/:productId', element: <ProductDetailPage /> },

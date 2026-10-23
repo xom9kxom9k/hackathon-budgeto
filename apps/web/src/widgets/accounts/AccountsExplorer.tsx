@@ -7,10 +7,12 @@ import { I18nKey } from '@/shared/i18n';
 
 interface AccountsExplorerProps {
   accounts: Account[];
+  onArchive: (account: Account) => void;
+  onEdit: (account: Account) => void;
   onImport: () => void;
 }
 
-export function AccountsExplorer({ accounts, onImport }: AccountsExplorerProps) {
+export function AccountsExplorer({ accounts, onArchive, onEdit, onImport }: AccountsExplorerProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const normalizedQuery = query.trim().toLocaleLowerCase();
@@ -46,11 +48,19 @@ export function AccountsExplorer({ accounts, onImport }: AccountsExplorerProps) 
         <div className="real-account-list">
           {visibleAccounts.map((account) => (
             <div className="real-account-row" key={account.id}>
-              <div>
+              <div className="real-account-main">
                 <strong>{account.name}</strong>
                 <span>{account.currency}</span>
               </div>
-              <StatusIndicator dimension="s" text={t(I18nKey.Connected)} />
+              <div className="real-account-actions">
+                <StatusIndicator dimension="s" text={t(I18nKey.Connected)} />
+                <Button appearance="secondary" dimension="s" onClick={() => onEdit(account)}>
+                  {t(I18nKey.AccountsEdit)}
+                </Button>
+                <Button appearance="secondary" dimension="s" onClick={() => onArchive(account)}>
+                  {t(I18nKey.AccountsArchive)}
+                </Button>
+              </div>
             </div>
           ))}
         </div>

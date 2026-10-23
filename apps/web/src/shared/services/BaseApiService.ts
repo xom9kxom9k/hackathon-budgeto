@@ -45,6 +45,10 @@ export abstract class BaseApiService {
     );
   }
 
+  protected patch<T>(path: string, body: unknown, schema: z.ZodType<T>): Promise<T> {
+    return this.request(path, { body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' }, method: 'PATCH' }, schema);
+  }
+
   protected request<T>(path: string, options: RequestInit, schema: z.ZodType<T>): Promise<T> {
     const normalizedPath = this.withPrefix(path);
     return this.apiClient.request(normalizedPath, options, schema);

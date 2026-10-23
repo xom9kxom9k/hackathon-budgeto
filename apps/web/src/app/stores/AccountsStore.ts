@@ -15,7 +15,10 @@ export class AccountsStore {
   accounts: Account[] = [];
   banks: Bank[] = [];
   products: FinancialProduct[] = [];
+  mutationStatus: 'idle' | 'saving' | 'success' | 'error' = 'idle';
+  mutationErrorCode: string | null = null;
   private loadPromise: Promise<void> | null = null;
+  private mutationPromise: Promise<void> | null = null;
 
   constructor(private readonly accountsService: AccountsService) {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -49,6 +52,21 @@ export class AccountsStore {
     await this.load();
   }
 
+  async create(input: { name: string; currency: string }): Promise<void> {
+    if (this.mutationPromise) return this.mutationPromise;
+    return this.mutate(() => this.accountsService.create(input));
+  }
+
+  async update(id: string, input: { name: string }): Promise<void> {
+    if (this.mutationPromise) return this.mutationPromise;
+    return this.mutate(() => this.accountsService.update(id, input));
+  }
+
+  async archive(id: string): Promise<void> {
+    if (this.mutationPromise) return this.mutationPromise;
+    return this.mutate(() => this.accountsService.archive(id));
+  }
+
   getAccount(accountId: string): Account | undefined {
     return this.accounts.find((account) => account.id === accountId);
   }
@@ -69,5 +87,24 @@ export class AccountsStore {
 
   getProductsForAccount(accountId: string): FinancialProduct[] {
     return this.products.filter((product) => product.accountId === accountId);
+  }
+
+  private async mutate(operation: () => Promise<unknown>): Promise<void> {
+    this.mutationStatus = 'saving';
+    this.mutationErrorCode = null;
+    this.mutationPromise = operation()
+      .then(() => {
+        this.mutationStatus = 'success';
+        this.status = 'idle';
+        return this.load();
+      })
+      .catch((error: unknown) => {
+        this.mutationStatus = 'error';
+        this.mutationErrorCode = error instanceof Error ? error.message : 'ACCOUNT_MUTATION_FAILED';
+      })
+      .finally(() => {
+        this.mutationPromise = null;
+      });
+    return this.mutationPromise;
   }
 }

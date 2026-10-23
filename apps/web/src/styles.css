@@ -1197,6 +1197,43 @@ input:focus-visible {
 .real-account-row span {
   color: var(--admiral-color-Neutral_Neutral60);
 }
+.real-account-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.real-account-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reference-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reference-editor {
+  display: grid;
+  gap: 18px;
+  border: 1px solid var(--admiral-color-Neutral_Neutral20);
+  padding: 20px;
+  background: var(--admiral-color-Neutral_Neutral00);
+}
+.reference-editor h3 {
+  margin: 0;
+}
+.reference-form {
+  display: grid;
+  gap: 16px;
+  max-width: 520px;
+}
+.reference-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .accounts-accordion {
   padding: 0 24px 12px;
 }
