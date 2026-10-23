@@ -3,7 +3,11 @@ module.exports = {
   env: { node: true, es2022: true },
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: ['./apps/api/tsconfig.app.json', './apps/web/tsconfig.json'],
+    project: [
+      './apps/api/tsconfig.app.json',
+      './apps/web/tsconfig.json',
+      './apps/worker/tsconfig.json',
+    ],
     tsconfigRootDir: __dirname,
   },
   plugins: ['@typescript-eslint'],

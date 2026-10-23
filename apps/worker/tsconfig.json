@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": { "outDir": "../../dist/apps/worker", "rootDir": ".." },
+  "include": ["src/**/*.ts", "../api/src/modules/accounts/entities/**/*.ts", "../api/src/modules/categories/entities/**/*.ts", "../api/src/modules/imports/entities/**/*.ts", "../api/src/shared/import-parser/**/*.ts"]
+}

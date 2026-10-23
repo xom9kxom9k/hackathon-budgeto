@@ -7,6 +7,9 @@ import { APP_GUARD } from '@nestjs/core';
 import { HealthController } from './health.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { AccountsModule } from './modules/accounts/accounts.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
+import { ImportsModule } from './modules/imports/imports.module';
 
 @Module({
   imports: [
@@ -34,6 +37,9 @@ import { AccountsModule } from './modules/accounts/accounts.module';
     CqrsModule.forRoot(),
     AuthModule,
     AccountsModule,
+    CategoriesModule,
+    TransactionsModule,
+    ImportsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
