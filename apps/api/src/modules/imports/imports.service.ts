@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DataSource, Repository } from 'typeorm';
@@ -11,6 +11,8 @@ import { AccountEntity } from '../accounts/entities/account.entity';
 import { CategoryEntity, CategoryKind } from '../categories/entities/category.entity';
 import { TransactionEntity, TransactionKind } from '../transactions/entities/transaction.entity';
 import type { ParsedImportPreview, ParsedImportRow } from '../../shared/import-parser/types';
+import type { VaultProofDto } from '../vault/vault.dto';
+import { VaultService } from '../vault/vault.service';
 
 @Injectable()
 export class ImportsService {
@@ -25,6 +27,7 @@ export class ImportsService {
     @InjectRepository(TransactionEntity)
     private readonly transactions: Repository<TransactionEntity>,
     private readonly dataSource: DataSource,
+    private readonly vault: VaultService,
   ) {}
 
   async create(userId: string, fileName: string, content: Buffer): Promise<unknown> {
@@ -72,29 +75,51 @@ export class ImportsService {
     return this.toView(await this.get(userId, jobId));
   }
 
-  async confirm(userId: string, jobId: string): Promise<{ created: number; skipped: number }> {
+  async confirm(
+    userId: string,
+    jobId: string,
+    proofs: VaultProofDto[] = [],
+  ): Promise<{ created: number; skipped: number }> {
     const job = await this.get(userId, jobId);
     if (job.status === ImportJobStatus.Confirmed) return { created: 0, skipped: 0 };
     const preview = job.preview as ParsedImportPreview | null;
     if (!preview || preview.invalid > 0) throw new Error('IMPORT_HAS_INVALID_ROWS');
+    const key = await this.vault.getKey(userId);
+    if (!key) throw new Error('VAULT_KEY_REQUIRED');
+    const { claims } = await this.vault.prepareImportConfirmation(userId, jobId);
+    if (proofs.length !== claims.length) throw new Error('VAULT_PROOFS_REQUIRED');
+    const validatedProofs = this.vault.validateProofs(claims, proofs, key.publicKey);
+    const proofByRow = new Map(validatedProofs.map((proof) => [proof.sourceRow, proof]));
     const result = await this.dataSource.transaction(async (manager) => {
       const transactions = manager.getRepository(TransactionEntity);
+      const accounts = await manager.getRepository(AccountEntity).find({ where: { userId } });
+      const categories = await manager.getRepository(CategoryEntity).find({ where: { userId } });
+      const createdTransactions: Array<{
+        transaction: TransactionEntity;
+        proof: (typeof validatedProofs)[number];
+      }> = [];
       let created = 0;
       let skipped = 0;
       for (const row of preview.rows) {
         if (!row.valid || !row.type || !row.date || !row.amount || !row.accountName) continue;
-        const account = await this.accounts.findOne({ where: { userId, name: row.accountName } });
+        const account = accounts.find(
+          (item) =>
+            item.name.toLocaleLowerCase('ru-RU') === row.accountName!.toLocaleLowerCase('ru-RU'),
+        );
         const destination = row.destinationAccountName
-          ? await this.accounts.findOne({ where: { userId, name: row.destinationAccountName } })
+          ? accounts.find(
+              (item) =>
+                item.name.toLocaleLowerCase('ru-RU') ===
+                row.destinationAccountName!.toLocaleLowerCase('ru-RU'),
+            )
           : null;
         const category = row.categoryName
-          ? await this.categories.findOne({
-              where: {
-                userId,
-                name: row.categoryName,
-                kind: row.type === 'income' ? CategoryKind.Income : CategoryKind.Expense,
-              },
-            })
+          ? categories.find(
+              (item) =>
+                item.name.toLocaleLowerCase('ru-RU') ===
+                  row.categoryName!.toLocaleLowerCase('ru-RU') &&
+                item.kind === (row.type === 'income' ? CategoryKind.Income : CategoryKind.Expense),
+            )
           : null;
         if (
           !account ||
@@ -102,27 +127,14 @@ export class ImportsService {
           (row.type !== 'transfer' && row.categoryName && !category)
         )
           throw new Error('IMPORT_REFERENCE_INVALID');
-        const fingerprint = createHash('sha256')
-          .update(
-            [
-              userId,
-              job.id,
-              row.sourceRow,
-              row.date,
-              row.type,
-              row.amount,
-              account.id,
-              destination?.id ?? '',
-              category?.id ?? '',
-              row.note ?? '',
-            ].join('|'),
-          )
-          .digest('hex');
+        const proof = proofByRow.get(row.sourceRow);
+        if (!proof) throw new Error('VAULT_PROOF_INVALID');
+        const fingerprint = proof.fingerprint;
         if (await transactions.exists({ where: { userId, fingerprint } })) {
           skipped += 1;
           continue;
         }
-        await transactions.save(
+        const transaction = await transactions.save(
           transactions.create({
             userId,
             accountId: account.id,
@@ -137,8 +149,10 @@ export class ImportsService {
             importRow: row.sourceRow,
           }),
         );
+        createdTransactions.push({ transaction, proof });
         created += 1;
       }
+      await this.vault.appendTransactionEvents(manager, userId, createdTransactions);
       await manager.getRepository(ImportJobEntity).update(job.id, {
         status: ImportJobStatus.Confirmed,
         confirmedAt: new Date(),

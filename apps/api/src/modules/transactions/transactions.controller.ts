@@ -28,7 +28,7 @@ export class TransactionsController {
   }
 
   private parseFilters(query: Record<string, string | undefined>): ListTransactionsFilters {
-    const page = this.parseInteger(query.page, 1, 1);
+    const page = this.parseInteger(query.page, 1);
     const pageSize = this.parseInteger(query.pageSize, 50, 100);
     const kind = query.kind as TransactionKind | undefined;
 
@@ -52,7 +52,11 @@ export class TransactionsController {
     };
   }
 
-  private parseInteger(value: string | undefined, fallback: number, maximum: number): number {
+  private parseInteger(
+    value: string | undefined,
+    fallback: number,
+    maximum = Number.MAX_SAFE_INTEGER,
+  ): number {
     if (!value) return fallback;
     const parsed = Number(value);
     if (!Number.isInteger(parsed) || parsed < 1 || parsed > maximum) {

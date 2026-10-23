@@ -9,11 +9,13 @@ import { ImportJobEntity } from './entities/import-job.entity';
 import { ImportsController } from './imports.controller';
 import { ImportsService } from './imports.service';
 import { importCommandHandlers, importQueryHandlers } from './imports.handlers';
+import { VaultModule } from '../vault/vault.module';
 
 @Module({
   imports: [
     CqrsModule,
     AuthModule,
+    VaultModule,
     TypeOrmModule.forFeature([ImportJobEntity, AccountEntity, CategoryEntity, TransactionEntity]),
   ],
   controllers: [ImportsController],

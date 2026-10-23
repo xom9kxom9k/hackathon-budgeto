@@ -1,4 +1,5 @@
 import type { ParsedImportRow } from '../../shared/import-parser/types';
+import type { VaultProofDto } from '../vault/vault.dto';
 
 export class CreateImportJobCommand {
   constructor(
@@ -20,5 +21,13 @@ export class ConfirmImportJobCommand {
   constructor(
     public readonly userId: string,
     public readonly jobId: string,
+  ) {}
+}
+
+export class ConfirmImportWithProofsCommand {
+  constructor(
+    public readonly userId: string,
+    public readonly jobId: string,
+    public readonly proofs: VaultProofDto[],
   ) {}
 }

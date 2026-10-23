@@ -9,18 +9,15 @@ describe('TransactionsController', () => {
     const execute = vi.fn().mockResolvedValue({ items: [], total: 0, page: 2, pageSize: 25 });
     const controller = new TransactionsController({ execute } as never);
 
-    await controller.list(
-      { userId: 'user-1' } as never,
-      {
-        page: '2',
-        pageSize: '25',
-        accountId: 'account-1',
-        kind: TransactionKind.Expense,
-        q: 'coffee',
-        from: '2025-01-01',
-        to: '2025-01-31',
-      },
-    );
+    await controller.list({ userId: 'user-1' } as never, {
+      page: '2',
+      pageSize: '25',
+      accountId: 'account-1',
+      kind: TransactionKind.Expense,
+      q: 'coffee',
+      from: '2025-01-01',
+      to: '2025-01-31',
+    });
 
     const [query] = execute.mock.calls[0] as [ListTransactionsQuery];
     expect(query.userId).toBe('user-1');

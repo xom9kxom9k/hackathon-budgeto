@@ -6,3 +6,10 @@ export class GetImportJobQuery {
 }
 
 export class GetImportTemplateQuery {}
+
+export class PrepareImportConfirmationQuery {
+  constructor(
+    public readonly userId: string,
+    public readonly jobId: string,
+  ) {}
+}
