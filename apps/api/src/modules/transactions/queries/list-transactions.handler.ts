@@ -7,28 +7,10 @@ import { CategoryEntity } from '../../categories/entities/category.entity';
 import { TransactionEntity } from '../entities/transaction.entity';
 import {
   ListTransactionsQuery,
-  TransactionCategoryView,
-  TransactionPartyView,
-  TransactionView,
+  TransactionRow,
   TransactionsPageView,
+  mapTransactionRow,
 } from './list-transactions.query';
-
-interface TransactionRow {
-  id: string;
-  date: string;
-  kind: TransactionView['kind'];
-  amount: string;
-  note: string | null;
-  accountId: string;
-  accountName: string;
-  accountCurrency: string;
-  destinationAccountId: string | null;
-  destinationAccountName: string | null;
-  destinationAccountCurrency: string | null;
-  categoryId: string | null;
-  categoryName: string | null;
-  categoryKind: TransactionCategoryView['kind'] | null;
-}
 
 @QueryHandler(ListTransactionsQuery)
 export class ListTransactionsHandler implements IQueryHandler<ListTransactionsQuery> {
@@ -96,37 +78,10 @@ export class ListTransactionsHandler implements IQueryHandler<ListTransactionsQu
       .getRawMany()) as TransactionRow[];
 
     return {
-      items: rows.map((row) => this.toView(row)),
+      items: rows.map(mapTransactionRow),
       total,
       page: filters.page,
       pageSize: filters.pageSize,
     };
-  }
-
-  private toView(row: TransactionRow): TransactionView {
-    return {
-      id: row.id,
-      date: row.date,
-      kind: row.kind,
-      amount: Number(row.amount),
-      note: row.note,
-      account: this.toParty(row.accountId, row.accountName, row.accountCurrency),
-      destinationAccount:
-        row.destinationAccountId && row.destinationAccountName && row.destinationAccountCurrency
-          ? this.toParty(
-              row.destinationAccountId,
-              row.destinationAccountName,
-              row.destinationAccountCurrency,
-            )
-          : null,
-      category:
-        row.categoryId && row.categoryName && row.categoryKind
-          ? { id: row.categoryId, name: row.categoryName, kind: row.categoryKind }
-          : null,
-    };
-  }
-
-  private toParty(id: string, name: string, currency: string): TransactionPartyView {
-    return { id, name, currency };
   }
 }

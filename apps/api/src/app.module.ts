@@ -10,6 +10,7 @@ import { AccountsModule } from './modules/accounts/accounts.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { ImportsModule } from './modules/imports/imports.module';
+import { OverviewModule } from './modules/overview/overview.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ImportsModule } from './modules/imports/imports.module';
     CategoriesModule,
     TransactionsModule,
     ImportsModule,
+    OverviewModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
