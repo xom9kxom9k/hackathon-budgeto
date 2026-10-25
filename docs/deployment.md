@@ -59,9 +59,10 @@ Application secrets не должны попадать в Git или GitHub Acti
 на сервере используется Compose через `../../.env` относительно
 `infra/prod/compose.yml`.
 
-## GitHub Environment
+## GitHub Actions secrets
 
-Создайте Environment `production` и добавьте secrets:
+Откройте `Settings → Secrets and variables → Actions`, выберите вкладку
+`Secrets`, нажмите `New repository secret` и добавьте:
 
 - `DEPLOY_SSH_PRIVATE_KEY` — закрытый ключ пользователя `deploy`;
 - `DEPLOY_KNOWN_HOSTS` — заранее проверенная строка host key сервера;
