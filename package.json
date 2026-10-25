@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev:api": "nest start api --watch",
-    "dev:worker": "node dist/apps/worker/main.js",
+    "dev:worker": "node dist/apps/worker/worker/src/main.js",
     "dev:web": "vite --config apps/web/vite.config.ts",
     "build:api": "nest build api",
     "build:worker": "tsc -p apps/worker/tsconfig.json",

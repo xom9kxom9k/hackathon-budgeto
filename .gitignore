@@ -4,5 +4,6 @@ coverage/
 .env
 .env.*
 !.env.example
+!infra/**/.env.example
 *.log
 .DS_Store

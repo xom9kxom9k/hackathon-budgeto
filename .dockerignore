@@ -1,0 +1,13 @@
+.git
+.github
+.agents
+node_modules
+dist
+coverage
+.data
+.env
+.env.*
+!.env.example
+infra/dev/.env
+infra/prod/.env
+*.log
