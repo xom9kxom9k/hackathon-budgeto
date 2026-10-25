@@ -13,6 +13,7 @@ FROM dependencies AS build
 
 COPY . .
 RUN npm run build:api && npm run build:worker
+RUN npm prune --omit=dev
 
 FROM node:22-bookworm-slim AS runtime
 
@@ -20,6 +21,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 
