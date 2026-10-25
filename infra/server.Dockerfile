@@ -3,7 +3,7 @@ FROM node:22-bookworm-slim AS dependencies
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install --no-audit --no-fund
+RUN npm pkg delete scripts.prepare && npm install --no-audit --no-fund
 
 FROM dependencies AS development
 
