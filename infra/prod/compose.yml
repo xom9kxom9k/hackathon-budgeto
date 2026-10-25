@@ -1,0 +1,97 @@
+name: budgeto-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - ../../.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    env_file:
+      - ../../.env
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migration:
+    build:
+      context: ../..
+      dockerfile: infra/server.Dockerfile
+      target: runtime
+    env_file:
+      - ../../.env
+    command: ['./node_modules/.bin/typeorm', 'migration:run', '-d', 'dist/apps/api/database/data-source.js']
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/server.Dockerfile
+      target: runtime
+    env_file:
+      - ../../.env
+    command: ['node', 'dist/apps/api/main.js']
+    expose:
+      - '3000'
+    volumes:
+      - import_data:/app/.data
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: infra/server.Dockerfile
+      target: runtime
+    env_file:
+      - ../../.env
+    command: ['node', 'dist/apps/worker/worker/src/main.js']
+    volumes:
+      - import_data:/app/.data
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  caddy:
+    build:
+      context: ../..
+      dockerfile: infra/web.Dockerfile
+      target: production
+      args:
+        VITE_API_BASE_URL: /api
+    env_file:
+      - ../../.env
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  caddy_config:
+  caddy_data:
+  import_data:
+  postgres_data:
