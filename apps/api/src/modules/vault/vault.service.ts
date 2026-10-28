@@ -410,6 +410,11 @@ export class VaultService {
       note: row.note,
       importJobId: job.id,
       importRow: row.sourceRow,
+      sourceRef: row.sourceRef,
+      sourceSha256: (job.preview as ParsedImportPreview).sourceSha256 ?? job.sourceSha256 ?? null,
+      parserId: (job.preview as ParsedImportPreview).parserId,
+      parserVersion: (job.preview as ParsedImportPreview).parserVersion,
+      templateId: (job.preview as ParsedImportPreview).templateId,
       fingerprint,
     };
     const canonicalPayload = canonicalize(payload);

@@ -4,6 +4,12 @@ import { BaseApiService } from './BaseApiService';
 
 const rowSchema = z.object({
   sourceRow: z.number(),
+  sourceRef: z.object({
+    kind: z.enum(['xlsx', 'csv', 'pdf']),
+    sheet: z.string().optional(),
+    page: z.number().optional(),
+    record: z.number().optional(),
+  }).optional(),
   date: z.string().nullable(),
   type: z.enum(['income', 'expense', 'transfer']).nullable(),
   amount: z.number().nullable(),
@@ -16,7 +22,12 @@ const rowSchema = z.object({
   warnings: z.array(z.string()),
 });
 const previewSchema = z.object({
-  format: z.enum(['budgeto-xlsx', 'finance-export-xlsx']),
+  format: z.enum(['budgeto-xlsx', 'finance-export-xlsx', 'generic-csv', 'generic-pdf']),
+  parserId: z.string().optional(),
+  parserVersion: z.string().optional(),
+  templateId: z.string().optional(),
+  confidence: z.number().optional(),
+  sourceSha256: z.string().optional(),
   total: z.number(),
   valid: z.number(),
   invalid: z.number(),

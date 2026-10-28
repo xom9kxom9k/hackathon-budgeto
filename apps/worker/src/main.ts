@@ -2,7 +2,10 @@ import 'reflect-metadata';
 import { Worker } from 'bullmq';
 import { DataSource, IsNull } from 'typeorm';
 import { readFile } from 'node:fs/promises';
-import { parseBudgetoXlsx } from '../../api/src/shared/import-parser/xlsx-parser';
+import {
+  parseImportDocument,
+  sha256,
+} from '../../api/src/shared/import-parser/document-parser';
 import {
   ImportJobEntity,
   ImportJobStatus,
@@ -23,7 +26,11 @@ async function processJob(jobId: string): Promise<void> {
   const job = await jobs.findOneByOrFail({ id: jobId });
   await jobs.update(job.id, { status: ImportJobStatus.Parsing, errorCode: null });
   try {
-    const preview = await parseBudgetoXlsx(await readFile(job.filePath));
+    const content = await readFile(job.filePath);
+    if (job.sourceSha256 && sha256(content) !== job.sourceSha256) {
+      throw new Error('IMPORT_SOURCE_CHANGED');
+    }
+    const preview = await parseImportDocument(content, job.fileName);
     const [accounts, categories] = await Promise.all([
       dataSource
         .getRepository(AccountEntity)

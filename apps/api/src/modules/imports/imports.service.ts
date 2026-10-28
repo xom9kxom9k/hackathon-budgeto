@@ -11,6 +11,7 @@ import { AccountEntity } from '../accounts/entities/account.entity';
 import { CategoryEntity, CategoryKind } from '../categories/entities/category.entity';
 import { TransactionEntity, TransactionKind } from '../transactions/entities/transaction.entity';
 import type { ParsedImportPreview, ParsedImportRow } from '../../shared/import-parser/types';
+import { detectImportFormat, sha256 } from '../../shared/import-parser/document-parser';
 import type { VaultProofDto } from '../vault/vault.dto';
 import { VaultService } from '../vault/vault.service';
 import { VaultEventType } from '../vault/entities/vault-event.entity';
@@ -32,14 +33,15 @@ export class ImportsService {
   ) {}
 
   async create(userId: string, fileName: string, content: Buffer): Promise<unknown> {
-    if (!/\.(xlsx|xlsm)$/i.test(fileName)) throw new Error('IMPORT_FILE_TYPE');
     if (!content.length) throw new Error('IMPORT_FILE_EMPTY');
     if (content.length > 8 * 1024 * 1024) throw new Error('IMPORT_FILE_TOO_LARGE');
+    detectImportFormat(fileName, content);
     await mkdir(this.stagingDir, { recursive: true });
-    const filePath = join(this.stagingDir, `${randomUUID()}.xlsx`);
+    const filePath = join(this.stagingDir, `${randomUUID()}.upload`);
+    const sourceSha256 = sha256(content);
     await writeFile(filePath, content, { flag: 'wx' });
     const job = await this.jobs.save(
-      this.jobs.create({ userId, fileName, filePath, status: ImportJobStatus.Queued }),
+      this.jobs.create({ userId, fileName, filePath, sourceSha256, status: ImportJobStatus.Queued }),
     );
     await this.queue.add(
       'parse',
@@ -85,11 +87,41 @@ export class ImportsService {
   async updateRows(userId: string, jobId: string, rows: ParsedImportRow[]): Promise<unknown> {
     const job = await this.get(userId, jobId);
     if (job.status !== ImportJobStatus.Preview) throw new Error('IMPORT_NOT_EDITABLE');
+    const preview = job.preview as ParsedImportPreview | null;
+    if (!preview || rows.length !== preview.rows.length) throw new Error('IMPORT_ROWS_CHANGED');
+    const originalRows = new Map(preview.rows.map((row) => [row.sourceRow, row]));
+    const submittedSourceRows = new Set(rows.map((row) => row.sourceRow));
+    if (
+      submittedSourceRows.size !== rows.length ||
+      preview.rows.some((row) => !submittedSourceRows.has(row.sourceRow))
+    ) {
+      throw new Error('IMPORT_ROWS_CHANGED');
+    }
+    const anchoredRows = rows.map((row) => {
+      const original = originalRows.get(row.sourceRow);
+      if (!original) throw new Error('IMPORT_ROWS_CHANGED');
+      return {
+        ...row,
+        sourceRow: original.sourceRow,
+        sourceRef: original.sourceRef ?? { kind: 'xlsx', record: original.sourceRow },
+      };
+    });
     const [accounts, categories] = await Promise.all([
       this.accounts.find({ where: { userId, archivedAt: IsNull() } }),
       this.categories.find({ where: { userId, archivedAt: IsNull() } }),
     ]);
-    const checkedRows = rows.map((row) => this.validateRow(row));
+    const checkedRows = anchoredRows.map((row) => {
+      const checked = this.validateRow(row);
+      const original = originalRows.get(row.sourceRow)!;
+      if (
+        original.errors.includes('PDF_AMOUNT_AMBIGUOUS') &&
+        row.amount === original.amount
+      ) {
+        checked.errors.push('PDF_AMOUNT_AMBIGUOUS');
+        checked.valid = false;
+      }
+      return checked;
+    });
     const resolved = this.resolve(
       { ...(job.preview as ParsedImportPreview), rows: checkedRows },
       accounts,

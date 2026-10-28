@@ -22,6 +22,8 @@ export class ImportJobEntity {
   @Column({ name: 'user_id', type: 'uuid' }) userId!: string;
   @Column({ name: 'file_name', type: 'varchar', length: 255 }) fileName!: string;
   @Column({ name: 'file_path', type: 'varchar', length: 500 }) filePath!: string;
+  @Column({ name: 'source_sha256', type: 'varchar', length: 64, nullable: true })
+  sourceSha256!: string | null;
   @Column({ type: 'enum', enum: ImportJobStatus, default: ImportJobStatus.Queued })
   status!: ImportJobStatus;
   @Column({ type: 'jsonb', nullable: true }) preview!: unknown;

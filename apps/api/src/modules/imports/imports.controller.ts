@@ -76,7 +76,16 @@ export class ImportsController {
     @Param('id') id: string,
     @Body() body: UpdateImportRowsDto,
   ): Promise<unknown> {
-    return this.commands.execute(new UpdateImportRowsCommand(user.userId, id, body.rows));
+    return this.commands.execute(
+      new UpdateImportRowsCommand(
+        user.userId,
+        id,
+        body.rows.map((row) => ({
+          ...row,
+          sourceRef: row.sourceRef ?? { kind: 'xlsx', record: row.sourceRow },
+        })),
+      ),
+    );
   }
 
   @Post(':id/confirm')

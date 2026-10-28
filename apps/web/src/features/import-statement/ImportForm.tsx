@@ -27,6 +27,7 @@ const issueTranslations: Record<string, I18nKey> = {
   CATEGORY_TYPE_MISMATCH: I18nKey.ImportsIssueCategoryTypeMismatch,
   TRANSFER_CATEGORY_IGNORED: I18nKey.ImportsIssueTransferCategoryIgnored,
   DESTINATION_ONLY_FOR_TRANSFER: I18nKey.ImportsIssueDestinationOnlyTransfer,
+  PDF_AMOUNT_AMBIGUOUS: I18nKey.ImportsIssuePdfAmountAmbiguous,
   EDIT_REQUIRES_RECHECK: I18nKey.ImportsIssueRequiresRecheck,
 };
 const typeOptions = [
@@ -41,7 +42,7 @@ export const importFileSchema = z.object({
       (value) => typeof File !== 'undefined' && value instanceof File,
       I18nKey.ImportsValidationRequired,
     )
-    .refine((file) => /\.(xlsx|xlsm)$/i.test(file.name), I18nKey.ImportsValidationType)
+    .refine((file) => /\.(xlsx|xlsm|csv|pdf)$/i.test(file.name), I18nKey.ImportsValidationType)
     .refine((file) => file.size <= maxFileSize, I18nKey.ImportsValidationSize),
 });
 type ImportFormValues = z.infer<typeof importFileSchema>;
@@ -147,6 +148,7 @@ export const ImportForm = observer(function ImportForm({
   };
 
   const step = !preview ? (isProcessing ? 1 : 0) : isDirty || invalidRows > 0 ? 2 : 3;
+  const formatLabel = preview?.format.replace('finance-export-', '').replace('budgeto-', '') ?? '';
 
   return (
     <section className="import-panel">
@@ -178,7 +180,7 @@ export const ImportForm = observer(function ImportForm({
           name="file"
           render={({ field }) => (
             <FileInputField
-              accept=".xlsx,.xlsm"
+              accept=".xlsx,.xlsm,.csv,.pdf"
               dimension="m"
               label={t(I18nKey.ImportsFileLabel)}
               name={field.name}
@@ -253,6 +255,9 @@ export const ImportForm = observer(function ImportForm({
             <div>
               <span className="section-kicker">{t(I18nKey.ImportsStepPreview)}</span>
               <h2>{t(I18nKey.ImportsPreviewReady)}</h2>
+              <span className="field-muted">
+                {t(I18nKey.ImportsDetectedFormat)}: {formatLabel.toUpperCase()}
+              </span>
             </div>
             <Badge appearance={invalidRows ? 'warning' : 'success'} dimension="m">
               {rows.length - invalidRows}/{rows.length}

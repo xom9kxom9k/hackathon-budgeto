@@ -1,5 +1,13 @@
 export type ImportTransactionType = 'income' | 'expense' | 'transfer';
 
+export type ImportSourceKind = 'xlsx' | 'csv' | 'pdf';
+
+export type ImportPreviewFormat =
+  | 'budgeto-xlsx'
+  | 'finance-export-xlsx'
+  | 'generic-csv'
+  | 'generic-pdf';
+
 export type ImportIssueCode =
   | 'INVALID_DATE'
   | 'UNKNOWN_TYPE'
@@ -13,10 +21,20 @@ export type ImportIssueCode =
   | 'CATEGORY_TYPE_MISMATCH'
   | 'TRANSFER_CATEGORY_IGNORED'
   | 'DESTINATION_ONLY_FOR_TRANSFER'
-  | 'EDIT_REQUIRES_RECHECK';
+  | 'EDIT_REQUIRES_RECHECK'
+  | 'PDF_AMOUNT_AMBIGUOUS'
+  | 'PDF_TEXT_NOT_FOUND';
+
+export interface ImportSourceRef {
+  kind: ImportSourceKind;
+  sheet?: string;
+  page?: number;
+  record?: number;
+}
 
 export interface ParsedImportRow {
   sourceRow: number;
+  sourceRef: ImportSourceRef;
   date: string | null;
   type: ImportTransactionType | null;
   amount: number | null;
@@ -30,7 +48,12 @@ export interface ParsedImportRow {
 }
 
 export interface ParsedImportPreview {
-  format: 'budgeto-xlsx' | 'finance-export-xlsx';
+  format: ImportPreviewFormat;
+  parserId: string;
+  parserVersion: string;
+  templateId: string;
+  confidence: number;
+  sourceSha256?: string;
   total: number;
   valid: number;
   invalid: number;

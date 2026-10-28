@@ -13,7 +13,9 @@ import { i18n } from '@/shared/i18n';
 describe('ImportForm', () => {
   it('rejects unsupported file extensions', async () => {
     const result = importFileSchema.safeParse({
-      file: new File(['data'], 'statement.pdf', { type: 'application/pdf' }),
+      file: new File(['data'], 'statement.docx', {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      }),
     });
 
     expect(result.success).toBe(false);
@@ -27,6 +29,19 @@ describe('ImportForm', () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it('accepts CSV and PDF statements in the upload schema', () => {
+    expect(
+      importFileSchema.safeParse({
+        file: new File(['date,amount'], 'statement.csv', { type: 'text/csv' }),
+      }).success,
+    ).toBe(true);
+    expect(
+      importFileSchema.safeParse({
+        file: new File(['%PDF-1.7'], 'statement.pdf', { type: 'application/pdf' }),
+      }).success,
+    ).toBe(true);
   });
 
   it('filters invalid rows and translates parser issues', async () => {
@@ -45,12 +60,17 @@ describe('ImportForm', () => {
       errorCode: null,
       preview: {
         format: 'budgeto-xlsx',
+        parserId: 'xlsx-header-map',
+        parserVersion: '1.0.0',
+        templateId: 'generic-xlsx-table',
+        confidence: 0.98,
         total: 2,
         valid: 1,
         invalid: 1,
         rows: [
           {
             sourceRow: 2,
+            sourceRef: { kind: 'xlsx', sheet: 'Операции', record: 2 },
             date: null,
             type: 'expense',
             amount: 10,
@@ -64,6 +84,7 @@ describe('ImportForm', () => {
           },
           {
             sourceRow: 3,
+            sourceRef: { kind: 'xlsx', sheet: 'Операции', record: 3 },
             date: '2026-01-01',
             type: 'income',
             amount: 100,
@@ -112,12 +133,17 @@ describe('ImportForm', () => {
       errorCode: null,
       preview: {
         format: 'budgeto-xlsx',
+        parserId: 'xlsx-header-map',
+        parserVersion: '1.0.0',
+        templateId: 'generic-xlsx-table',
+        confidence: 0.98,
         total: 1,
         valid: 1,
         invalid: 0,
         rows: [
           {
             sourceRow: 2,
+            sourceRef: { kind: 'xlsx', sheet: 'Операции', record: 2 },
             date: '2026-01-01',
             type: 'expense',
             amount: 10,

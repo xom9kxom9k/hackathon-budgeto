@@ -236,6 +236,7 @@ export enum I18nKey {
   ImportsIssueCategoryTypeMismatch = 'imports.issueCategoryTypeMismatch',
   ImportsIssueTransferCategoryIgnored = 'imports.issueTransferCategoryIgnored',
   ImportsIssueDestinationOnlyTransfer = 'imports.issueDestinationOnlyTransfer',
+  ImportsIssuePdfAmountAmbiguous = 'imports.issuePdfAmountAmbiguous',
   ImportsIssueRequiresRecheck = 'imports.issueRequiresRecheck',
   ImportsSelectAccount = 'imports.selectAccount',
   ImportsSelectDestination = 'imports.selectDestination',

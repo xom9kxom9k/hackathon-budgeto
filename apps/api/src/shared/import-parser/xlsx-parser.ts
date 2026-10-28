@@ -2,6 +2,7 @@ import { Workbook } from 'exceljs';
 
 import type {
   ImportIssueCode,
+  ImportSourceRef,
   ImportTransactionType,
   ParsedImportPreview,
   ParsedImportRow,
@@ -93,6 +94,7 @@ function cell(row: unknown[], columns: Record<string, number>, field: string): u
 function rowPreview(
   row: unknown[],
   sourceRow: number,
+  sourceRef: ImportSourceRef,
   columns: Record<string, number>,
   fixedType?: ImportTransactionType,
 ): ParsedImportRow {
@@ -117,6 +119,7 @@ function rowPreview(
   } else if (destinationAccountName) warnings.push('DESTINATION_ONLY_FOR_TRANSFER');
   return {
     sourceRow,
+    sourceRef,
     date,
     type,
     amount,
@@ -134,7 +137,10 @@ function isEmpty(row: unknown[]): boolean {
   return row.every((value) => normalize(value) === '');
 }
 
-export async function parseBudgetoXlsx(content: Buffer): Promise<ParsedImportPreview> {
+export async function parseBudgetoXlsx(
+  content: Buffer,
+  sourceSha256?: string,
+): Promise<ParsedImportPreview> {
   const workbook = new Workbook();
   try {
     await workbook.xlsx.load(content as never);
@@ -160,7 +166,9 @@ export async function parseBudgetoXlsx(content: Buffer): Promise<ParsedImportPre
       if (!columns) continue;
       for (let index = headerRow + 1; index <= sheet.rowCount; index += 1) {
         const values = sheet.getRow(index).values as unknown[];
-        if (!isEmpty(values)) rows.push(rowPreview(values, index, columns, config.type));
+        if (!isEmpty(values)) {
+          rows.push(rowPreview(values, rows.length + 1, { kind: 'xlsx', sheet: sheet.name, record: index }, columns, config.type));
+        }
       }
     }
   } else {
@@ -184,12 +192,19 @@ export async function parseBudgetoXlsx(content: Buffer): Promise<ParsedImportPre
     if (!columns) throw new Error('IMPORT_HEADERS_NOT_FOUND');
     for (let index = headerRow + 1; index <= sheet.rowCount; index += 1) {
       const values = sheet.getRow(index).values as unknown[];
-      if (!isEmpty(values)) rows.push(rowPreview(values, index, columns));
+      if (!isEmpty(values)) {
+        rows.push(rowPreview(values, rows.length + 1, { kind: 'xlsx', sheet: sheet.name, record: index }, columns));
+      }
     }
   }
   const valid = rows.filter((row) => row.valid).length;
   return {
     format: finance ? 'finance-export-xlsx' : 'budgeto-xlsx',
+    parserId: 'xlsx-header-map',
+    parserVersion: '1.0.0',
+    templateId: finance ? 'budgeto-finance-sheets' : 'generic-xlsx-table',
+    confidence: rows.length ? 0.98 : 0.5,
+    sourceSha256,
     total: rows.length,
     valid,
     invalid: rows.length - valid,

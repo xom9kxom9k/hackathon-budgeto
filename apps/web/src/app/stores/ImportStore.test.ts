@@ -8,6 +8,10 @@ const previewJob = (status: ImportJob['status'] = 'preview'): ImportJob => ({
   errorCode: null,
   preview: {
     format: 'budgeto-xlsx',
+    parserId: 'xlsx-header-map',
+    parserVersion: '1.0.0',
+    templateId: 'generic-xlsx-table',
+    confidence: 0.98,
     total: 1,
     valid: 1,
     invalid: 0,
