@@ -4,6 +4,7 @@ import { DataSource, IsNull } from 'typeorm';
 import { readFile } from 'node:fs/promises';
 import { parseImportDocument, sha256 } from '../../api/src/shared/import-parser/document-parser';
 import { ImportError, ImportErrorCode } from '../../api/src/shared/import-parser/import-errors';
+import { loadConfiguredImportProfiles } from '../../api/src/shared/import-parser/profiles/configuration';
 import {
   assertImportStagingKey,
   decryptImportStaging,
@@ -23,7 +24,10 @@ const dataSource = new DataSource({
   synchronize: false,
 });
 
-async function processJob(jobId: string): Promise<void> {
+async function processJob(
+  jobId: string,
+  profiles: ReturnType<typeof loadConfiguredImportProfiles>,
+): Promise<void> {
   const jobs = dataSource.getRepository(ImportJobEntity);
   const job = await jobs.findOneByOrFail({ id: jobId });
   await jobs.update(job.id, { status: ImportJobStatus.Parsing, errorCode: null });
@@ -35,7 +39,7 @@ async function processJob(jobId: string): Promise<void> {
     if (sha256(content) !== job.sourceSha256) {
       throw new ImportError(ImportErrorCode.IMPORT_SOURCE_CHANGED);
     }
-    const preview = await parseImportDocument(content, job.fileName);
+    const preview = await parseImportDocument(content, job.fileName, profiles);
     const [accounts, categories] = await Promise.all([
       dataSource
         .getRepository(AccountEntity)
@@ -83,8 +87,9 @@ async function processJob(jobId: string): Promise<void> {
 
 async function main(): Promise<void> {
   assertImportStagingKey();
+  const profiles = loadConfiguredImportProfiles();
   await dataSource.initialize();
-  const worker = new Worker(IMPORT_QUEUE, async (job) => processJob(job.data.jobId), {
+  const worker = new Worker(IMPORT_QUEUE, async (job) => processJob(job.data.jobId, profiles), {
     connection: { url: process.env.REDIS_URL ?? 'redis://localhost:6379' },
   });
   worker.on('error', (error) => console.error('Import worker error', error));
