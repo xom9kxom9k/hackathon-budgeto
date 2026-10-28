@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { ImportError, ImportErrorCode } from './import-errors';
+import {
+  ImportError,
+  ImportErrorCode,
+  InvalidPdfError,
+  InvalidXlsxError,
+  PdfTextNotFoundError,
+  PdfTooManyPagesError,
+} from './import-errors';
 import type { ImportProfile, ParsedImportPreview } from '@budgeto/contracts';
 
 describe('shared import contracts', () => {
@@ -8,6 +15,29 @@ describe('shared import contracts', () => {
     const error = new ImportError(ImportErrorCode.INVALID_PDF);
     expect(error).toBeInstanceOf(Error);
     expect(error.code).toBe(ImportErrorCode.INVALID_PDF);
+  });
+
+  it('exposes typed document errors while preserving stable error codes', () => {
+    const errors = [
+      new InvalidPdfError(),
+      new PdfTooManyPagesError(),
+      new PdfTextNotFoundError(),
+      new InvalidXlsxError(),
+    ];
+
+    expect(errors).toEqual([
+      expect.objectContaining({ code: ImportErrorCode.INVALID_PDF, name: 'InvalidPdfError' }),
+      expect.objectContaining({
+        code: ImportErrorCode.PDF_TOO_MANY_PAGES,
+        name: 'PdfTooManyPagesError',
+      }),
+      expect.objectContaining({
+        code: ImportErrorCode.PDF_TEXT_NOT_FOUND,
+        name: 'PdfTextNotFoundError',
+      }),
+      expect.objectContaining({ code: ImportErrorCode.INVALID_XLSX, name: 'InvalidXlsxError' }),
+    ]);
+    for (const error of errors) expect(error).toBeInstanceOf(ImportError);
   });
 
   it('exposes document and profile types from the shared package', () => {

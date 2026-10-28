@@ -48,8 +48,44 @@ class ImportError extends Error {
   }
 }
 
+class InvalidPdfError extends ImportError {
+  constructor(message, options) {
+    super(ImportErrorCode.INVALID_PDF, message, options);
+    this.name = 'InvalidPdfError';
+  }
+}
+
+class PdfTooManyPagesError extends ImportError {
+  constructor(message, options) {
+    super(ImportErrorCode.PDF_TOO_MANY_PAGES, message, options);
+    this.name = 'PdfTooManyPagesError';
+  }
+}
+
+class PdfTextNotFoundError extends ImportError {
+  constructor(message, options) {
+    super(ImportErrorCode.PDF_TEXT_NOT_FOUND, message, options);
+    this.name = 'PdfTextNotFoundError';
+  }
+}
+
+class InvalidXlsxError extends ImportError {
+  constructor(message, options) {
+    super(ImportErrorCode.INVALID_XLSX, message, options);
+    this.name = 'InvalidXlsxError';
+  }
+}
+
 function isImportError(error) {
   return error instanceof ImportError;
 }
 
-module.exports = { ImportErrorCode, ImportError, isImportError };
+module.exports = {
+  ImportErrorCode,
+  ImportError,
+  InvalidPdfError,
+  PdfTooManyPagesError,
+  PdfTextNotFoundError,
+  InvalidXlsxError,
+  isImportError,
+};

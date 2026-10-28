@@ -1,7 +1,7 @@
 import { parseDate, parseAmount, recountPreview, rowPreview } from './normalization';
 import type { ParsedImportPreview } from './types';
 import type { ImportProfile } from './profiles/types';
-import { ImportError, ImportErrorCode } from './import-errors';
+import { InvalidPdfError, PdfTextNotFoundError, PdfTooManyPagesError } from './import-errors';
 
 const maxPages = 50;
 const datePattern = /(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[./-]\d{1,2}[./-]\d{4})/;
@@ -72,10 +72,10 @@ export async function parsePdf(
   extracted?: { numpages: number; text: string },
 ): Promise<ParsedImportPreview> {
   if (!content.subarray(0, 5).toString('ascii').startsWith('%PDF-')) {
-    throw new ImportError(ImportErrorCode.INVALID_PDF);
+    throw new InvalidPdfError();
   }
   const parsed = extracted ?? (await extractPdfText(content));
-  if (parsed.numpages > maxPages) throw new ImportError(ImportErrorCode.PDF_TOO_MANY_PAGES);
+  if (parsed.numpages > maxPages) throw new PdfTooManyPagesError();
   const rows = parsed.text.split('\f').flatMap((text, pageIndex) =>
     text
       .split(/\r?\n/)
@@ -85,7 +85,7 @@ export async function parsePdf(
   rows.forEach((row, index) => {
     row.sourceRow = index + 1;
   });
-  if (!rows.length) throw new ImportError(ImportErrorCode.PDF_TEXT_NOT_FOUND);
+  if (!rows.length) throw new PdfTextNotFoundError();
   return recountPreview({
     format: 'generic-pdf' as const,
     parserId: 'pdf-text-table',
@@ -99,14 +99,14 @@ export async function parsePdf(
 
 export async function extractPdfText(content: Buffer): Promise<{ numpages: number; text: string }> {
   if (!content.subarray(0, 5).toString('ascii').startsWith('%PDF-')) {
-    throw new ImportError(ImportErrorCode.INVALID_PDF);
+    throw new InvalidPdfError();
   }
   try {
     const parsed = await (await loadPdfParser())(content, { max: maxPages });
-    if (parsed.numpages > maxPages) throw new ImportError(ImportErrorCode.PDF_TOO_MANY_PAGES);
+    if (parsed.numpages > maxPages) throw new PdfTooManyPagesError();
     return parsed;
   } catch (error) {
-    if (error instanceof Error && error.message === 'PDF_TOO_MANY_PAGES') throw error;
-    throw new ImportError(ImportErrorCode.INVALID_PDF, undefined, { cause: error });
+    if (error instanceof PdfTooManyPagesError) throw error;
+    throw new InvalidPdfError(undefined, { cause: error });
   }
 }

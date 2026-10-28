@@ -44,4 +44,20 @@ export declare class ImportError extends Error {
   constructor(code: ImportErrorCode, message?: string, options?: { cause?: unknown });
 }
 
+export declare class InvalidPdfError extends ImportError {
+  constructor(message?: string, options?: { cause?: unknown });
+}
+
+export declare class PdfTooManyPagesError extends ImportError {
+  constructor(message?: string, options?: { cause?: unknown });
+}
+
+export declare class PdfTextNotFoundError extends ImportError {
+  constructor(message?: string, options?: { cause?: unknown });
+}
+
+export declare class InvalidXlsxError extends ImportError {
+  constructor(message?: string, options?: { cause?: unknown });
+}
+
 export declare function isImportError(error: unknown): error is ImportError;

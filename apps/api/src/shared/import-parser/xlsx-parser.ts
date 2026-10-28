@@ -8,7 +8,7 @@ import type {
   ParsedImportRow,
 } from './types';
 import type { ImportProfile } from './profiles/types';
-import { ImportError, ImportErrorCode } from './import-errors';
+import { ImportError, ImportErrorCode, InvalidXlsxError } from './import-errors';
 
 const aliases: Record<string, string[]> = {
   date: ['дата', 'date', 'день'],
@@ -160,7 +160,7 @@ export async function parseBudgetoXlsx(
   try {
     await workbook.xlsx.load(content as never);
   } catch {
-    throw new ImportError(ImportErrorCode.INVALID_XLSX);
+    throw new InvalidXlsxError();
   }
   const finance = workbook.worksheets.some((sheet) => financeSheets[key(sheet.name)]);
   const tableLayout = profile?.layout.kind === 'table' ? profile.layout : undefined;
@@ -253,7 +253,7 @@ export async function extractXlsxHeaders(content: Buffer): Promise<string[]> {
   try {
     await workbook.xlsx.load(content as never);
   } catch {
-    throw new ImportError(ImportErrorCode.INVALID_XLSX);
+    throw new InvalidXlsxError();
   }
   let best: string[] = [];
   for (const sheet of workbook.worksheets) {
