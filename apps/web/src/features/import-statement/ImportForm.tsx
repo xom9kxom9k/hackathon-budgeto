@@ -1,7 +1,7 @@
-import { Badge, Button, FileInputField, StatusIndicator } from '@admiral-ds/react-ui';
+import { Badge, Button, StatusIndicator } from '@admiral-ds/react-ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useMemo, useState } from 'react';
+import { type DragEvent, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
@@ -60,6 +60,10 @@ function rowHasIssues(row: ImportRow): boolean {
   return !row.valid || row.errors.length > 0;
 }
 
+function isPdfFile(file: File | null): boolean {
+  return Boolean(file && /\.pdf$/i.test(file.name));
+}
+
 export const ImportForm = observer(function ImportForm({
   onJobCreated,
   onNewImport,
@@ -72,6 +76,10 @@ export const ImportForm = observer(function ImportForm({
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [filter, setFilter] = useState<RowFilter>('all');
   const [isDirty, setIsDirty] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [fileInputKey, setFileInputKey] = useState(0);
+  const [selectedSourceRow, setSelectedSourceRow] = useState<number | null>(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const {
     control,
     handleSubmit,
@@ -83,6 +91,7 @@ export const ImportForm = observer(function ImportForm({
     reValidateMode: 'onChange',
   });
   const preview = importStore.preview;
+  const selectedFile = importStore.selectedFile;
 
   useEffect(() => {
     void accountsStore.load();
@@ -93,7 +102,24 @@ export const ImportForm = observer(function ImportForm({
     setRows(preview?.rows ?? []);
     setIsDirty(false);
     setFilter('all');
+    setSelectedSourceRow(
+      preview?.format === 'generic-pdf' ? (preview.rows[0]?.sourceRow ?? null) : null,
+    );
   }, [preview]);
+
+  useEffect(() => {
+    if (!selectedFile || !isPdfFile(selectedFile) || typeof URL.createObjectURL !== 'function') {
+      setPdfPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(selectedFile);
+    setPdfPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [selectedFile]);
+
+  useEffect(() => {
+    if (!selectedFile) setFileInputKey((value) => value + 1);
+  }, [selectedFile]);
 
   const visibleRows = useMemo(
     () =>
@@ -157,6 +183,21 @@ export const ImportForm = observer(function ImportForm({
     preview?.classifierConfidence === undefined
       ? ''
       : `${Math.round(preview.classifierConfidence * 100)}%`;
+  const selectedSource = rows.find((row) => row.sourceRow === selectedSourceRow) ?? null;
+  const selectedSourcePage = selectedSource?.sourceRef?.page ?? 1;
+  const pdfPageUrl = pdfPreviewUrl ? `${pdfPreviewUrl}#page=${selectedSourcePage}` : null;
+
+  const handleFile = (file: File | undefined, onChange: (value: File) => void) => {
+    if (!file) return;
+    onChange(file);
+    importStore.selectFile(file);
+  };
+
+  const handleDrop = (event: DragEvent<HTMLLabelElement>, onChange: (value: File) => void) => {
+    event.preventDefault();
+    setIsDragOver(false);
+    handleFile(event.dataTransfer.files[0], onChange);
+  };
 
   return (
     <section className="import-panel">
@@ -187,30 +228,48 @@ export const ImportForm = observer(function ImportForm({
           control={control}
           name="file"
           render={({ field }) => (
-            <FileInputField
-              accept=".xlsx,.xlsm,.csv,.pdf"
-              dimension="m"
-              label={t(I18nKey.ImportsFileLabel)}
-              name={field.name}
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) {
-                  field.onChange(file);
-                  importStore.selectFile(file);
-                }
-              }}
-              onBlur={field.onBlur}
-              ref={field.ref}
-              status={errors.file ? 'error' : undefined}
-              title={t(I18nKey.ImportsFileLabel)}
-              extraText={
-                translateValidationError(
+            <div className="import-file-field">
+              <span className="import-file-label">{t(I18nKey.ImportsFileLabel)}</span>
+              <label
+                className={`import-dropzone${isDragOver ? ' is-dragging' : ''}${
+                  errors.file ? ' is-error' : ''
+                }`}
+                htmlFor="import-file-input"
+                onDragEnter={(event) => {
+                  event.preventDefault();
+                  setIsDragOver(true);
+                }}
+                onDragOver={(event) => event.preventDefault()}
+                onDragLeave={(event) => {
+                  if (event.currentTarget === event.target) setIsDragOver(false);
+                }}
+                onDrop={(event) => handleDrop(event, field.onChange)}
+              >
+                <input
+                  key={fileInputKey}
+                  id="import-file-input"
+                  accept=".xlsx,.xlsm,.csv,.pdf"
+                  name={field.name}
+                  ref={field.ref}
+                  type="file"
+                  aria-label={t(I18nKey.ImportsFileLabel)}
+                  aria-invalid={errors.file ? 'true' : 'false'}
+                  onBlur={field.onBlur}
+                  onChange={(event) => handleFile(event.target.files?.[0], field.onChange)}
+                />
+                <span className="import-dropzone-title">
+                  {isDragOver ? t(I18nKey.ImportsDropzoneActive) : t(I18nKey.ImportsDropzoneTitle)}
+                </span>
+                <span className="import-dropzone-hint">{t(I18nKey.ImportsDropzoneHint)}</span>
+              </label>
+              <span className={`import-file-help${errors.file ? ' is-error' : ''}`}>
+                {translateValidationError(
                   errors.file?.message,
                   t,
                   I18nKey.ImportsValidationRequired,
-                ) ?? t(I18nKey.ImportsFileHint)
-              }
-            />
+                ) ?? t(I18nKey.ImportsFileHint)}
+              </span>
+            </div>
           )}
         />
         <div className="import-actions">
@@ -260,7 +319,7 @@ export const ImportForm = observer(function ImportForm({
         <div className="import-preview" role="region" aria-label={t(I18nKey.ImportsStepPreview)}>
           {!isConfirmed ? <VaultKeyPanel /> : null}
           <div className="section-heading section-heading--compact">
-            <div>
+            <div className="import-preview-meta">
               <span className="section-kicker">{t(I18nKey.ImportsStepPreview)}</span>
               <h2>{t(I18nKey.ImportsPreviewReady)}</h2>
               <span className="field-muted">
@@ -323,185 +382,302 @@ export const ImportForm = observer(function ImportForm({
             </span>
           </div>
           {visibleRows.length ? (
-            <div className="table-scroll">
-              <table className="import-data-table">
-                <thead>
-                  <tr>
-                    <th>{t(I18nKey.ImportsSourceRow)}</th>
-                    <th>{t(I18nKey.Date)}</th>
-                    <th>{t(I18nKey.Operation)}</th>
-                    <th>{t(I18nKey.Amount)}</th>
-                    <th>{t(I18nKey.Account)}</th>
-                    <th>{t(I18nKey.ImportsDestinationAccount)}</th>
-                    <th>{t(I18nKey.Category)}</th>
-                    <th>{t(I18nKey.ImportsNote)}</th>
-                    <th>{t(I18nKey.Status)}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleRows.map((row) => (
-                    <tr
-                      key={row.sourceRow}
-                      className={rowHasIssues(row) ? 'is-invalid' : undefined}
-                    >
-                      <td data-label={t(I18nKey.ImportsSourceRow)}>{row.sourceRow}</td>
-                      <td data-label={t(I18nKey.Date)}>
-                        <input
-                          disabled={isProcessing || isConfirmed}
-                          aria-label={`${t(I18nKey.Date)} ${row.sourceRow}`}
-                          value={row.date ?? ''}
-                          onChange={(event) => updateRow(row.sourceRow, 'date', event.target.value)}
-                        />
-                      </td>
-                      <td data-label={t(I18nKey.Operation)}>
-                        <select
-                          disabled={isProcessing || isConfirmed}
-                          aria-label={`${t(I18nKey.Operation)} ${row.sourceRow}`}
-                          value={row.type ?? ''}
-                          onChange={(event) => updateRow(row.sourceRow, 'type', event.target.value)}
+            <div className="import-review-layout">
+              <div className="import-table-panel">
+                <h3 className="import-review-table-title">{t(I18nKey.ImportsReviewTable)}</h3>
+                <div className="table-scroll">
+                  <table className="import-data-table">
+                    <thead>
+                      <tr>
+                        <th>{t(I18nKey.ImportsSourceRow)}</th>
+                        <th>{t(I18nKey.ImportsOperationAndAmount)}</th>
+                        <th>{t(I18nKey.ImportsAccountsAndCategory)}</th>
+                        <th>{t(I18nKey.ImportsNote)}</th>
+                        <th>{t(I18nKey.ImportsReviewStatus)}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleRows.map((row) => (
+                        <tr
+                          key={row.sourceRow}
+                          className={`${rowHasIssues(row) ? 'is-invalid' : ''}${
+                            selectedSourceRow === row.sourceRow ? ' is-source-selected' : ''
+                          }`}
                         >
-                          <option value="">{t(I18nKey.ImportsTypeUnknown)}</option>
-                          {typeOptions.map(([value, label]) => (
-                            <option key={value} value={value}>
-                              {t(label)}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td data-label={t(I18nKey.Amount)}>
-                        <input
-                          disabled={isProcessing || isConfirmed}
-                          aria-label={`${t(I18nKey.Amount)} ${row.sourceRow}`}
-                          inputMode="decimal"
-                          value={row.amount ?? ''}
-                          onChange={(event) =>
-                            updateRow(row.sourceRow, 'amount', event.target.value)
-                          }
-                        />
-                      </td>
-                      <td data-label={t(I18nKey.Account)}>
-                        <select
-                          disabled={isProcessing || isConfirmed}
-                          aria-label={`${t(I18nKey.Account)} ${row.sourceRow}`}
-                          value={row.accountName ?? ''}
-                          onChange={(event) =>
-                            updateRow(row.sourceRow, 'accountName', event.target.value)
-                          }
-                        >
-                          <option value="">{t(I18nKey.ImportsSelectAccount)}</option>
-                          {row.accountName &&
-                          !accountsStore.accounts.some(
-                            (account) => account.name === row.accountName,
-                          ) ? (
-                            <option value={row.accountName} disabled>
-                              {row.accountName} — {t(I18nKey.ImportsReferenceNotFound)}
-                            </option>
-                          ) : null}
-                          {accountsStore.accounts.map((account) => (
-                            <option key={account.id} value={account.name}>
-                              {account.name} · {account.currency}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td data-label={t(I18nKey.ImportsDestinationAccount)}>
-                        {row.type === 'transfer' ? (
-                          <select
-                            disabled={isProcessing || isConfirmed}
-                            aria-label={`${t(I18nKey.ImportsDestinationAccount)} ${row.sourceRow}`}
-                            value={row.destinationAccountName ?? ''}
-                            onChange={(event) =>
-                              updateRow(row.sourceRow, 'destinationAccountName', event.target.value)
-                            }
+                          <td
+                            data-label={t(I18nKey.ImportsSourceRow)}
+                            className="import-source-cell"
                           >
-                            <option value="">{t(I18nKey.ImportsSelectDestination)}</option>
-                            {row.destinationAccountName &&
-                            !accountsStore.accounts.some(
-                              (account) => account.name === row.destinationAccountName,
-                            ) ? (
-                              <option value={row.destinationAccountName} disabled>
-                                {row.destinationAccountName} — {t(I18nKey.ImportsReferenceNotFound)}
-                              </option>
-                            ) : null}
-                            {accountsStore.accounts.map((account) => (
-                              <option key={account.id} value={account.name}>
-                                {account.name} · {account.currency}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span className="field-muted">—</span>
-                        )}
-                      </td>
-                      <td data-label={t(I18nKey.Category)}>
-                        {row.type === 'transfer' ? (
-                          <span className="field-muted">{t(I18nKey.ImportsCategoryNotUsed)}</span>
-                        ) : (
-                          <select
-                            disabled={isProcessing || isConfirmed || !row.type}
-                            aria-label={`${t(I18nKey.Category)} ${row.sourceRow}`}
-                            value={row.categoryName ?? ''}
-                            onChange={(event) =>
-                              updateRow(row.sourceRow, 'categoryName', event.target.value)
-                            }
-                          >
-                            <option value="">{t(I18nKey.ImportsSelectCategory)}</option>
-                            {row.categoryName &&
-                            !categoriesStore
-                              .byKind(row.type as CategoryKind)
-                              .some((category) => category.name === row.categoryName) ? (
-                              <option value={row.categoryName} disabled>
-                                {row.categoryName} — {t(I18nKey.ImportsReferenceNotFound)}
-                              </option>
-                            ) : null}
-                            {row.type
-                              ? categoriesStore.byKind(row.type as CategoryKind).map((category) => (
-                                  <option key={category.id} value={category.name}>
-                                    {category.name}
-                                  </option>
-                                ))
-                              : null}
-                          </select>
-                        )}
-                      </td>
-                      <td data-label={t(I18nKey.ImportsNote)}>
-                        <input
-                          disabled={isProcessing || isConfirmed}
-                          aria-label={`${t(I18nKey.ImportsNote)} ${row.sourceRow}`}
-                          value={row.note ?? ''}
-                          onChange={(event) => updateRow(row.sourceRow, 'note', event.target.value)}
-                        />
-                      </td>
-                      <td data-label={t(I18nKey.Status)}>
-                        <div className="import-row-status">
-                          <span>
-                            {rowHasIssues(row)
-                              ? t(I18nKey.ImportsRowInvalid)
-                              : t(I18nKey.Connected)}
-                          </span>
-                          {row.errors.length ? (
-                            <ul aria-label={t(I18nKey.ImportsErrors)}>
-                              {row.errors.map((code) => (
-                                <li key={code}>{issueText(code, t)}</li>
-                              ))}
-                            </ul>
-                          ) : null}
-                          {row.warnings.length ? (
-                            <ul
-                              className="import-row-warnings"
-                              aria-label={t(I18nKey.ImportsWarnings)}
+                            <button
+                              className="import-source-link"
+                              type="button"
+                              aria-label={t(I18nKey.ImportsSourceRowLink, { row: row.sourceRow })}
+                              onClick={() => setSelectedSourceRow(row.sourceRow)}
                             >
-                              {row.warnings.map((code) => (
-                                <li key={code}>{issueText(code, t)}</li>
-                              ))}
-                            </ul>
-                          ) : null}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                              <strong>{row.sourceRow}</strong>
+                              <span>
+                                {row.sourceRef?.kind === 'pdf' && row.sourceRef.page
+                                  ? t(I18nKey.ImportsSourcePage, { page: row.sourceRef.page })
+                                  : (row.sourceRef?.sheet ?? '—')}
+                              </span>
+                            </button>
+                            <input
+                              disabled={isProcessing || isConfirmed}
+                              aria-label={`${t(I18nKey.Date)} ${row.sourceRow}`}
+                              value={row.date ?? ''}
+                              onChange={(event) =>
+                                updateRow(row.sourceRow, 'date', event.target.value)
+                              }
+                            />
+                          </td>
+                          <td data-label={t(I18nKey.ImportsOperationAndAmount)}>
+                            <div className="import-operation-fields">
+                              <select
+                                disabled={isProcessing || isConfirmed}
+                                aria-label={`${t(I18nKey.Operation)} ${row.sourceRow}`}
+                                value={row.type ?? ''}
+                                onChange={(event) =>
+                                  updateRow(row.sourceRow, 'type', event.target.value)
+                                }
+                              >
+                                <option value="">{t(I18nKey.ImportsTypeUnknown)}</option>
+                                {typeOptions.map(([value, label]) => (
+                                  <option key={value} value={value}>
+                                    {t(label)}
+                                  </option>
+                                ))}
+                              </select>
+                              <input
+                                disabled={isProcessing || isConfirmed}
+                                aria-label={`${t(I18nKey.Amount)} ${row.sourceRow}`}
+                                inputMode="decimal"
+                                value={row.amount ?? ''}
+                                onChange={(event) =>
+                                  updateRow(row.sourceRow, 'amount', event.target.value)
+                                }
+                              />
+                            </div>
+                          </td>
+                          <td data-label={t(I18nKey.ImportsAccountsAndCategory)}>
+                            <div className="import-reference-fields">
+                              <select
+                                disabled={isProcessing || isConfirmed}
+                                aria-label={`${t(I18nKey.Account)} ${row.sourceRow}`}
+                                value={row.accountName ?? ''}
+                                onChange={(event) =>
+                                  updateRow(row.sourceRow, 'accountName', event.target.value)
+                                }
+                              >
+                                <option value="">{t(I18nKey.ImportsSelectAccount)}</option>
+                                {row.accountName &&
+                                !accountsStore.accounts.some(
+                                  (account) => account.name === row.accountName,
+                                ) ? (
+                                  <option value={row.accountName} disabled>
+                                    {row.accountName} — {t(I18nKey.ImportsReferenceNotFound)}
+                                  </option>
+                                ) : null}
+                                {accountsStore.accounts.map((account) => (
+                                  <option key={account.id} value={account.name}>
+                                    {account.name} · {account.currency}
+                                  </option>
+                                ))}
+                              </select>
+                              {row.type === 'transfer' ? (
+                                <select
+                                  disabled={isProcessing || isConfirmed}
+                                  aria-label={`${t(I18nKey.ImportsDestinationAccount)} ${row.sourceRow}`}
+                                  value={row.destinationAccountName ?? ''}
+                                  onChange={(event) =>
+                                    updateRow(
+                                      row.sourceRow,
+                                      'destinationAccountName',
+                                      event.target.value,
+                                    )
+                                  }
+                                >
+                                  <option value="">{t(I18nKey.ImportsSelectDestination)}</option>
+                                  {row.destinationAccountName &&
+                                  !accountsStore.accounts.some(
+                                    (account) => account.name === row.destinationAccountName,
+                                  ) ? (
+                                    <option value={row.destinationAccountName} disabled>
+                                      {row.destinationAccountName} —{' '}
+                                      {t(I18nKey.ImportsReferenceNotFound)}
+                                    </option>
+                                  ) : null}
+                                  {accountsStore.accounts.map((account) => (
+                                    <option key={account.id} value={account.name}>
+                                      {account.name} · {account.currency}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : null}
+                              {row.type === 'transfer' ? (
+                                <span className="field-muted">
+                                  {t(I18nKey.ImportsCategoryNotUsed)}
+                                </span>
+                              ) : (
+                                <select
+                                  disabled={isProcessing || isConfirmed || !row.type}
+                                  aria-label={`${t(I18nKey.Category)} ${row.sourceRow}`}
+                                  value={row.categoryName ?? ''}
+                                  onChange={(event) =>
+                                    updateRow(row.sourceRow, 'categoryName', event.target.value)
+                                  }
+                                >
+                                  <option value="">{t(I18nKey.ImportsSelectCategory)}</option>
+                                  {row.categoryName &&
+                                  !categoriesStore
+                                    .byKind(row.type as CategoryKind)
+                                    .some((category) => category.name === row.categoryName) ? (
+                                    <option value={row.categoryName} disabled>
+                                      {row.categoryName} — {t(I18nKey.ImportsReferenceNotFound)}
+                                    </option>
+                                  ) : null}
+                                  {row.type
+                                    ? categoriesStore
+                                        .byKind(row.type as CategoryKind)
+                                        .map((category) => (
+                                          <option key={category.id} value={category.name}>
+                                            {category.name}
+                                          </option>
+                                        ))
+                                    : null}
+                                </select>
+                              )}
+                            </div>
+                          </td>
+                          <td data-label={t(I18nKey.ImportsNote)}>
+                            <input
+                              disabled={isProcessing || isConfirmed}
+                              aria-label={`${t(I18nKey.ImportsNote)} ${row.sourceRow}`}
+                              value={row.note ?? ''}
+                              onChange={(event) =>
+                                updateRow(row.sourceRow, 'note', event.target.value)
+                              }
+                            />
+                          </td>
+                          <td data-label={t(I18nKey.ImportsReviewStatus)}>
+                            <div className="import-row-status">
+                              <span>
+                                {rowHasIssues(row)
+                                  ? t(I18nKey.ImportsRowInvalid)
+                                  : t(I18nKey.Connected)}
+                              </span>
+                              {row.errors.length ? (
+                                <ul aria-label={t(I18nKey.ImportsErrors)}>
+                                  {row.errors.map((code) => (
+                                    <li key={code}>{issueText(code, t)}</li>
+                                  ))}
+                                </ul>
+                              ) : null}
+                              {row.warnings.length ? (
+                                <ul
+                                  className="import-row-warnings"
+                                  aria-label={t(I18nKey.ImportsWarnings)}
+                                >
+                                  {row.warnings.map((code) => (
+                                    <li key={code}>{issueText(code, t)}</li>
+                                  ))}
+                                </ul>
+                              ) : null}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              {preview.format === 'generic-pdf' ? (
+                <aside
+                  className="import-source-preview"
+                  aria-label={t(I18nKey.ImportsSourcePreviewTitle)}
+                >
+                  <div className="import-source-preview-heading">
+                    <span className="section-kicker">{t(I18nKey.ImportsSourceHighlight)}</span>
+                    <h3>{t(I18nKey.ImportsSourcePreviewTitle)}</h3>
+                    <p>{t(I18nKey.ImportsSourcePreviewDescription)}</p>
+                  </div>
+                  {pdfPageUrl ? (
+                    <iframe
+                      className="import-pdf-frame"
+                      key={pdfPageUrl}
+                      title={`${selectedFile?.name ?? 'PDF'} — ${t(I18nKey.ImportsSourcePage, {
+                        page: selectedSourcePage,
+                      })}`}
+                      src={pdfPageUrl}
+                    />
+                  ) : (
+                    <div className="state-callout">
+                      {t(I18nKey.ImportsSourcePreviewUnavailable)}
+                    </div>
+                  )}
+                  {selectedSource ? (
+                    <div className="import-source-editor">
+                      <div className="import-source-meta">
+                        <strong>
+                          {t(I18nKey.ImportsSourceRowLink, { row: selectedSource.sourceRow })}
+                        </strong>
+                        <span>
+                          {t(I18nKey.ImportsSourcePage, { page: selectedSourcePage })}
+                          {selectedSource.sourceRef?.record
+                            ? ` · ${t(I18nKey.ImportsSourceRecord, {
+                                record: selectedSource.sourceRef.record,
+                              })}`
+                            : ''}
+                        </span>
+                      </div>
+                      <span className="import-source-editor-label">
+                        {t(I18nKey.ImportsSourceEdit)}
+                      </span>
+                      <div className="import-source-editor-grid">
+                        <label>
+                          {t(I18nKey.Date)}
+                          <input
+                            disabled={isProcessing || isConfirmed}
+                            aria-label={`${t(I18nKey.Date)} ${selectedSource.sourceRow} — ${t(
+                              I18nKey.ImportsSourceEdit,
+                            )}`}
+                            value={selectedSource.date ?? ''}
+                            onChange={(event) =>
+                              updateRow(selectedSource.sourceRow, 'date', event.target.value)
+                            }
+                          />
+                        </label>
+                        <label>
+                          {t(I18nKey.Amount)}
+                          <input
+                            disabled={isProcessing || isConfirmed}
+                            aria-label={`${t(I18nKey.Amount)} ${selectedSource.sourceRow} — ${t(
+                              I18nKey.ImportsSourceEdit,
+                            )}`}
+                            inputMode="decimal"
+                            value={selectedSource.amount ?? ''}
+                            onChange={(event) =>
+                              updateRow(selectedSource.sourceRow, 'amount', event.target.value)
+                            }
+                          />
+                        </label>
+                      </div>
+                      <label>
+                        {t(I18nKey.ImportsNote)}
+                        <input
+                          disabled={isProcessing || isConfirmed}
+                          aria-label={`${t(I18nKey.ImportsNote)} ${selectedSource.sourceRow} — ${t(
+                            I18nKey.ImportsSourceEdit,
+                          )}`}
+                          value={selectedSource.note ?? ''}
+                          onChange={(event) =>
+                            updateRow(selectedSource.sourceRow, 'note', event.target.value)
+                          }
+                        />
+                      </label>
+                    </div>
+                  ) : null}
+                </aside>
+              ) : null}
             </div>
           ) : (
             <p className="state-callout">{t(I18nKey.ImportsNoRows)}</p>

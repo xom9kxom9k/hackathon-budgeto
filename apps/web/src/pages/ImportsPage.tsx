@@ -17,6 +17,11 @@ export const ImportsPage = observer(function ImportsPage() {
   const [jobId, setJobId] = useQueryState('job', parseAsString);
 
   useEffect(() => {
+    importStore.clearSelectedFile();
+    return () => importStore.clearSelectedFile();
+  }, [importStore]);
+
+  useEffect(() => {
     if (jobId) void importStore.restoreJob(jobId);
     void importStore.loadHistory();
   }, [importStore, jobId]);

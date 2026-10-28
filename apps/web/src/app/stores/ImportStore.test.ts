@@ -47,4 +47,17 @@ describe('ImportStore', () => {
     expect(store.job?.status).toBe('confirmed');
     expect(store.status).toBe('success');
   });
+
+  it('can clear only the local file selection while keeping the preview job', () => {
+    const service = {} as ImportService;
+    const store = new ImportStore(service);
+    store.job = previewJob();
+    store.selectFile(new File(['xlsx'], 'statement.xlsx'));
+    store.job = previewJob();
+
+    store.clearSelectedFile();
+
+    expect(store.selectedFile).toBeNull();
+    expect(store.job?.id).toBe('job-1');
+  });
 });

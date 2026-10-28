@@ -1,6 +1,7 @@
 import { importFileSchema } from './ImportForm';
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { runInAction } from 'mobx';
 import { I18nextProvider } from 'react-i18next';
 import { ThemeProvider } from 'styled-components';
 import { LIGHT_THEME } from '@admiral-ds/react-ui';
@@ -9,6 +10,7 @@ import { RootStore } from '@/app/stores/RootStore';
 import { StoreProvider } from '@/app/stores/StoreProvider';
 import { StoreName } from '@/app/stores/StoreName';
 import { i18n } from '@/shared/i18n';
+import type { ImportJob } from '@/shared/services/ImportService';
 
 describe('ImportForm', () => {
   it('rejects unsupported file extensions', async () => {
@@ -180,5 +182,76 @@ describe('ImportForm', () => {
     expect(
       screen.getByText('После изменения сохраните строку для повторной проверки'),
     ).toBeInTheDocument();
+  });
+
+  it('accepts a dropped PDF and keeps source editing linked to the preview row', async () => {
+    const store = new RootStore();
+    store.get(StoreName.Accounts).status = 'success';
+    store.get(StoreName.Categories).status = 'success';
+    const pdfJob: ImportJob = {
+      id: 'job-pdf',
+      fileName: 'statement.pdf',
+      status: 'preview',
+      errorCode: null,
+      preview: {
+        format: 'generic-pdf',
+        parserId: 'pdf-text-table',
+        parserVersion: '1.0.0',
+        templateId: 'generic-pdf-text-table',
+        profileId: 'sber-pdf-v1',
+        total: 1,
+        valid: 1,
+        invalid: 0,
+        rows: [
+          {
+            sourceRow: 2,
+            sourceRef: { kind: 'pdf', page: 1, record: 2 },
+            date: '2026-10-22',
+            type: 'expense',
+            amount: 1000,
+            accountName: null,
+            destinationAccountName: null,
+            categoryName: null,
+            note: 'Перевод',
+            valid: true,
+            errors: [],
+            warnings: [],
+          },
+        ],
+      },
+    };
+
+    render(
+      <StoreProvider store={store}>
+        <I18nextProvider i18n={i18n}>
+          <ThemeProvider theme={LIGHT_THEME}>
+            <ImportForm onJobCreated={() => undefined} onNewImport={() => undefined} />
+          </ThemeProvider>
+        </I18nextProvider>
+      </StoreProvider>,
+    );
+
+    const dropzone = screen.getByText('Перетащите файл сюда или выберите его').closest('label');
+    expect(dropzone).toBeInTheDocument();
+    fireEvent.drop(dropzone!, {
+      dataTransfer: {
+        files: [new File(['%PDF-1.7'], 'dropped.pdf', { type: 'application/pdf' })],
+      },
+    });
+    expect(store.get(StoreName.Import).selectedFile?.name).toBe('dropped.pdf');
+
+    act(() => {
+      runInAction(() => {
+        store.get(StoreName.Import).job = pdfJob;
+      });
+    });
+    const sourceButton = screen.getByRole('button', { name: 'Открыть источник строки 2' });
+    const user = userEvent.setup();
+    await user.click(sourceButton);
+    const sourceAmount = screen.getByLabelText('Сумма 2 — Исправить выбранную строку');
+    await user.clear(sourceAmount);
+    await user.type(sourceAmount, '1250');
+
+    expect(screen.getByLabelText('Сумма 2')).toHaveValue('1250');
   });
 });
