@@ -79,6 +79,19 @@ export function validateImportProfile(value: unknown): ImportProfile {
     const hasValidColumns =
       value.layout.columns === undefined ||
       (isRecord(value.layout.columns) &&
+        Object.keys(value.layout.columns).every((field) =>
+          [
+            'date',
+            'type',
+            'amount',
+            'debit',
+            'credit',
+            'account',
+            'destination',
+            'category',
+            'note',
+          ].includes(field),
+        ) &&
         Object.values(value.layout.columns).every(
           (aliases) =>
             Array.isArray(aliases) && aliases.every((alias) => typeof alias === 'string'),
@@ -95,7 +108,9 @@ export function validateImportProfile(value: unknown): ImportProfile {
   if (
     value.layout.kind === 'pdf-lines' &&
     (typeof value.layout.amountRule !== 'string' ||
-      !['single-amount-only', 'signed-amount'].includes(value.layout.amountRule) ||
+      !['single-amount-only', 'signed-amount', 'first-amount', 'last-amount'].includes(
+        value.layout.amountRule,
+      ) ||
       value.layout.descriptionRule !== 'between-date-and-amount' ||
       layoutKeys.some((key) => !['kind', 'amountRule', 'descriptionRule'].includes(key)))
   ) {

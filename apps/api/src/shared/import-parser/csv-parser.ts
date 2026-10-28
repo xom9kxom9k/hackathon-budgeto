@@ -2,6 +2,7 @@ import type { ImportTransactionType, ParsedImportPreview } from './types';
 import type { ImportProfile } from './profiles/types';
 import { ImportError, ImportErrorCode } from './import-errors';
 import {
+  aliases,
   headerMap,
   isEmpty,
   key,
@@ -121,7 +122,7 @@ export function extractCsvHeaders(content: Buffer): string[] {
       (columns.amount !== undefined || columns.debit !== undefined || columns.credit !== undefined)
     );
   });
-  return header ?? [];
+  return header ?? records.find((record) => record.length > 1) ?? [];
 }
 
 export function parseCsv(
@@ -134,10 +135,11 @@ export function parseCsv(
   if (text.length > 16 * 1024 * 1024) throw new ImportError(ImportErrorCode.CSV_TEXT_TOO_LARGE);
   const tableLayout = profile?.layout.kind === 'table' ? profile.layout : undefined;
   const amountMode = tableLayout?.amountMode ?? 'debit-credit';
+  const fieldAliases = tableLayout?.columns ? { ...aliases, ...tableLayout.columns } : aliases;
   const delimiter = detectDelimiter(text, tableLayout?.delimiter);
   const records = parseRecords(text, delimiter);
   const headerIndex = records.findIndex((record) => {
-    const columns = headerMap(record);
+    const columns = headerMap(record, fieldAliases);
     return (
       columns.date !== undefined &&
       (columns.amount !== undefined || columns.debit !== undefined || columns.credit !== undefined)
@@ -145,7 +147,7 @@ export function parseCsv(
   });
   if (headerIndex < 0) throw new ImportError(ImportErrorCode.IMPORT_HEADERS_NOT_FOUND);
   const headers = records[headerIndex];
-  const sourceColumns = headerMap(headers);
+  const sourceColumns = headerMap(headers, fieldAliases);
   const columns =
     sourceColumns.amount === undefined
       ? { ...sourceColumns, amount: headers.length }

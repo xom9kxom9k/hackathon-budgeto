@@ -33,7 +33,11 @@ function lineToRow(
   const signedAmount = amounts.find((match) => /^[+-]/.test(match[0]));
   const signedAmountMissing = amountRule === 'signed-amount' && !signedAmount;
   const amountMatch =
-    amountRule === 'signed-amount' ? (signedAmount ?? amounts.at(-1)) : amounts.at(-1);
+    amountRule === 'signed-amount'
+      ? (signedAmount ?? amounts.at(-1))
+      : amountRule === 'first-amount'
+        ? amounts[0]
+        : amounts.at(-1);
   if (!amountMatch || amountMatch.index === undefined) return null;
   const rawAmount = amountMatch[0];
   const amount = parseAmount(rawAmount);

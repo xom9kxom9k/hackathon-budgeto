@@ -97,12 +97,16 @@ export function parseAmount(value: unknown): number | null {
   return Number.isFinite(amount) ? Math.abs(amount) : null;
 }
 
-export function headerMap(row: unknown[]): Record<string, number> {
+export function headerMap(
+  row: unknown[],
+  fieldAliases: Record<string, string[]> = aliases,
+): Record<string, number> {
   const result: Record<string, number> = {};
   row.forEach((cell, index) => {
     const normalized = key(cell);
-    for (const [field, names] of Object.entries(aliases)) {
-      if (names.includes(normalized) && result[field] === undefined) result[field] = index;
+    for (const [field, names] of Object.entries(fieldAliases)) {
+      if (names.some((name) => key(name) === normalized) && result[field] === undefined)
+        result[field] = index;
     }
   });
   return result;
