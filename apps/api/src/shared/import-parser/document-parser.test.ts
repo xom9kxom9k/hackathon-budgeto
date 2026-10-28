@@ -1,8 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { detectImportFormat, parseImportDocument } from './document-parser';
 import { ImportError, ImportErrorCode } from './import-errors';
-import { parsePdf } from './pdf-parser';
+import { extractPdfText, parsePdf } from './pdf-parser';
 
 const signedPdfFixture = Buffer.from(
   'JVBERi0xLjcKJYGBgYEKCjYgMCBvYmoKPDwKL0ZpbHRlciAvRmxhdGVEZWNvZGUKL0xlbmd0aCAxMjEKPj4Kc3RyZWFtCnicJYsxCgIxEEX7f4rUgjiZyU6yIBayAQsbYS4gsoqyFop4fieRD+83772wN1Boe9+wOczLd/7cL+d1prGkQrmMgVOwKxqPiF39057YCknk6mQntxdlSpMOmVW0aNSaExNPErszCLE3bvp6SbtgD9gK1XDCDzkPHx8KZW5kc3RyZWFtCmVuZG9iagoKNyAwIG9iago8PAovRmlsdGVyIC9GbGF0ZURlY29kZQovVHlwZSAvT2JqU3RtCi9OIDUKL0ZpcnN0IDI2Ci9MZW5ndGggMzY4Cj4+CnN0cmVhbQp4nNVS30vDMBB+z19xj/rgkqY/0soYbGurIOLYBEXxoWvDqIxE2lTmf+9d2zn2ID5L+Uju7rvkS+/zQICEIAAfVAwBhL6EEJSnYDpl/PHrQwNfFTvdMn5XVy28IkfAGt4YX9rOOPDYbMZO3GXhir3dsaEJPCIfGavGVl2pG5jmWZ4LoYQQUYCIhJAprktEgpAYY03GuEeoYATmlC+EP8daPiBSQw/Ve2449me4IjciTjpwg3iIf+6lu7LhDPmXnmTG+L2t0sJpuEivpZCRhwq9WCZSvVzi72h04ez/fVyvv7bm1xeezZnGS0NuNHmgnzJf69Z2TYljJ15usUKbW73/1K4uiyslkhh1qjhBj43G4M8P23dd9lQKs4O72TjSMCQod6+ruljYA7pP4Bcm4UTGEAfeBE9CJ86NsY682bvSONREUTQ69Uw4yWJ8021dH1LSY3xRtLoXfFKLUkxpq9rsgD/VZm7a+pigE78BtSLHRgplbmRzdHJlYW0KZW5kb2JqCgo4IDAgb2JqCjw8Ci9TaXplIDkKL1Jvb3QgMiAwIFIKL0luZm8gMyAwIFIKL0ZpbHRlciAvRmxhdGVEZWNvZGUKL1R5cGUgL1hSZWYKL0xlbmd0aCA0MgovVyBbIDEgMiAyIF0KL0luZGV4IFsgMCA5IF0KPj4Kc3RyZWFtCnicY2Bg+P+fiYGdgQFEMIIIJhDBDCJYGBkEGBgYGS4BCaYVDAwAYioDxQplbmRzdHJlYW0KZW5kb2JqCgpzdGFydHhyZWYKNjgwCiUlRU9G',
@@ -14,6 +17,9 @@ const validSignedPdfFixture = Buffer.from(
     '',
   ),
   'base64',
+);
+const upstreamTextPdfFixture = readFileSync(
+  resolve(process.cwd(), 'node_modules/pdf-parse/test/data/05-versions-space.pdf'),
 );
 
 describe('document import registry', () => {
@@ -141,6 +147,13 @@ describe('document import registry', () => {
     );
     expect(preview.rows[0]).toMatchObject({ amount: 12.5, note: 'Merchant' });
     expect(preview.rows[0].errors).not.toContain('PDF_AMOUNT_AMBIGUOUS');
+  });
+
+  it('extracts text from an upstream valid PDF through the real pdf-parse adapter', async () => {
+    const extracted = await extractPdfText(upstreamTextPdfFixture);
+
+    expect(extracted.numpages).toBe(1);
+    expect(extracted.text).toContain('Dadfrtfjh');
   });
 
   it('reports malformed generated PDF input with the shared error contract', async () => {
