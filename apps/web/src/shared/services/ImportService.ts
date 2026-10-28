@@ -4,12 +4,14 @@ import { BaseApiService } from './BaseApiService';
 
 const rowSchema = z.object({
   sourceRow: z.number(),
-  sourceRef: z.object({
-    kind: z.enum(['xlsx', 'csv', 'pdf']),
-    sheet: z.string().optional(),
-    page: z.number().optional(),
-    record: z.number().optional(),
-  }).optional(),
+  sourceRef: z
+    .object({
+      kind: z.enum(['xlsx', 'csv', 'pdf']),
+      sheet: z.string().optional(),
+      page: z.number().optional(),
+      record: z.number().optional(),
+    })
+    .optional(),
   date: z.string().nullable(),
   type: z.enum(['income', 'expense', 'transfer']).nullable(),
   amount: z.number().nullable(),
@@ -26,6 +28,12 @@ const previewSchema = z.object({
   parserId: z.string().optional(),
   parserVersion: z.string().optional(),
   templateId: z.string().optional(),
+  profileId: z.string().optional(),
+  profileVersion: z.string().optional(),
+  profileDigest: z.string().optional(),
+  reviewRequired: z.boolean().optional(),
+  reviewReasons: z.array(z.string()).optional(),
+  classifierConfidence: z.number().optional(),
   confidence: z.number().optional(),
   sourceSha256: z.string().optional(),
   total: z.number(),

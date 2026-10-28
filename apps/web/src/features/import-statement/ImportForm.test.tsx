@@ -63,6 +63,8 @@ describe('ImportForm', () => {
         parserId: 'xlsx-header-map',
         parserVersion: '1.0.0',
         templateId: 'generic-xlsx-table',
+        profileId: 'budgeto-xlsx',
+        profileVersion: '1.0.0',
         confidence: 0.98,
         total: 2,
         valid: 1,
@@ -112,6 +114,7 @@ describe('ImportForm', () => {
     );
 
     expect(screen.getByText('Проверьте дату')).toBeInTheDocument();
+    expect(screen.getByText(/Профиль обработки: budgeto-xlsx/)).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText('Показать строки'), 'invalid');
     expect(screen.getByRole('combobox', { name: 'Счёт 2' })).toHaveValue('Карта');
     expect(screen.queryByDisplayValue('2026-01-01')).not.toBeInTheDocument();

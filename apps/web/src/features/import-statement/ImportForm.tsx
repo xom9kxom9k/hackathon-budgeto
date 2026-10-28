@@ -112,6 +112,7 @@ export const ImportForm = observer(function ImportForm({
     rows.length > 0 &&
     !isDirty &&
     invalidRows === 0 &&
+    !preview?.reviewRequired &&
     !isProcessing &&
     vaultStore.status === 'unlocked',
   );
@@ -149,6 +150,13 @@ export const ImportForm = observer(function ImportForm({
 
   const step = !preview ? (isProcessing ? 1 : 0) : isDirty || invalidRows > 0 ? 2 : 3;
   const formatLabel = preview?.format.replace('finance-export-', '').replace('budgeto-', '') ?? '';
+  const profileLabel = preview?.profileId
+    ? `${preview.profileId}${preview.profileVersion ? ` · ${preview.profileVersion}` : ''}`
+    : '';
+  const profileConfidence =
+    preview?.classifierConfidence === undefined
+      ? ''
+      : `${Math.round(preview.classifierConfidence * 100)}%`;
 
   return (
     <section className="import-panel">
@@ -258,6 +266,19 @@ export const ImportForm = observer(function ImportForm({
               <span className="field-muted">
                 {t(I18nKey.ImportsDetectedFormat)}: {formatLabel.toUpperCase()}
               </span>
+              {profileLabel ? (
+                <span className="field-muted">
+                  {t(I18nKey.ImportsDetectedProfile)}: {profileLabel}
+                </span>
+              ) : null}
+              {profileConfidence ? (
+                <span className="field-muted">
+                  {t(I18nKey.ImportsProfileConfidence)}: {profileConfidence}
+                </span>
+              ) : null}
+              {preview.reviewRequired ? (
+                <span className="field-muted">{t(I18nKey.ImportsManualReviewRequired)}</span>
+              ) : null}
             </div>
             <Badge appearance={invalidRows ? 'warning' : 'success'} dimension="m">
               {rows.length - invalidRows}/{rows.length}

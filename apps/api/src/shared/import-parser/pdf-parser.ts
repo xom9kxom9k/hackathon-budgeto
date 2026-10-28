@@ -1,5 +1,7 @@
 import { parseDate, parseAmount, recountPreview, rowPreview } from './normalization';
 import type { ParsedImportPreview } from './types';
+import type { ImportProfile } from './profiles/types';
+import { ImportError, ImportErrorCode } from './import-errors';
 
 const maxPages = 50;
 const datePattern = /(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[./-]\d{1,2}[./-]\d{4})/;
@@ -15,12 +17,23 @@ async function loadPdfParser(): Promise<PdfParser> {
   return (module.default ?? module) as unknown as PdfParser;
 }
 
-function lineToRow(line: string, sourceRow: number, page: number, record: number) {
+function lineToRow(
+  line: string,
+  sourceRow: number,
+  page: number,
+  record: number,
+  profile?: ImportProfile,
+) {
   const dateMatch = datePattern.exec(line);
   if (!dateMatch || !parseDate(dateMatch[0])) return null;
   const amountText = line.slice(dateMatch.index + dateMatch[0].length);
   const amounts = [...amountText.matchAll(amountPattern)];
-  const amountMatch = amounts.at(-1);
+  const amountRule =
+    profile?.layout.kind === 'pdf-lines' ? profile.layout.amountRule : 'single-amount-only';
+  const signedAmount = amounts.find((match) => /^[+-]/.test(match[0]));
+  const signedAmountMissing = amountRule === 'signed-amount' && !signedAmount;
+  const amountMatch =
+    amountRule === 'signed-amount' ? (signedAmount ?? amounts.at(-1)) : amounts.at(-1);
   if (!amountMatch || amountMatch.index === undefined) return null;
   const rawAmount = amountMatch[0];
   const amount = parseAmount(rawAmount);
@@ -41,7 +54,7 @@ function lineToRow(line: string, sourceRow: number, page: number, record: number
     { date: 0, type: 1, amount: 2, account: 3, note: 5 },
     type,
   );
-  if (amounts.length > 1) {
+  if ((amountRule === 'single-amount-only' && amounts.length > 1) || signedAmountMissing) {
     row.errors.push('PDF_AMOUNT_AMBIGUOUS');
     row.valid = false;
   }
@@ -51,27 +64,24 @@ function lineToRow(line: string, sourceRow: number, page: number, record: number
 export async function parsePdf(
   content: Buffer,
   sourceSha256?: string,
+  profile?: ImportProfile,
+  extracted?: { numpages: number; text: string },
 ): Promise<ParsedImportPreview> {
   if (!content.subarray(0, 5).toString('ascii').startsWith('%PDF-')) {
-    throw new Error('INVALID_PDF');
+    throw new ImportError(ImportErrorCode.INVALID_PDF);
   }
-  let parsed;
-  try {
-    parsed = await (await loadPdfParser())(content, { max: maxPages });
-  } catch {
-    throw new Error('INVALID_PDF');
-  }
-  if (parsed.numpages > maxPages) throw new Error('PDF_TOO_MANY_PAGES');
+  const parsed = extracted ?? (await extractPdfText(content));
+  if (parsed.numpages > maxPages) throw new ImportError(ImportErrorCode.PDF_TOO_MANY_PAGES);
   const rows = parsed.text.split('\f').flatMap((text, pageIndex) =>
     text
       .split(/\r?\n/)
-      .map((line, lineIndex) => lineToRow(line, 0, pageIndex + 1, lineIndex + 1))
+      .map((line, lineIndex) => lineToRow(line, 0, pageIndex + 1, lineIndex + 1, profile))
       .filter((row): row is NonNullable<typeof row> => row !== null),
   );
   rows.forEach((row, index) => {
     row.sourceRow = index + 1;
   });
-  if (!rows.length) throw new Error('PDF_TEXT_NOT_FOUND');
+  if (!rows.length) throw new ImportError(ImportErrorCode.PDF_TEXT_NOT_FOUND);
   return recountPreview({
     format: 'generic-pdf' as const,
     parserId: 'pdf-text-table',
@@ -81,4 +91,18 @@ export async function parsePdf(
     sourceSha256,
     rows,
   });
+}
+
+export async function extractPdfText(content: Buffer): Promise<{ numpages: number; text: string }> {
+  if (!content.subarray(0, 5).toString('ascii').startsWith('%PDF-')) {
+    throw new ImportError(ImportErrorCode.INVALID_PDF);
+  }
+  try {
+    const parsed = await (await loadPdfParser())(content, { max: maxPages });
+    if (parsed.numpages > maxPages) throw new ImportError(ImportErrorCode.PDF_TOO_MANY_PAGES);
+    return parsed;
+  } catch (error) {
+    if (error instanceof Error && error.message === 'PDF_TOO_MANY_PAGES') throw error;
+    throw new ImportError(ImportErrorCode.INVALID_PDF, undefined, { cause: error });
+  }
 }

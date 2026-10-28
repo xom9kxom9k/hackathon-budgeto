@@ -47,6 +47,10 @@ function createService() {
 
   const jobs = {
     findOne: vi.fn(async () => job),
+    update: vi.fn(async (_id: string, values: Partial<ImportJobEntity>) => {
+      Object.assign(job, values);
+      return undefined;
+    }),
   };
   const transactionRepository = {
     exists: vi.fn(async () => false),
@@ -169,5 +173,54 @@ describe('ImportsService confirmation', () => {
     expect(job.skippedCount).toBe(0);
     expect(appendCalls()).toBe(1);
     expect(vault.appendTransactionEvents).toHaveBeenCalledOnce();
+  });
+
+  it('does not confirm a profile that still requires manual review', async () => {
+    const { service, job } = createService();
+    job.preview = {
+      ...(job.preview as Record<string, unknown>),
+      reviewRequired: true,
+      reviewReasons: ['PROFILE_REVIEW_REQUIRED'],
+    };
+    await expect(service.confirm('user-1', 'job-1', [{ sourceRow: 2 }] as never)).rejects.toThrow(
+      'IMPORT_REVIEW_REQUIRED',
+    );
+  });
+
+  it('does not clear manual review on a no-op rows update', async () => {
+    const { service, job } = createService();
+    job.preview = {
+      ...(job.preview as Record<string, unknown>),
+      reviewRequired: true,
+      reviewReasons: ['PROFILE_REVIEW_REQUIRED'],
+    };
+    const row = (job.preview as { rows: unknown[] }).rows[0];
+    await service.updateRows('user-1', 'job-1', [row] as never);
+    expect((job.preview as { reviewRequired: boolean }).reviewRequired).toBe(true);
+  });
+
+  it('does not clear manual review when only one row was reviewed', async () => {
+    const { service, job } = createService();
+    const firstRow = (job.preview as { rows: Array<Record<string, unknown>> }).rows[0];
+    const secondRow = {
+      ...firstRow,
+      sourceRow: 3,
+      sourceRef: { kind: 'xlsx', record: 3 },
+      note: 'Вторая строка',
+    };
+    job.preview = {
+      ...(job.preview as Record<string, unknown>),
+      reviewRequired: true,
+      reviewReasons: ['PROFILE_REVIEW_REQUIRED'],
+      rows: [firstRow, secondRow],
+      total: 2,
+      valid: 2,
+      invalid: 0,
+    };
+    await service.updateRows('user-1', 'job-1', [
+      { ...firstRow, note: 'Исправлено' },
+      secondRow,
+    ] as never);
+    expect((job.preview as { reviewRequired: boolean }).reviewRequired).toBe(true);
   });
 });

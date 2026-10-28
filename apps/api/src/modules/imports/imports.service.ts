@@ -12,6 +12,7 @@ import { CategoryEntity, CategoryKind } from '../categories/entities/category.en
 import { TransactionEntity, TransactionKind } from '../transactions/entities/transaction.entity';
 import type { ParsedImportPreview, ParsedImportRow } from '../../shared/import-parser/types';
 import { detectImportFormat, sha256 } from '../../shared/import-parser/document-parser';
+import { ImportError, ImportErrorCode } from '../../shared/import-parser/import-errors';
 import type { VaultProofDto } from '../vault/vault.dto';
 import { VaultService } from '../vault/vault.service';
 import { VaultEventType } from '../vault/entities/vault-event.entity';
@@ -33,15 +34,22 @@ export class ImportsService {
   ) {}
 
   async create(userId: string, fileName: string, content: Buffer): Promise<unknown> {
-    if (!content.length) throw new Error('IMPORT_FILE_EMPTY');
-    if (content.length > 8 * 1024 * 1024) throw new Error('IMPORT_FILE_TOO_LARGE');
+    if (!content.length) throw new ImportError(ImportErrorCode.IMPORT_FILE_EMPTY);
+    if (content.length > 8 * 1024 * 1024)
+      throw new ImportError(ImportErrorCode.IMPORT_FILE_TOO_LARGE);
     detectImportFormat(fileName, content);
     await mkdir(this.stagingDir, { recursive: true });
     const filePath = join(this.stagingDir, `${randomUUID()}.upload`);
     const sourceSha256 = sha256(content);
     await writeFile(filePath, content, { flag: 'wx' });
     const job = await this.jobs.save(
-      this.jobs.create({ userId, fileName, filePath, sourceSha256, status: ImportJobStatus.Queued }),
+      this.jobs.create({
+        userId,
+        fileName,
+        filePath,
+        sourceSha256,
+        status: ImportJobStatus.Queued,
+      }),
     );
     await this.queue.add(
       'parse',
@@ -68,7 +76,8 @@ export class ImportsService {
 
   async retry(userId: string, jobId: string): Promise<unknown> {
     const job = await this.get(userId, jobId);
-    if (job.status !== ImportJobStatus.Failed) throw new Error('IMPORT_NOT_RETRYABLE');
+    if (job.status !== ImportJobStatus.Failed)
+      throw new ImportError(ImportErrorCode.IMPORT_NOT_RETRYABLE);
     await this.jobs.update(job.id, { status: ImportJobStatus.Queued, errorCode: null });
     await this.queue.add(
       'parse',
@@ -86,26 +95,43 @@ export class ImportsService {
 
   async updateRows(userId: string, jobId: string, rows: ParsedImportRow[]): Promise<unknown> {
     const job = await this.get(userId, jobId);
-    if (job.status !== ImportJobStatus.Preview) throw new Error('IMPORT_NOT_EDITABLE');
+    if (job.status !== ImportJobStatus.Preview)
+      throw new ImportError(ImportErrorCode.IMPORT_NOT_EDITABLE);
     const preview = job.preview as ParsedImportPreview | null;
-    if (!preview || rows.length !== preview.rows.length) throw new Error('IMPORT_ROWS_CHANGED');
+    if (!preview || rows.length !== preview.rows.length)
+      throw new ImportError(ImportErrorCode.IMPORT_ROWS_CHANGED);
     const originalRows = new Map(preview.rows.map((row) => [row.sourceRow, row]));
     const submittedSourceRows = new Set(rows.map((row) => row.sourceRow));
     if (
       submittedSourceRows.size !== rows.length ||
       preview.rows.some((row) => !submittedSourceRows.has(row.sourceRow))
     ) {
-      throw new Error('IMPORT_ROWS_CHANGED');
+      throw new ImportError(ImportErrorCode.IMPORT_ROWS_CHANGED);
     }
     const anchoredRows = rows.map((row) => {
       const original = originalRows.get(row.sourceRow);
-      if (!original) throw new Error('IMPORT_ROWS_CHANGED');
+      if (!original) throw new ImportError(ImportErrorCode.IMPORT_ROWS_CHANGED);
       return {
         ...row,
         sourceRow: original.sourceRow,
         sourceRef: original.sourceRef ?? { kind: 'xlsx', record: original.sourceRow },
       };
     });
+    const editableFields = [
+      'date',
+      'type',
+      'amount',
+      'accountName',
+      'destinationAccountName',
+      'categoryName',
+      'note',
+    ] as const;
+    const allRowsReviewed =
+      anchoredRows.length > 0 &&
+      anchoredRows.every((row) => {
+        const original = originalRows.get(row.sourceRow)!;
+        return editableFields.some((field) => row[field] !== original[field]);
+      });
     const [accounts, categories] = await Promise.all([
       this.accounts.find({ where: { userId, archivedAt: IsNull() } }),
       this.categories.find({ where: { userId, archivedAt: IsNull() } }),
@@ -113,10 +139,7 @@ export class ImportsService {
     const checkedRows = anchoredRows.map((row) => {
       const checked = this.validateRow(row);
       const original = originalRows.get(row.sourceRow)!;
-      if (
-        original.errors.includes('PDF_AMOUNT_AMBIGUOUS') &&
-        row.amount === original.amount
-      ) {
+      if (original.errors.includes('PDF_AMOUNT_AMBIGUOUS') && row.amount === original.amount) {
         checked.errors.push('PDF_AMOUNT_AMBIGUOUS');
         checked.valid = false;
       }
@@ -127,6 +150,10 @@ export class ImportsService {
       accounts,
       categories,
     );
+    if (resolved.reviewRequired && resolved.invalid === 0 && allRowsReviewed) {
+      resolved.reviewRequired = false;
+      resolved.reviewReasons = [];
+    }
     await this.jobs.update(job.id, { preview: resolved });
     return this.toView(await this.get(userId, jobId));
   }
@@ -147,13 +174,17 @@ export class ImportsService {
       if (job.status === ImportJobStatus.Confirmed) {
         return { created: job.createdCount, skipped: job.skippedCount };
       }
-      if (job.status !== ImportJobStatus.Preview) throw new Error('IMPORT_NOT_READY');
+      if (job.status !== ImportJobStatus.Preview)
+        throw new ImportError(ImportErrorCode.IMPORT_NOT_READY);
       const preview = job.preview as ParsedImportPreview | null;
-      if (!preview || preview.invalid > 0) throw new Error('IMPORT_HAS_INVALID_ROWS');
+      if (!preview || preview.invalid > 0)
+        throw new ImportError(ImportErrorCode.IMPORT_HAS_INVALID_ROWS);
+      if (preview.reviewRequired) throw new ImportError(ImportErrorCode.IMPORT_REVIEW_REQUIRED);
       const key = await this.vault.getKey(userId);
-      if (!key) throw new Error('VAULT_KEY_REQUIRED');
+      if (!key) throw new ImportError(ImportErrorCode.VAULT_KEY_REQUIRED);
       const { claims } = await this.vault.prepareImportConfirmation(userId, jobId);
-      if (proofs.length !== claims.length) throw new Error('VAULT_PROOFS_REQUIRED');
+      if (proofs.length !== claims.length)
+        throw new ImportError(ImportErrorCode.VAULT_PROOFS_REQUIRED);
       const validatedProofs = this.vault.validateProofs(
         claims,
         proofs,
@@ -202,9 +233,9 @@ export class ImportsService {
           (row.type === 'transfer' && !destination) ||
           (row.type !== 'transfer' && row.categoryName && !category)
         )
-          throw new Error('IMPORT_REFERENCE_INVALID');
+          throw new ImportError(ImportErrorCode.IMPORT_REFERENCE_INVALID);
         const proof = proofByRow.get(row.sourceRow);
-        if (!proof) throw new Error('VAULT_PROOF_INVALID');
+        if (!proof) throw new ImportError(ImportErrorCode.VAULT_PROOF_INVALID);
         const fingerprint = proof.fingerprint;
         if (await transactions.exists({ where: { userId, fingerprint } })) {
           skipped += 1;

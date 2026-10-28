@@ -1,7 +1,16 @@
 import { createHash } from 'node:crypto';
 
-import { parseCsv } from './csv-parser';
-import { parsePdf } from './pdf-parser';
+import { extractCsvHeaders, parseCsv } from './csv-parser';
+import { extractPdfText, parsePdf } from './pdf-parser';
+import { ImportError, ImportErrorCode } from './import-errors';
+import { builtinImportProfiles } from './profiles/builtins';
+import {
+  classifyImportProfile,
+  createImportProfileRegistry,
+  digestImportProfile,
+  listImportProfiles,
+} from './profiles/registry';
+import type { ImportProfile } from './profiles/types';
 import type { ImportSourceKind, ParsedImportPreview } from './types';
 
 const extensionPattern = /\.([a-z0-9]+)$/i;
@@ -11,36 +20,93 @@ export function detectImportFormat(fileName: string, content: Buffer): ImportSou
   const isPdf = content.subarray(0, 5).toString('ascii').startsWith('%PDF-');
   const isZip = content.subarray(0, 4).toString('ascii') === 'PK\u0003\u0004';
   if (isPdf) {
-    if (extension !== 'pdf') throw new Error('IMPORT_FILE_SIGNATURE_MISMATCH');
+    if (extension !== 'pdf') throw new ImportError(ImportErrorCode.IMPORT_FILE_SIGNATURE_MISMATCH);
     return 'pdf';
   }
   if (isZip) {
     if (extension !== 'xlsx' && extension !== 'xlsm') {
-      throw new Error('IMPORT_FILE_SIGNATURE_MISMATCH');
+      throw new ImportError(ImportErrorCode.IMPORT_FILE_SIGNATURE_MISMATCH);
     }
     return 'xlsx';
   }
   if (extension === 'csv') return 'csv';
-  throw new Error('IMPORT_FILE_TYPE');
+  throw new ImportError(ImportErrorCode.IMPORT_FILE_TYPE);
 }
 
 export async function parseImportDocument(
   content: Buffer,
   fileName: string,
+  profiles: readonly ImportProfile[] = listImportProfiles(),
 ): Promise<ParsedImportPreview> {
   const sourceSha256 = createHash('sha256').update(content).digest('hex');
-  switch (detectImportFormat(fileName, content)) {
+  const sourceKind = detectImportFormat(fileName, content);
+  const configuredProfiles =
+    profiles === builtinImportProfiles ? profiles : [...builtinImportProfiles, ...profiles];
+  const profileRegistry = createImportProfileRegistry(configuredProfiles);
+  let preview: ParsedImportPreview;
+  let selection;
+  switch (sourceKind) {
     case 'xlsx': {
-      const { parseBudgetoXlsx } = await import('./xlsx-parser');
-      return parseBudgetoXlsx(content, sourceSha256);
+      const { extractXlsxHeaders, parseBudgetoXlsx } = await import('./xlsx-parser');
+      const customProfiles = profileRegistry.filter(
+        (profile) => profile.format === 'xlsx' && !profile.match.previewFormat,
+      );
+      if (customProfiles.length) {
+        const headers = await extractXlsxHeaders(content);
+        let defaultPreview: ParsedImportPreview | null = null;
+        try {
+          defaultPreview = await parseBudgetoXlsx(content, sourceSha256);
+        } catch (error) {
+          if (
+            !(error instanceof ImportError) ||
+            error.code !== ImportErrorCode.IMPORT_HEADERS_NOT_FOUND
+          ) {
+            throw error;
+          }
+        }
+        selection = classifyImportProfile(
+          {
+            format: sourceKind,
+            headers,
+            previewFormat: defaultPreview?.format,
+          },
+          profileRegistry,
+        );
+        preview = await parseBudgetoXlsx(content, sourceSha256, selection.profile);
+      } else {
+        preview = await parseBudgetoXlsx(content, sourceSha256);
+        selection = classifyImportProfile(
+          { format: sourceKind, previewFormat: preview.format },
+          profileRegistry,
+        );
+      }
+      break;
     }
     case 'csv': {
-      return parseCsv(content, sourceSha256);
+      const headers = extractCsvHeaders(content);
+      selection = classifyImportProfile({ format: sourceKind, headers }, profileRegistry);
+      preview = parseCsv(content, sourceSha256, selection.profile);
+      break;
     }
     case 'pdf': {
-      return parsePdf(content, sourceSha256);
+      const extracted = await extractPdfText(content);
+      selection = classifyImportProfile(
+        { format: sourceKind, sampleText: extracted.text.slice(0, 64 * 1024) },
+        profileRegistry,
+      );
+      preview = await parsePdf(content, sourceSha256, selection.profile, extracted);
+      break;
     }
   }
+  return {
+    ...preview,
+    profileId: selection.profile.id,
+    profileVersion: selection.profile.version,
+    profileDigest: digestImportProfile(selection.profile),
+    reviewRequired: selection.reviewRequired,
+    reviewReasons: selection.reviewReasons,
+    classifierConfidence: selection.confidence,
+  };
 }
 
 export function sha256(content: Buffer): string {

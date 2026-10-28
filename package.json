@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@admiral-ds/react-ui": "^8.69.0",
+    "@budgeto/contracts": "file:packages/contracts",
     "@hookform/resolvers": "^3.9.1",
     "@nestjs/common": "^10.4.0",
     "@nestjs/config": "^3.3.0",

@@ -3,10 +3,7 @@ export type ImportTransactionType = 'income' | 'expense' | 'transfer';
 export type ImportSourceKind = 'xlsx' | 'csv' | 'pdf';
 
 export type ImportPreviewFormat =
-  | 'budgeto-xlsx'
-  | 'finance-export-xlsx'
-  | 'generic-csv'
-  | 'generic-pdf';
+  'budgeto-xlsx' | 'finance-export-xlsx' | 'generic-csv' | 'generic-pdf';
 
 export type ImportIssueCode =
   | 'INVALID_DATE'
@@ -52,6 +49,12 @@ export interface ParsedImportPreview {
   parserId: string;
   parserVersion: string;
   templateId: string;
+  profileId?: string;
+  profileVersion?: string;
+  profileDigest?: string;
+  reviewRequired?: boolean;
+  reviewReasons?: string[];
+  classifierConfidence?: number;
   confidence: number;
   sourceSha256?: string;
   total: number;

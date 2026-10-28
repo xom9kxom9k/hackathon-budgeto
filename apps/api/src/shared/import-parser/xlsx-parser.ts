@@ -7,6 +7,8 @@ import type {
   ParsedImportPreview,
   ParsedImportRow,
 } from './types';
+import type { ImportProfile } from './profiles/types';
+import { ImportError, ImportErrorCode } from './import-errors';
 
 const aliases: Record<string, string[]> = {
   date: ['дата', 'date', 'день'],
@@ -75,11 +77,14 @@ function parseAmount(value: unknown): number | null {
   return text && Number.isFinite(amount) ? Math.abs(amount) : null;
 }
 
-function headerMap(row: unknown[]): Record<string, number> {
+function headerMap(
+  row: unknown[],
+  fieldAliases: Record<string, string[]> = aliases,
+): Record<string, number> {
   const result: Record<string, number> = {};
   row.forEach((cell, index) => {
     const normalized = key(cell);
-    for (const [field, names] of Object.entries(aliases)) {
+    for (const [field, names] of Object.entries(fieldAliases)) {
       if (names.includes(normalized) && result[field] === undefined) result[field] = index;
     }
   });
@@ -97,11 +102,20 @@ function rowPreview(
   sourceRef: ImportSourceRef,
   columns: Record<string, number>,
   fixedType?: ImportTransactionType,
+  amountMode: 'signed' | 'debit-credit' = 'debit-credit',
 ): ParsedImportRow {
   const errors: ImportIssueCode[] = [];
   const warnings: ImportIssueCode[] = [];
   const date = parseDate(cell(row, columns, 'date'));
-  const type = fixedType ?? typeAliases[key(cell(row, columns, 'type'))] ?? null;
+  const rawAmount = normalize(cell(row, columns, 'amount'));
+  const type =
+    fixedType ??
+    typeAliases[key(cell(row, columns, 'type'))] ??
+    (amountMode === 'signed' && rawAmount
+      ? rawAmount.startsWith('-')
+        ? 'expense'
+        : 'income'
+      : null);
   const amount = parseAmount(cell(row, columns, 'amount'));
   const accountName = normalize(cell(row, columns, 'account')) || null;
   const destinationAccountName = normalize(cell(row, columns, 'destination')) || null;
@@ -140,14 +154,18 @@ function isEmpty(row: unknown[]): boolean {
 export async function parseBudgetoXlsx(
   content: Buffer,
   sourceSha256?: string,
+  profile?: ImportProfile,
 ): Promise<ParsedImportPreview> {
   const workbook = new Workbook();
   try {
     await workbook.xlsx.load(content as never);
   } catch {
-    throw new Error('INVALID_XLSX');
+    throw new ImportError(ImportErrorCode.INVALID_XLSX);
   }
   const finance = workbook.worksheets.some((sheet) => financeSheets[key(sheet.name)]);
+  const tableLayout = profile?.layout.kind === 'table' ? profile.layout : undefined;
+  const amountMode = tableLayout?.amountMode ?? 'debit-credit';
+  const fieldAliases = tableLayout?.columns ? { ...aliases, ...tableLayout.columns } : aliases;
   const rows: ParsedImportRow[] = [];
   if (finance) {
     for (const sheet of workbook.worksheets) {
@@ -156,7 +174,7 @@ export async function parseBudgetoXlsx(
       let columns: Record<string, number> | null = null;
       let headerRow = 0;
       for (let index = 1; index <= Math.min(10, sheet.rowCount); index += 1) {
-        const candidate = headerMap(sheet.getRow(index).values as unknown[]);
+        const candidate = headerMap(sheet.getRow(index).values as unknown[], fieldAliases);
         if (config.required.every((field) => candidate[field] !== undefined)) {
           columns = candidate;
           headerRow = index;
@@ -167,7 +185,16 @@ export async function parseBudgetoXlsx(
       for (let index = headerRow + 1; index <= sheet.rowCount; index += 1) {
         const values = sheet.getRow(index).values as unknown[];
         if (!isEmpty(values)) {
-          rows.push(rowPreview(values, rows.length + 1, { kind: 'xlsx', sheet: sheet.name, record: index }, columns, config.type));
+          rows.push(
+            rowPreview(
+              values,
+              rows.length + 1,
+              { kind: 'xlsx', sheet: sheet.name, record: index },
+              columns,
+              config.type,
+              amountMode,
+            ),
+          );
         }
       }
     }
@@ -177,10 +204,10 @@ export async function parseBudgetoXlsx(
     let headerRow = 0;
     for (const candidateSheet of workbook.worksheets) {
       for (let index = 1; index <= Math.min(30, candidateSheet.rowCount); index += 1) {
-        const candidate = headerMap(candidateSheet.getRow(index).values as unknown[]);
-        if (
-          ['date', 'type', 'amount', 'account'].every((field) => candidate[field] !== undefined)
-        ) {
+        const candidate = headerMap(candidateSheet.getRow(index).values as unknown[], fieldAliases);
+        const requiredFields = ['date', 'amount', 'account'];
+        if (amountMode !== 'signed') requiredFields.push('type');
+        if (requiredFields.every((field) => candidate[field] !== undefined)) {
           sheet = candidateSheet;
           columns = candidate;
           headerRow = index;
@@ -189,11 +216,20 @@ export async function parseBudgetoXlsx(
       }
       if (columns) break;
     }
-    if (!columns) throw new Error('IMPORT_HEADERS_NOT_FOUND');
+    if (!columns) throw new ImportError(ImportErrorCode.IMPORT_HEADERS_NOT_FOUND);
     for (let index = headerRow + 1; index <= sheet.rowCount; index += 1) {
       const values = sheet.getRow(index).values as unknown[];
       if (!isEmpty(values)) {
-        rows.push(rowPreview(values, rows.length + 1, { kind: 'xlsx', sheet: sheet.name, record: index }, columns));
+        rows.push(
+          rowPreview(
+            values,
+            rows.length + 1,
+            { kind: 'xlsx', sheet: sheet.name, record: index },
+            columns,
+            undefined,
+            amountMode,
+          ),
+        );
       }
     }
   }
@@ -210,6 +246,23 @@ export async function parseBudgetoXlsx(
     invalid: rows.length - valid,
     rows,
   };
+}
+
+export async function extractXlsxHeaders(content: Buffer): Promise<string[]> {
+  const workbook = new Workbook();
+  try {
+    await workbook.xlsx.load(content as never);
+  } catch {
+    throw new ImportError(ImportErrorCode.INVALID_XLSX);
+  }
+  let best: string[] = [];
+  for (const sheet of workbook.worksheets) {
+    for (let index = 1; index <= Math.min(30, sheet.rowCount); index += 1) {
+      const values = (sheet.getRow(index).values as unknown[]).map(normalize).filter(Boolean);
+      if (values.length > best.length) best = values;
+    }
+  }
+  return best;
 }
 
 export const importIssueCodes: ImportIssueCode[] = [

@@ -1,4 +1,6 @@
 import type { ImportTransactionType, ParsedImportPreview } from './types';
+import type { ImportProfile } from './profiles/types';
+import { ImportError, ImportErrorCode } from './import-errors';
 import {
   headerMap,
   isEmpty,
@@ -22,14 +24,15 @@ function countDelimiter(line: string, delimiter: string): number {
   return count;
 }
 
-function detectDelimiter(text: string): string {
+function detectDelimiter(text: string, preferred?: string): string {
+  if (preferred) return preferred;
   const firstLine = text.split(/\r?\n/, 1)[0] ?? '';
   const ranked = delimiters
     .map((delimiter) => ({ delimiter, count: countDelimiter(firstLine, delimiter) }))
     .sort((left, right) => right.count - left.count);
-  if (!ranked[0]?.count) throw new Error('CSV_DELIMITER_NOT_FOUND');
+  if (!ranked[0]?.count) throw new ImportError(ImportErrorCode.CSV_DELIMITER_NOT_FOUND);
   if (ranked[0].count === ranked[1]?.count && ranked[0].count > 0) {
-    throw new Error('CSV_DELIMITER_AMBIGUOUS');
+    throw new ImportError(ImportErrorCode.CSV_DELIMITER_AMBIGUOUS);
   }
   return ranked[0].delimiter;
 }
@@ -66,7 +69,7 @@ function parseRecords(text: string, delimiter: string): string[][] {
     }
     value += character;
   }
-  if (quoted) throw new Error('CSV_QUOTE_NOT_CLOSED');
+  if (quoted) throw new ImportError(ImportErrorCode.CSV_QUOTE_NOT_CLOSED);
   record.push(value);
   if (record.some((cell) => normalize(cell) !== '')) records.push(record);
   return records;
@@ -75,9 +78,14 @@ function parseRecords(text: string, delimiter: string): string[][] {
 function inferType(
   row: string[],
   columns: Record<string, number>,
+  amountMode: 'signed' | 'debit-credit',
 ): ImportTransactionType | undefined {
   const type = typeAliases[key(row[columns.type ?? -1])];
   if (type) return type;
+  if (amountMode === 'signed') {
+    const amount = columns.amount === undefined ? '' : normalize(row[columns.amount]);
+    if (amount) return /^-/.test(amount) ? 'expense' : 'income';
+  }
   const debit = columns.debit === undefined ? '' : normalize(row[columns.debit]);
   const credit = columns.credit === undefined ? '' : normalize(row[columns.credit]);
   if (parseAmount(debit) !== null && parseAmount(debit)! > 0) return 'expense';
@@ -87,8 +95,13 @@ function inferType(
   return undefined;
 }
 
-function amountValue(row: string[], columns: Record<string, number>): string | null {
+function amountValue(
+  row: string[],
+  columns: Record<string, number>,
+  amountMode: 'signed' | 'debit-credit',
+): string | null {
   if (columns.amount !== undefined) return row[columns.amount] ?? null;
+  if (amountMode === 'signed') return null;
   const debit = columns.debit === undefined ? '' : normalize(row[columns.debit]);
   const credit = columns.credit === undefined ? '' : normalize(row[columns.credit]);
   return parseAmount(debit) !== null && parseAmount(debit)! > 0
@@ -98,11 +111,30 @@ function amountValue(row: string[], columns: Record<string, number>): string | n
       : null;
 }
 
-export function parseCsv(content: Buffer, sourceSha256?: string): ParsedImportPreview {
+export function extractCsvHeaders(content: Buffer): string[] {
   const text = content.toString('utf8').replace(/^\uFEFF/, '');
-  if (!text.trim()) throw new Error('IMPORT_FILE_EMPTY');
-  if (text.length > 16 * 1024 * 1024) throw new Error('CSV_TEXT_TOO_LARGE');
-  const delimiter = detectDelimiter(text);
+  const records = parseRecords(text, detectDelimiter(text));
+  const header = records.find((record) => {
+    const columns = headerMap(record);
+    return (
+      columns.date !== undefined &&
+      (columns.amount !== undefined || columns.debit !== undefined || columns.credit !== undefined)
+    );
+  });
+  return header ?? [];
+}
+
+export function parseCsv(
+  content: Buffer,
+  sourceSha256?: string,
+  profile?: ImportProfile,
+): ParsedImportPreview {
+  const text = content.toString('utf8').replace(/^\uFEFF/, '');
+  if (!text.trim()) throw new ImportError(ImportErrorCode.IMPORT_FILE_EMPTY);
+  if (text.length > 16 * 1024 * 1024) throw new ImportError(ImportErrorCode.CSV_TEXT_TOO_LARGE);
+  const tableLayout = profile?.layout.kind === 'table' ? profile.layout : undefined;
+  const amountMode = tableLayout?.amountMode ?? 'debit-credit';
+  const delimiter = detectDelimiter(text, tableLayout?.delimiter);
   const records = parseRecords(text, delimiter);
   const headerIndex = records.findIndex((record) => {
     const columns = headerMap(record);
@@ -111,7 +143,7 @@ export function parseCsv(content: Buffer, sourceSha256?: string): ParsedImportPr
       (columns.amount !== undefined || columns.debit !== undefined || columns.credit !== undefined)
     );
   });
-  if (headerIndex < 0) throw new Error('IMPORT_HEADERS_NOT_FOUND');
+  if (headerIndex < 0) throw new ImportError(ImportErrorCode.IMPORT_HEADERS_NOT_FOUND);
   const headers = records[headerIndex];
   const sourceColumns = headerMap(headers);
   const columns =
@@ -123,8 +155,8 @@ export function parseCsv(content: Buffer, sourceSha256?: string): ParsedImportPr
     .filter((record) => !isEmpty(record))
     .map((record, index) => {
       const row = [...record];
-      row[columns.amount] = amountValue(record, sourceColumns) ?? '';
-      const type = inferType(record, sourceColumns);
+      row[columns.amount] = amountValue(record, sourceColumns, amountMode) ?? '';
+      const type = inferType(record, sourceColumns, amountMode);
       return rowPreview(row, index + 1, { kind: 'csv', record: index + 1 }, columns, type);
     });
   return recountPreview({

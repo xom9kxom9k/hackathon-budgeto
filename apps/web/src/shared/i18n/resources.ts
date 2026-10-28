@@ -193,7 +193,8 @@ const ru: TranslationMap = {
   [I18nKey.ImportsDescription]:
     'Выберите XLSX, CSV или текстовый PDF. Перед импортом мы проверим структуру файла и покажем найденные ошибки.',
   [I18nKey.ImportsStepTitle]: 'Выберите файл',
-  [I18nKey.ImportsStepDescription]: 'Файл будет проверен на сервере и не изменит данные до подтверждения.',
+  [I18nKey.ImportsStepDescription]:
+    'Файл будет проверен на сервере и не изменит данные до подтверждения.',
   [I18nKey.ImportsFileLabel]: 'Файл выписки',
   [I18nKey.ImportsFileHint]: 'XLSX, CSV или PDF, до 8 МБ',
   [I18nKey.ImportsFileNotSelected]: 'Файл ещё не выбран',
@@ -206,6 +207,9 @@ const ru: TranslationMap = {
   [I18nKey.ImportsStepReview]: 'Проверить ошибки',
   [I18nKey.ImportsStepApply]: 'Применить импорт',
   [I18nKey.ImportsDetectedFormat]: 'Распознанный формат',
+  [I18nKey.ImportsDetectedProfile]: 'Профиль обработки',
+  [I18nKey.ImportsProfileConfidence]: 'Уверенность профиля',
+  [I18nKey.ImportsManualReviewRequired]: 'Профиль требует ручной проверки строк',
   [I18nKey.ImportsLocalOnly]: 'Файл пока не отправлен и не изменил финансовые данные.',
   [I18nKey.ImportsValidationRequired]: 'Выберите файл',
   [I18nKey.ImportsValidationType]: 'Поддерживаются XLSX, CSV и PDF',
@@ -622,7 +626,8 @@ const en: TranslationMap = {
   [I18nKey.ImportsDescription]:
     'Choose XLSX, CSV, or a text PDF. We will check the structure and show issues before import.',
   [I18nKey.ImportsStepTitle]: 'Choose a file',
-  [I18nKey.ImportsStepDescription]: 'The file is checked on the server and cannot change data before confirmation.',
+  [I18nKey.ImportsStepDescription]:
+    'The file is checked on the server and cannot change data before confirmation.',
   [I18nKey.ImportsFileLabel]: 'Statement file',
   [I18nKey.ImportsFileHint]: 'XLSX, CSV, or PDF, up to 8 MB',
   [I18nKey.ImportsFileNotSelected]: 'No file selected',
@@ -635,6 +640,9 @@ const en: TranslationMap = {
   [I18nKey.ImportsStepReview]: 'Check errors',
   [I18nKey.ImportsStepApply]: 'Apply import',
   [I18nKey.ImportsDetectedFormat]: 'Detected format',
+  [I18nKey.ImportsDetectedProfile]: 'Processing profile',
+  [I18nKey.ImportsProfileConfidence]: 'Profile confidence',
+  [I18nKey.ImportsManualReviewRequired]: 'This profile requires manual row review',
   [I18nKey.ImportsLocalOnly]: 'The file has not been sent or applied to your financial data.',
   [I18nKey.ImportsValidationRequired]: 'Choose a file',
   [I18nKey.ImportsValidationType]: 'XLSX, CSV, and PDF files are supported',
@@ -847,8 +855,7 @@ const en: TranslationMap = {
   [I18nKey.WelcomeTransactions]: 'Transactions',
   [I18nKey.WelcomeTransactionsDescription]: 'Find and review money movements.',
   [I18nKey.WelcomeImports]: 'Statements',
-  [I18nKey.WelcomeImportsDescription]:
-    'Select an XLSX, CSV, or PDF and review it before import.',
+  [I18nKey.WelcomeImportsDescription]: 'Select an XLSX, CSV, or PDF and review it before import.',
   [I18nKey.WelcomeName]: 'What should we call you?',
   [I18nKey.WelcomeNameHint]: 'Your name is only shown in your profile.',
   [I18nKey.WelcomeGoals]: 'What matters most to you?',

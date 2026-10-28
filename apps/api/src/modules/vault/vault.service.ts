@@ -415,6 +415,9 @@ export class VaultService {
       parserId: (job.preview as ParsedImportPreview).parserId,
       parserVersion: (job.preview as ParsedImportPreview).parserVersion,
       templateId: (job.preview as ParsedImportPreview).templateId,
+      profileId: (job.preview as ParsedImportPreview).profileId,
+      profileVersion: (job.preview as ParsedImportPreview).profileVersion,
+      profileDigest: (job.preview as ParsedImportPreview).profileDigest,
       fingerprint,
     };
     const canonicalPayload = canonicalize(payload);
