@@ -195,6 +195,37 @@ describe('document import registry', () => {
     expect(preview.rows[0].errors).not.toContain('PDF_AMOUNT_AMBIGUOUS');
   });
 
+  it('supports opt-in PDF records spread across a date block', async () => {
+    const preview = await parsePdf(
+      Buffer.from('%PDF-1.7'),
+      undefined,
+      {
+        id: 'bank-pdf-date-block',
+        version: '1.0.0',
+        format: 'pdf',
+        match: { textAnchors: ['ANONYMIZED BANK'] },
+        layout: {
+          kind: 'pdf-lines',
+          amountRule: 'signed-amount',
+          descriptionRule: 'between-date-and-amount',
+          recordRule: 'date-block',
+        },
+        review: { alwaysRequired: true, minConfidence: 0.95 },
+      },
+      {
+        numpages: 1,
+        text: 'ANONYMIZED BANK\n01.02.2026\nMerchant one\n-12,50\n02.02.2026\nSalary\n+100,00',
+      },
+    );
+
+    expect(preview.rows).toHaveLength(2);
+    expect(preview.rows).toMatchObject([
+      { date: '2026-02-01', amount: 12.5, type: 'expense', note: 'Merchant one' },
+      { date: '2026-02-02', amount: 100, type: 'income', note: 'Salary' },
+    ]);
+    expect(preview.rows[0].sourceRef).toMatchObject({ kind: 'pdf', page: 1, record: 2 });
+  });
+
   it('extracts text from an upstream valid PDF through the real pdf-parse adapter', async () => {
     const extracted = await extractPdfText(upstreamTextPdfFixture);
 

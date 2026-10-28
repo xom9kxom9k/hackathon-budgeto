@@ -87,6 +87,7 @@ export type ImportProfileLayout =
       kind: 'pdf-lines';
       amountRule: 'single-amount-only' | 'signed-amount' | 'first-amount' | 'last-amount';
       descriptionRule: 'between-date-and-amount';
+      recordRule?: 'same-line' | 'date-block';
     };
 
 export interface ImportProfile {

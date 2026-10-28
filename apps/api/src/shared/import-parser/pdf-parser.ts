@@ -17,6 +17,34 @@ async function loadPdfParser(): Promise<PdfParser> {
   return (module.default ?? module) as unknown as PdfParser;
 }
 
+type PdfLineRecord = { text: string; lineNumber: number };
+
+function isDateLine(line: string): boolean {
+  const dateMatch = datePattern.exec(line);
+  return dateMatch !== null && parseDate(dateMatch[0]) !== null;
+}
+
+function splitPdfRecords(text: string, profile?: ImportProfile): PdfLineRecord[] {
+  const lines = text.split(/\r?\n/);
+  if (profile?.layout.kind !== 'pdf-lines' || profile.layout.recordRule !== 'date-block') {
+    return lines.map((line, index) => ({ text: line, lineNumber: index + 1 }));
+  }
+
+  const records: PdfLineRecord[] = [];
+  let pending: PdfLineRecord | null = null;
+  lines.forEach((line, index) => {
+    const normalized = line.trim();
+    if (isDateLine(normalized)) {
+      if (pending) records.push(pending);
+      pending = { text: normalized, lineNumber: index + 1 };
+    } else if (pending && normalized) {
+      pending.text = `${pending.text} ${normalized}`;
+    }
+  });
+  if (pending) records.push(pending);
+  return records;
+}
+
 function lineToRow(
   line: string,
   sourceRow: number,
@@ -77,9 +105,8 @@ export async function parsePdf(
   const parsed = extracted ?? (await extractPdfText(content));
   if (parsed.numpages > maxPages) throw new PdfTooManyPagesError();
   const rows = parsed.text.split('\f').flatMap((text, pageIndex) =>
-    text
-      .split(/\r?\n/)
-      .map((line, lineIndex) => lineToRow(line, 0, pageIndex + 1, lineIndex + 1, profile))
+    splitPdfRecords(text, profile)
+      .map(({ text: line, lineNumber }) => lineToRow(line, 0, pageIndex + 1, lineNumber, profile))
       .filter((row): row is NonNullable<typeof row> => row !== null),
   );
   rows.forEach((row, index) => {

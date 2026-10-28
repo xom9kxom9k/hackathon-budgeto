@@ -27,6 +27,7 @@ describe('configured import profiles', () => {
             kind: 'pdf-lines',
             amountRule: 'signed-amount',
             descriptionRule: 'between-date-and-amount',
+            recordRule: 'date-block',
           },
           review: { alwaysRequired: true, minConfidence: 0.9 },
         },

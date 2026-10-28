@@ -131,7 +131,12 @@ export function validateImportProfile(value: unknown): ImportProfile {
         value.layout.amountRule,
       ) ||
       value.layout.descriptionRule !== 'between-date-and-amount' ||
-      layoutKeys.some((key) => !['kind', 'amountRule', 'descriptionRule'].includes(key)))
+      (value.layout.recordRule !== undefined &&
+        (typeof value.layout.recordRule !== 'string' ||
+          !['same-line', 'date-block'].includes(value.layout.recordRule))) ||
+      layoutKeys.some(
+        (key) => !['kind', 'amountRule', 'descriptionRule', 'recordRule'].includes(key),
+      ))
   ) {
     throw new ImportError(ImportErrorCode.IMPORT_PROFILE_INVALID);
   }
