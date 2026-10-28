@@ -12,7 +12,13 @@ describe('configured import profiles', () => {
       'budgeto-finance-xlsx',
       'generic-csv-table',
       'generic-pdf-text-table',
+      'ozon-pdf-v1',
+      'sber-pdf-v1',
+      'tbank-pdf-v1',
     ]);
+    expect(Object.isFrozen(profiles)).toBe(true);
+    expect(Object.isFrozen(profiles[0])).toBe(true);
+    expect(Object.isFrozen(profiles[0].match)).toBe(true);
   });
 
   it('adds validated declarative profiles to the worker registry', () => {
@@ -34,7 +40,7 @@ describe('configured import profiles', () => {
       ]),
     );
 
-    expect(profiles).toHaveLength(5);
+    expect(profiles).toHaveLength(8);
     expect(profiles.at(-1)).toMatchObject({ id: 'bank-pdf-v1', version: '1.0.0' });
     const selection = classifyImportProfile(
       { format: 'pdf', sampleText: 'ANONYMIZED BANK\n01.02.2026 Merchant -12.50' },

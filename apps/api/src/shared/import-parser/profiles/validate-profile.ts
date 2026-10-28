@@ -130,12 +130,28 @@ export function validateImportProfile(value: unknown): ImportProfile {
       !['single-amount-only', 'signed-amount', 'first-amount', 'last-amount'].includes(
         value.layout.amountRule,
       ) ||
-      value.layout.descriptionRule !== 'between-date-and-amount' ||
       (value.layout.recordRule !== undefined &&
         (typeof value.layout.recordRule !== 'string' ||
           !['same-line', 'date-block'].includes(value.layout.recordRule))) ||
+      (value.layout.recordStartRule !== undefined &&
+        (typeof value.layout.recordStartRule !== 'string' ||
+          !['date', 'date-and-amount'].includes(value.layout.recordStartRule))) ||
+      (value.layout.unsignedAmountType !== undefined &&
+        (typeof value.layout.unsignedAmountType !== 'string' ||
+          !['expense', 'income'].includes(value.layout.unsignedAmountType as string))) ||
+      !['between-date-and-amount', 'after-amount'].includes(
+        value.layout.descriptionRule as string,
+      ) ||
       layoutKeys.some(
-        (key) => !['kind', 'amountRule', 'descriptionRule', 'recordRule'].includes(key),
+        (key) =>
+          ![
+            'kind',
+            'amountRule',
+            'descriptionRule',
+            'recordRule',
+            'recordStartRule',
+            'unsignedAmountType',
+          ].includes(key),
       ))
   ) {
     throw new ImportError(ImportErrorCode.IMPORT_PROFILE_INVALID);

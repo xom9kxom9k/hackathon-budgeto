@@ -13,6 +13,14 @@ import { ImportError, ImportErrorCode } from '../import-errors';
 const normalize = (value: string): string =>
   value.normalize('NFKC').replace(/\s+/g, ' ').trim().toLocaleLowerCase('ru-RU');
 
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value as Record<string, unknown>)) deepFreeze(child);
+  }
+  return value;
+}
+
 function headerMatches(headers: string[], expected: string[]): boolean {
   const normalized = new Set(headers.map(normalize));
   return expected.some((value) => normalized.has(normalize(value)));
@@ -60,7 +68,7 @@ export function createImportProfileRegistry(
   if (new Set(validated.map((profile) => profile.id)).size !== validated.length) {
     throw new ImportError(ImportErrorCode.IMPORT_PROFILE_DUPLICATE);
   }
-  return validated;
+  return deepFreeze(validated);
 }
 
 export function digestImportProfile(profile: ImportProfile): string {

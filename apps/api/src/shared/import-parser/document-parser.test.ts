@@ -23,6 +23,15 @@ const validSignedPdfFixture = Buffer.from(
 const upstreamTextPdfFixture = readFileSync(
   resolve(process.cwd(), 'node_modules/pdf-parse/test/data/05-versions-space.pdf'),
 );
+const ozonPdfFixture = readFileSync(
+  resolve(process.cwd(), 'apps/api/src/shared/import-parser/fixtures/ozon_anonymized.pdf'),
+);
+const sberPdfFixture = readFileSync(
+  resolve(process.cwd(), 'apps/api/src/shared/import-parser/fixtures/sber_anonymized.pdf'),
+);
+const tbankPdfFixture = readFileSync(
+  resolve(process.cwd(), 'apps/api/src/shared/import-parser/fixtures/tbank_anonymized.pdf'),
+);
 
 function profilesWith(profile: ImportProfile): readonly ImportProfile[] {
   return loadConfiguredImportProfiles(JSON.stringify([profile]));
@@ -230,8 +239,45 @@ describe('document import registry', () => {
     const extracted = await extractPdfText(upstreamTextPdfFixture);
 
     expect(extracted.numpages).toBe(1);
-    expect(extracted.text).toContain('Dadfrtfjh');
+    expect(extracted.text.replace(/\s+/g, '')).toContain('Dadfrtfjh');
   });
+
+  it.each([
+    { fileName: 'ozon_anonymized.pdf', content: ozonPdfFixture, profileId: 'ozon-pdf-v1' },
+    { fileName: 'sber_anonymized.pdf', content: sberPdfFixture, profileId: 'sber-pdf-v1' },
+    { fileName: 'tbank_anonymized.pdf', content: tbankPdfFixture, profileId: 'tbank-pdf-v1' },
+  ])(
+    'parses the anonymized $profileId document through the full pipeline',
+    async ({ fileName, content, profileId }) => {
+      const preview = await parseImportDocument(content, fileName);
+
+      expect(preview.profileId).toBe(profileId);
+      expect(preview.profileDigest).toMatch(/^[a-f0-9]{64}$/);
+      expect(preview.sourceSha256).toMatch(/^[a-f0-9]{64}$/);
+      expect(preview.total).toBe(
+        profileId === 'ozon-pdf-v1' ? 528 : profileId === 'sber-pdf-v1' ? 40 : 19,
+      );
+      expect(preview.rows[0]).toMatchObject({
+        sourceRef: { kind: 'pdf', page: 1 },
+        date:
+          profileId === 'sber-pdf-v1'
+            ? '2026-10-22'
+            : profileId === 'tbank-pdf-v1'
+              ? '2026-10-26'
+              : '2026-10-24',
+        type: 'expense',
+        amount: profileId === 'sber-pdf-v1' ? 1000 : profileId === 'tbank-pdf-v1' ? 7000 : 200,
+      });
+      expect(preview.rows.at(-1)).toMatchObject({
+        sourceRef: {
+          kind: 'pdf',
+          page: profileId === 'ozon-pdf-v1' ? 52 : profileId === 'sber-pdf-v1' ? 3 : 2,
+        },
+        type: 'income',
+        amount: profileId === 'ozon-pdf-v1' ? 60 : profileId === 'sber-pdf-v1' ? 2000 : 8500,
+      });
+    },
+  );
 
   it('reports malformed generated PDF input with the shared error contract', async () => {
     await expect(parseImportDocument(validSignedPdfFixture, 'statement.pdf')).rejects.toMatchObject(

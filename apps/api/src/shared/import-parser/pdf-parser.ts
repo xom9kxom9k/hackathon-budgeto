@@ -3,25 +3,77 @@ import type { ParsedImportPreview } from './types';
 import type { ImportProfile } from './profiles/types';
 import { InvalidPdfError, PdfTextNotFoundError, PdfTooManyPagesError } from './import-errors';
 
-const maxPages = 50;
+const maxPages = 128;
 const datePattern = /(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[./-]\d{1,2}[./-]\d{4})/;
-const amountPattern = /[-+]?(?:\d{1,3}(?:[\s\u00a0]\d{3})+|\d+)(?:[.,]\d{2})/g;
+const datePrefixPattern = /^\s*(\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[./-]\d{1,2}[./-]\d{4})/;
+const dateLikePattern = /\b(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[./-]\d{1,2}[./-]\d{4})\b/g;
+const amountPattern = /[-+]?\s*(?:\d{1,3}(?:[\s\u00a0]\d{3})+|\d+)(?:[.,]\d{2})/g;
 
 type PdfParser = (
   content: Buffer,
-  options?: { max?: number },
+  options?: { max?: number; pagerender?: (page: PdfPage) => Promise<string> },
 ) => Promise<{ numpages: number; text: string }>;
+
+type PdfTextItem = { str?: string; transform?: number[] };
+type PdfPage = {
+  getTextContent: (options?: {
+    normalizeWhitespace?: boolean;
+    disableCombineTextItems?: boolean;
+  }) => Promise<{ items: PdfTextItem[] }>;
+};
 
 async function loadPdfParser(): Promise<PdfParser> {
   const module = await import('pdf-parse/lib/pdf-parse.js');
   return (module.default ?? module) as unknown as PdfParser;
 }
 
+async function renderPdfPage(page: PdfPage): Promise<string> {
+  const content = await page.getTextContent({
+    normalizeWhitespace: false,
+    disableCombineTextItems: true,
+  });
+  const rows: Array<{ y: number; items: Array<{ x: number; text: string }> }> = [];
+  for (const item of content.items) {
+    if (!item.str?.trim() || !item.transform) continue;
+    const x = item.transform[4];
+    const y = item.transform[5];
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    const row = rows.find((candidate) => Math.abs(candidate.y - y) <= 2);
+    if (row) row.items.push({ x, text: item.str });
+    else rows.push({ y, items: [{ x, text: item.str }] });
+  }
+  return rows
+    .sort((left, right) => right.y - left.y)
+    .map((row) =>
+      row.items
+        .sort((left, right) => left.x - right.x)
+        .map((item) => item.text)
+        .join(' '),
+    )
+    .join('\n');
+}
+
 type PdfLineRecord = { text: string; lineNumber: number };
 
-function isDateLine(line: string): boolean {
-  const dateMatch = datePattern.exec(line);
-  return dateMatch !== null && parseDate(dateMatch[0]) !== null;
+function splitPdfPages(text: string): string[] {
+  if (text.includes('\f')) return text.split('\f');
+  return text.split(/\n{2,}/).filter((page) => page.trim().length > 0);
+}
+
+function isDateLine(line: string, profile?: ImportProfile): boolean {
+  const dateMatch = datePrefixPattern.exec(line);
+  if (!dateMatch || parseDate(dateMatch[1]) === null) return false;
+  if (
+    profile?.layout.kind !== 'pdf-lines' ||
+    profile.layout.recordStartRule !== 'date-and-amount'
+  ) {
+    return true;
+  }
+  return containsAmount(line.slice(dateMatch[0].length));
+}
+
+function containsAmount(text: string): boolean {
+  return text.replace(dateLikePattern, '').match(amountPattern) !== null;
 }
 
 function splitPdfRecords(text: string, profile?: ImportProfile): PdfLineRecord[] {
@@ -34,11 +86,18 @@ function splitPdfRecords(text: string, profile?: ImportProfile): PdfLineRecord[]
   let pending: PdfLineRecord | null = null;
   lines.forEach((line, index) => {
     const normalized = line.trim();
-    if (isDateLine(normalized)) {
+    if (isDateLine(normalized, profile)) {
       if (pending) records.push(pending);
       pending = { text: normalized, lineNumber: index + 1 };
     } else if (pending && normalized) {
-      pending.text = `${pending.text} ${normalized}`;
+      const pendingHasAmount = containsAmount(pending.text);
+      const lineHasAmount = containsAmount(normalized);
+      if (pendingHasAmount && lineHasAmount) {
+        records.push(pending);
+        pending = null;
+      } else {
+        pending.text = `${pending.text} ${normalized}`;
+      }
     }
   });
   if (pending) records.push(pending);
@@ -58,6 +117,10 @@ function lineToRow(
   const amounts = [...amountText.matchAll(amountPattern)];
   const amountRule =
     profile?.layout.kind === 'pdf-lines' ? profile.layout.amountRule : 'single-amount-only';
+  const descriptionRule =
+    profile?.layout.kind === 'pdf-lines'
+      ? profile.layout.descriptionRule
+      : 'between-date-and-amount';
   const signedAmount = amounts.find((match) => /^[+-]/.test(match[0]));
   const signedAmountMissing = amountRule === 'signed-amount' && !signedAmount;
   const amountMatch =
@@ -71,14 +134,19 @@ function lineToRow(
   const amount = parseAmount(rawAmount);
   if (amount === null || amount <= 0) return null;
   const description = amountText
-    .slice(0, amountMatch.index)
-    .replace(/^[|:\-\s]+|[|\-\s]+$/g, '')
+    .slice(
+      descriptionRule === 'after-amount' ? amountMatch.index + rawAmount.length : 0,
+      descriptionRule === 'after-amount' ? undefined : amountMatch.index,
+    )
+    .replace(/^[|:—–\-₽\s]+|[|—–\-\s]+$/g, '')
     .trim();
   const type = rawAmount.startsWith('-')
     ? 'expense'
     : rawAmount.startsWith('+')
       ? 'income'
-      : undefined;
+      : profile?.layout.kind === 'pdf-lines'
+        ? profile.layout.unsignedAmountType
+        : undefined;
   const row = rowPreview(
     [dateMatch[0], type ?? '', rawAmount, '', '', description],
     sourceRow,
@@ -104,7 +172,7 @@ export async function parsePdf(
   }
   const parsed = extracted ?? (await extractPdfText(content));
   if (parsed.numpages > maxPages) throw new PdfTooManyPagesError();
-  const rows = parsed.text.split('\f').flatMap((text, pageIndex) =>
+  const rows = splitPdfPages(parsed.text).flatMap((text, pageIndex) =>
     splitPdfRecords(text, profile)
       .map(({ text: line, lineNumber }) => lineToRow(line, 0, pageIndex + 1, lineNumber, profile))
       .filter((row): row is NonNullable<typeof row> => row !== null),
@@ -129,7 +197,12 @@ export async function extractPdfText(content: Buffer): Promise<{ numpages: numbe
     throw new InvalidPdfError();
   }
   try {
-    const parsed = await (await loadPdfParser())(content, { max: maxPages });
+    const parsed = await (
+      await loadPdfParser()
+    )(content, {
+      max: maxPages,
+      pagerender: renderPdfPage,
+    });
     if (parsed.numpages > maxPages) throw new PdfTooManyPagesError();
     return parsed;
   } catch (error) {

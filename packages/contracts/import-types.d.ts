@@ -86,8 +86,10 @@ export type ImportProfileLayout =
   | {
       kind: 'pdf-lines';
       amountRule: 'single-amount-only' | 'signed-amount' | 'first-amount' | 'last-amount';
-      descriptionRule: 'between-date-and-amount';
+      descriptionRule: 'between-date-and-amount' | 'after-amount';
       recordRule?: 'same-line' | 'date-block';
+      recordStartRule?: 'date' | 'date-and-amount';
+      unsignedAmountType?: 'expense' | 'income';
     };
 
 export interface ImportProfile {
