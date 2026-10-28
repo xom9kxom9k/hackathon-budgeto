@@ -3,6 +3,8 @@ export type {
   ImportPreviewFormat,
   ImportSourceKind,
   ImportSourceRef,
+  ImportEditableField,
+  ImportRowEdit,
   ImportTransactionType,
   ParsedImportPreview,
   ParsedImportRow,

@@ -44,6 +44,17 @@ export interface ParsedImportRow {
   warnings: ImportIssueCode[];
 }
 
+export type ImportEditableField =
+  'date' | 'type' | 'amount' | 'accountName' | 'destinationAccountName' | 'categoryName' | 'note';
+
+export interface ImportRowEdit {
+  sourceRow: number;
+  fields: ImportEditableField[];
+  before: Partial<Pick<ParsedImportRow, ImportEditableField>>;
+  after: Partial<Pick<ParsedImportRow, ImportEditableField>>;
+  editHash: string;
+}
+
 export interface ParsedImportPreview {
   format: ImportPreviewFormat;
   parserId: string;
@@ -61,6 +72,8 @@ export interface ParsedImportPreview {
   valid: number;
   invalid: number;
   rows: ParsedImportRow[];
+  originalRows?: ParsedImportRow[];
+  editLog?: ImportRowEdit[];
 }
 
 export type ImportProfileLayout =

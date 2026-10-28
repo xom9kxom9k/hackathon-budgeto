@@ -118,6 +118,29 @@ describe('Vault import provenance', () => {
     expect(first.claims[0].claimDigest).not.toBe(second.claims[0].claimDigest);
   });
 
+  it('binds the original row and correction history into the claim payload', async () => {
+    const service = createService({
+      ...preview('profile-edited'),
+      originalRows: [{ ...row, note: null }],
+      editLog: [
+        {
+          sourceRow: 2,
+          fields: ['note'],
+          before: { note: null },
+          after: { note: 'Corrected note' },
+          editHash: 'edit-hash',
+        },
+      ],
+    });
+    const result = await service.prepareImportConfirmation('user-1', 'job-1');
+    const payload = JSON.parse(result.claims[0].canonicalPayload) as Record<string, unknown>;
+
+    expect(payload.originalImportRow).toMatchObject({ sourceRow: 2, note: null });
+    expect(payload.importEdits).toEqual([
+      expect.objectContaining({ sourceRow: 2, editHash: 'edit-hash' }),
+    ]);
+  });
+
   it('records the import claim in the signed hash-chain and detects tampering', async () => {
     const service = createService(preview('profile-chain'));
     const { claims } = await service.prepareImportConfirmation('user-1', 'job-1');

@@ -17,6 +17,8 @@ import { assertImportStagingKey, encryptImportStaging } from '../../shared/impor
 import type { VaultProofDto } from '../vault/vault.dto';
 import { VaultService } from '../vault/vault.service';
 import { VaultEventType } from '../vault/entities/vault-event.entity';
+import { canonicalize, sha256 as sha256Text } from '../vault/vault.crypto';
+import type { ImportEditableField, ImportRowEdit } from '../../shared/import-parser/types';
 
 @Injectable()
 export class ImportsService {
@@ -133,7 +135,8 @@ export class ImportsService {
     const preview = job.preview as ParsedImportPreview | null;
     if (!preview || rows.length !== preview.rows.length)
       throw new ImportError(ImportErrorCode.IMPORT_ROWS_CHANGED);
-    const originalRows = new Map(preview.rows.map((row) => [row.sourceRow, row]));
+    const baseRows = preview.originalRows ?? preview.rows;
+    const currentRows = new Map(preview.rows.map((row) => [row.sourceRow, row]));
     const submittedSourceRows = new Set(rows.map((row) => row.sourceRow));
     if (
       submittedSourceRows.size !== rows.length ||
@@ -142,15 +145,15 @@ export class ImportsService {
       throw new ImportError(ImportErrorCode.IMPORT_ROWS_CHANGED);
     }
     const anchoredRows = rows.map((row) => {
-      const original = originalRows.get(row.sourceRow);
-      if (!original) throw new ImportError(ImportErrorCode.IMPORT_ROWS_CHANGED);
+      const current = currentRows.get(row.sourceRow);
+      if (!current) throw new ImportError(ImportErrorCode.IMPORT_ROWS_CHANGED);
       return {
         ...row,
-        sourceRow: original.sourceRow,
-        sourceRef: original.sourceRef ?? { kind: 'xlsx', record: original.sourceRow },
+        sourceRow: current.sourceRow,
+        sourceRef: current.sourceRef ?? { kind: 'xlsx', record: current.sourceRow },
       };
     });
-    const editableFields = [
+    const editableFields: readonly ImportEditableField[] = [
       'date',
       'type',
       'amount',
@@ -158,28 +161,36 @@ export class ImportsService {
       'destinationAccountName',
       'categoryName',
       'note',
-    ] as const;
+    ];
     const allRowsReviewed =
       anchoredRows.length > 0 &&
       anchoredRows.every((row) => {
-        const original = originalRows.get(row.sourceRow)!;
-        return editableFields.some((field) => row[field] !== original[field]);
+        const current = currentRows.get(row.sourceRow)!;
+        return editableFields.some((field) => row[field] !== current[field]);
       });
+    const edits = anchoredRows
+      .map((row) => this.createRowEdit(currentRows.get(row.sourceRow)!, row, editableFields))
+      .filter((edit): edit is ImportRowEdit => edit !== null);
+    const editLog = [...(preview.editLog ?? []), ...edits];
     const [accounts, categories] = await Promise.all([
       this.accounts.find({ where: { userId, archivedAt: IsNull() } }),
       this.categories.find({ where: { userId, archivedAt: IsNull() } }),
     ]);
     const checkedRows = anchoredRows.map((row) => {
       const checked = this.validateRow(row);
-      const original = originalRows.get(row.sourceRow)!;
-      if (original.errors.includes('PDF_AMOUNT_AMBIGUOUS') && row.amount === original.amount) {
+      const current = currentRows.get(row.sourceRow)!;
+      if (current.errors.includes('PDF_AMOUNT_AMBIGUOUS') && row.amount === current.amount) {
         checked.errors.push('PDF_AMOUNT_AMBIGUOUS');
         checked.valid = false;
       }
       return checked;
     });
     const resolved = this.resolve(
-      { ...(job.preview as ParsedImportPreview), rows: checkedRows },
+      {
+        ...preview,
+        rows: checkedRows,
+        ...(editLog.length ? { originalRows: baseRows, editLog } : {}),
+      },
       accounts,
       categories,
     );
@@ -417,6 +428,32 @@ export class ImportsService {
         errors.push('TRANSFER_SAME_ACCOUNT');
     }
     return { ...row, errors, valid: errors.length === 0 };
+  }
+
+  private createRowEdit(
+    before: ParsedImportRow,
+    after: ParsedImportRow,
+    editableFields: readonly ImportEditableField[],
+  ): ImportRowEdit | null {
+    const fields = editableFields.filter((field) => before[field] !== after[field]);
+    if (!fields.length) return null;
+    const beforeValues = Object.fromEntries(fields.map((field) => [field, before[field]]));
+    const afterValues = Object.fromEntries(fields.map((field) => [field, after[field]]));
+    const editHash = sha256Text(
+      canonicalize({
+        sourceRow: before.sourceRow,
+        fields,
+        before: beforeValues,
+        after: afterValues,
+      }),
+    );
+    return {
+      sourceRow: before.sourceRow,
+      fields: [...fields],
+      before: beforeValues,
+      after: afterValues,
+      editHash,
+    };
   }
 
   private toView(job: ImportJobEntity): unknown {

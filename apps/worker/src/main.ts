@@ -85,9 +85,15 @@ async function processJob(
   }
 }
 
+async function loadWorkerProfiles() {
+  const profileFile = process.env.IMPORT_PROFILES_FILE;
+  if (profileFile) return loadConfiguredImportProfiles(await readFile(profileFile, 'utf8'));
+  return loadConfiguredImportProfiles();
+}
+
 async function main(): Promise<void> {
   assertImportStagingKey();
-  const profiles = loadConfiguredImportProfiles();
+  const profiles = await loadWorkerProfiles();
   await dataSource.initialize();
   const worker = new Worker(IMPORT_QUEUE, async (job) => processJob(job.data.jobId, profiles), {
     connection: { url: process.env.REDIS_URL ?? 'redis://localhost:6379' },

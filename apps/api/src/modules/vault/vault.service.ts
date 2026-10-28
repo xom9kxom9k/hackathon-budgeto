@@ -377,6 +377,10 @@ export class VaultService {
         item.name.toLocaleLowerCase('ru-RU') === row.categoryName?.toLocaleLowerCase('ru-RU') &&
         item.kind === (row.type === 'income' ? CategoryKind.Income : CategoryKind.Expense),
     );
+    const preview = job.preview as ParsedImportPreview;
+    const originalRow =
+      preview.originalRows?.find((item) => item.sourceRow === row.sourceRow) ?? null;
+    const editLog = preview.editLog?.filter((edit) => edit.sourceRow === row.sourceRow) ?? [];
     if (
       !account ||
       (row.type === 'transfer' && !destination) ||
@@ -411,13 +415,15 @@ export class VaultService {
       importJobId: job.id,
       importRow: row.sourceRow,
       sourceRef: row.sourceRef,
-      sourceSha256: (job.preview as ParsedImportPreview).sourceSha256 ?? job.sourceSha256 ?? null,
-      parserId: (job.preview as ParsedImportPreview).parserId,
-      parserVersion: (job.preview as ParsedImportPreview).parserVersion,
-      templateId: (job.preview as ParsedImportPreview).templateId,
-      profileId: (job.preview as ParsedImportPreview).profileId,
-      profileVersion: (job.preview as ParsedImportPreview).profileVersion,
-      profileDigest: (job.preview as ParsedImportPreview).profileDigest,
+      sourceSha256: preview.sourceSha256 ?? job.sourceSha256 ?? null,
+      parserId: preview.parserId,
+      parserVersion: preview.parserVersion,
+      templateId: preview.templateId,
+      profileId: preview.profileId,
+      profileVersion: preview.profileVersion,
+      profileDigest: preview.profileDigest,
+      originalImportRow: originalRow,
+      importEdits: editLog,
       fingerprint,
     };
     const canonicalPayload = canonicalize(payload);

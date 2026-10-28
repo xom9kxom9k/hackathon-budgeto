@@ -199,6 +199,26 @@ describe('ImportsService confirmation', () => {
     expect((job.preview as { reviewRequired: boolean }).reviewRequired).toBe(true);
   });
 
+  it('keeps the parsed row and a hashed diff when a row is corrected', async () => {
+    const { service, job } = createService();
+    const row = (job.preview as { rows: Array<Record<string, unknown>> }).rows[0];
+
+    await service.updateRows('user-1', 'job-1', [{ ...row, note: 'Corrected note' }] as never);
+
+    const preview = job.preview as {
+      originalRows: Array<Record<string, unknown>>;
+      editLog: Array<Record<string, unknown>>;
+    };
+    expect(preview.originalRows[0].note).toBeNull();
+    expect(preview.editLog[0]).toMatchObject({
+      sourceRow: 2,
+      fields: ['note'],
+      before: { note: null },
+      after: { note: 'Corrected note' },
+    });
+    expect(preview.editLog[0].editHash).toMatch(/^[a-f0-9]{64}$/);
+  });
+
   it('does not clear manual review when only one row was reviewed', async () => {
     const { service, job } = createService();
     const firstRow = (job.preview as { rows: Array<Record<string, unknown>> }).rows[0];
