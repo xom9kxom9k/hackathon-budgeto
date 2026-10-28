@@ -11,9 +11,14 @@ import { AccountEntity } from '../accounts/entities/account.entity';
 import { CategoryEntity, CategoryKind } from '../categories/entities/category.entity';
 import { TransactionEntity, TransactionKind } from '../transactions/entities/transaction.entity';
 import type { ParsedImportPreview, ParsedImportRow } from '../../shared/import-parser/types';
+import { detectImportFormat, sha256 } from '../../shared/import-parser/document-parser';
+import { ImportError, ImportErrorCode } from '../../shared/import-parser/import-errors';
+import { assertImportStagingKey, encryptImportStaging } from '../../shared/import-staging-crypto';
 import type { VaultProofDto } from '../vault/vault.dto';
 import { VaultService } from '../vault/vault.service';
 import { VaultEventType } from '../vault/entities/vault-event.entity';
+import { canonicalize, sha256 as sha256Text } from '../vault/vault.crypto';
+import type { ImportEditableField, ImportRowEdit } from '../../shared/import-parser/types';
 
 @Injectable()
 export class ImportsService {
@@ -29,24 +34,58 @@ export class ImportsService {
     private readonly transactions: Repository<TransactionEntity>,
     private readonly dataSource: DataSource,
     private readonly vault: VaultService,
-  ) {}
+  ) {
+    assertImportStagingKey();
+  }
 
   async create(userId: string, fileName: string, content: Buffer): Promise<unknown> {
-    if (!/\.(xlsx|xlsm)$/i.test(fileName)) throw new Error('IMPORT_FILE_TYPE');
-    if (!content.length) throw new Error('IMPORT_FILE_EMPTY');
-    if (content.length > 8 * 1024 * 1024) throw new Error('IMPORT_FILE_TOO_LARGE');
-    await mkdir(this.stagingDir, { recursive: true });
-    const filePath = join(this.stagingDir, `${randomUUID()}.xlsx`);
-    await writeFile(filePath, content, { flag: 'wx' });
-    const job = await this.jobs.save(
-      this.jobs.create({ userId, fileName, filePath, status: ImportJobStatus.Queued }),
-    );
-    await this.queue.add(
-      'parse',
-      { jobId: job.id },
-      { removeOnComplete: true, removeOnFail: false },
-    );
-    return this.toView(job);
+    if (!content.length) throw new ImportError(ImportErrorCode.IMPORT_FILE_EMPTY);
+    if (content.length > 8 * 1024 * 1024)
+      throw new ImportError(ImportErrorCode.IMPORT_FILE_TOO_LARGE);
+    detectImportFormat(fileName, content);
+    await mkdir(this.stagingDir, { recursive: true, mode: 0o700 });
+    const filePath = join(this.stagingDir, `${randomUUID()}.upload`);
+    const sourceSha256 = sha256(content);
+    let job: ImportJobEntity | null = null;
+    try {
+      await writeFile(filePath, encryptImportStaging(content), { flag: 'wx', mode: 0o600 });
+      job = await this.jobs.save(
+        this.jobs.create({
+          userId,
+          fileName,
+          filePath,
+          sourceSha256,
+          status: ImportJobStatus.Queued,
+        }),
+      );
+      await this.queue.add(
+        'parse',
+        { jobId: job.id },
+        { removeOnComplete: true, removeOnFail: false },
+      );
+      return this.toView(job);
+    } catch (error) {
+      try {
+        await unlink(filePath);
+      } catch (cleanupError) {
+        if (!(
+          cleanupError &&
+          typeof cleanupError === 'object' &&
+          'code' in cleanupError &&
+          cleanupError.code === 'ENOENT'
+        )) {
+          console.error('Import staging rollback cleanup failed', { filePath, cleanupError });
+        }
+      }
+      if (job) {
+        try {
+          await this.jobs.remove(job);
+        } catch (cleanupError) {
+          console.error('Import job rollback cleanup failed', { jobId: job.id, cleanupError });
+        }
+      }
+      throw error;
+    }
   }
 
   async get(userId: string, jobId: string): Promise<ImportJobEntity> {
@@ -66,7 +105,11 @@ export class ImportsService {
 
   async retry(userId: string, jobId: string): Promise<unknown> {
     const job = await this.get(userId, jobId);
-    if (job.status !== ImportJobStatus.Failed) throw new Error('IMPORT_NOT_RETRYABLE');
+    if (
+      job.status !== ImportJobStatus.Failed ||
+      job.errorCode !== ImportErrorCode.IMPORT_PARSE_FAILED
+    )
+      throw new ImportError(ImportErrorCode.IMPORT_NOT_RETRYABLE);
     await this.jobs.update(job.id, { status: ImportJobStatus.Queued, errorCode: null });
     await this.queue.add(
       'parse',
@@ -78,23 +121,83 @@ export class ImportsService {
 
   async deleteStaging(userId: string, jobId: string): Promise<void> {
     const job = await this.get(userId, jobId);
-    await unlink(job.filePath).catch(() => undefined);
+    if (job.status !== ImportJobStatus.Failed && job.status !== ImportJobStatus.Confirmed) {
+      throw new ImportError(ImportErrorCode.IMPORT_NOT_EDITABLE);
+    }
+    if (job.filePath) await this.removeStagingFile(job.filePath);
     await this.jobs.update(job.id, { filePath: '' });
   }
 
   async updateRows(userId: string, jobId: string, rows: ParsedImportRow[]): Promise<unknown> {
     const job = await this.get(userId, jobId);
-    if (job.status !== ImportJobStatus.Preview) throw new Error('IMPORT_NOT_EDITABLE');
+    if (job.status !== ImportJobStatus.Preview)
+      throw new ImportError(ImportErrorCode.IMPORT_NOT_EDITABLE);
+    const preview = job.preview as ParsedImportPreview | null;
+    if (!preview || rows.length !== preview.rows.length)
+      throw new ImportError(ImportErrorCode.IMPORT_ROWS_CHANGED);
+    const baseRows = preview.originalRows ?? preview.rows;
+    const currentRows = new Map(preview.rows.map((row) => [row.sourceRow, row]));
+    const submittedSourceRows = new Set(rows.map((row) => row.sourceRow));
+    if (
+      submittedSourceRows.size !== rows.length ||
+      preview.rows.some((row) => !submittedSourceRows.has(row.sourceRow))
+    ) {
+      throw new ImportError(ImportErrorCode.IMPORT_ROWS_CHANGED);
+    }
+    const anchoredRows = rows.map((row) => {
+      const current = currentRows.get(row.sourceRow);
+      if (!current) throw new ImportError(ImportErrorCode.IMPORT_ROWS_CHANGED);
+      return {
+        ...row,
+        sourceRow: current.sourceRow,
+        sourceRef: current.sourceRef ?? { kind: 'xlsx', record: current.sourceRow },
+      };
+    });
+    const editableFields: readonly ImportEditableField[] = [
+      'date',
+      'type',
+      'amount',
+      'accountName',
+      'destinationAccountName',
+      'categoryName',
+      'note',
+    ];
+    const allRowsReviewed =
+      anchoredRows.length > 0 &&
+      anchoredRows.every((row) => {
+        const current = currentRows.get(row.sourceRow)!;
+        return editableFields.some((field) => row[field] !== current[field]);
+      });
+    const edits = anchoredRows
+      .map((row) => this.createRowEdit(currentRows.get(row.sourceRow)!, row, editableFields))
+      .filter((edit): edit is ImportRowEdit => edit !== null);
+    const editLog = [...(preview.editLog ?? []), ...edits];
     const [accounts, categories] = await Promise.all([
       this.accounts.find({ where: { userId, archivedAt: IsNull() } }),
       this.categories.find({ where: { userId, archivedAt: IsNull() } }),
     ]);
-    const checkedRows = rows.map((row) => this.validateRow(row));
+    const checkedRows = anchoredRows.map((row) => {
+      const checked = this.validateRow(row);
+      const current = currentRows.get(row.sourceRow)!;
+      if (current.errors.includes('PDF_AMOUNT_AMBIGUOUS') && row.amount === current.amount) {
+        checked.errors.push('PDF_AMOUNT_AMBIGUOUS');
+        checked.valid = false;
+      }
+      return checked;
+    });
     const resolved = this.resolve(
-      { ...(job.preview as ParsedImportPreview), rows: checkedRows },
+      {
+        ...preview,
+        rows: checkedRows,
+        ...(editLog.length ? { originalRows: baseRows, editLog } : {}),
+      },
       accounts,
       categories,
     );
+    if (resolved.reviewRequired && resolved.invalid === 0 && allRowsReviewed) {
+      resolved.reviewRequired = false;
+      resolved.reviewReasons = [];
+    }
     await this.jobs.update(job.id, { preview: resolved });
     return this.toView(await this.get(userId, jobId));
   }
@@ -115,13 +218,17 @@ export class ImportsService {
       if (job.status === ImportJobStatus.Confirmed) {
         return { created: job.createdCount, skipped: job.skippedCount };
       }
-      if (job.status !== ImportJobStatus.Preview) throw new Error('IMPORT_NOT_READY');
+      if (job.status !== ImportJobStatus.Preview)
+        throw new ImportError(ImportErrorCode.IMPORT_NOT_READY);
       const preview = job.preview as ParsedImportPreview | null;
-      if (!preview || preview.invalid > 0) throw new Error('IMPORT_HAS_INVALID_ROWS');
+      if (!preview || preview.invalid > 0)
+        throw new ImportError(ImportErrorCode.IMPORT_HAS_INVALID_ROWS);
+      if (preview.reviewRequired) throw new ImportError(ImportErrorCode.IMPORT_REVIEW_REQUIRED);
       const key = await this.vault.getKey(userId);
-      if (!key) throw new Error('VAULT_KEY_REQUIRED');
+      if (!key) throw new ImportError(ImportErrorCode.VAULT_KEY_REQUIRED);
       const { claims } = await this.vault.prepareImportConfirmation(userId, jobId);
-      if (proofs.length !== claims.length) throw new Error('VAULT_PROOFS_REQUIRED');
+      if (proofs.length !== claims.length)
+        throw new ImportError(ImportErrorCode.VAULT_PROOFS_REQUIRED);
       const validatedProofs = this.vault.validateProofs(
         claims,
         proofs,
@@ -170,9 +277,9 @@ export class ImportsService {
           (row.type === 'transfer' && !destination) ||
           (row.type !== 'transfer' && row.categoryName && !category)
         )
-          throw new Error('IMPORT_REFERENCE_INVALID');
+          throw new ImportError(ImportErrorCode.IMPORT_REFERENCE_INVALID);
         const proof = proofByRow.get(row.sourceRow);
-        if (!proof) throw new Error('VAULT_PROOF_INVALID');
+        if (!proof) throw new ImportError(ImportErrorCode.VAULT_PROOF_INVALID);
         const fingerprint = proof.fingerprint;
         if (await transactions.exists({ where: { userId, fingerprint } })) {
           skipped += 1;
@@ -222,9 +329,29 @@ export class ImportsService {
       return { created, skipped };
     });
     const confirmedJob = await this.get(userId, jobId);
-    await unlink(confirmedJob.filePath).catch(() => undefined);
-    if (confirmedJob.filePath) await this.jobs.update(confirmedJob.id, { filePath: '' });
+    if (confirmedJob.filePath) {
+      try {
+        await this.removeStagingFile(confirmedJob.filePath);
+        await this.jobs.update(confirmedJob.id, { filePath: '' });
+      } catch (error) {
+        console.error('Import staging cleanup failed', {
+          jobId: confirmedJob.id,
+          error,
+        });
+      }
+    }
     return result;
+  }
+
+  private async removeStagingFile(filePath: string): Promise<void> {
+    try {
+      await unlink(filePath);
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') return;
+      throw new ImportError(ImportErrorCode.IMPORT_STAGING_CLEANUP_FAILED, undefined, {
+        cause: error,
+      });
+    }
   }
 
   async template(): Promise<Buffer> {
@@ -301,6 +428,32 @@ export class ImportsService {
         errors.push('TRANSFER_SAME_ACCOUNT');
     }
     return { ...row, errors, valid: errors.length === 0 };
+  }
+
+  private createRowEdit(
+    before: ParsedImportRow,
+    after: ParsedImportRow,
+    editableFields: readonly ImportEditableField[],
+  ): ImportRowEdit | null {
+    const fields = editableFields.filter((field) => before[field] !== after[field]);
+    if (!fields.length) return null;
+    const beforeValues = Object.fromEntries(fields.map((field) => [field, before[field]]));
+    const afterValues = Object.fromEntries(fields.map((field) => [field, after[field]]));
+    const editHash = sha256Text(
+      canonicalize({
+        sourceRow: before.sourceRow,
+        fields,
+        before: beforeValues,
+        after: afterValues,
+      }),
+    );
+    return {
+      sourceRow: before.sourceRow,
+      fields: [...fields],
+      before: beforeValues,
+      after: afterValues,
+      editHash,
+    };
   }
 
   private toView(job: ImportJobEntity): unknown {

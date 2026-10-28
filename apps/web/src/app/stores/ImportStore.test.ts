@@ -8,6 +8,10 @@ const previewJob = (status: ImportJob['status'] = 'preview'): ImportJob => ({
   errorCode: null,
   preview: {
     format: 'budgeto-xlsx',
+    parserId: 'xlsx-header-map',
+    parserVersion: '1.0.0',
+    templateId: 'generic-xlsx-table',
+    confidence: 0.98,
     total: 1,
     valid: 1,
     invalid: 0,
@@ -42,5 +46,18 @@ describe('ImportStore', () => {
     expect(store.result).toEqual({ created: 3, skipped: 1 });
     expect(store.job?.status).toBe('confirmed');
     expect(store.status).toBe('success');
+  });
+
+  it('can clear only the local file selection while keeping the preview job', () => {
+    const service = {} as ImportService;
+    const store = new ImportStore(service);
+    store.job = previewJob();
+    store.selectFile(new File(['xlsx'], 'statement.xlsx'));
+    store.job = previewJob();
+
+    store.clearSelectedFile();
+
+    expect(store.selectedFile).toBeNull();
+    expect(store.job?.id).toBe('job-1');
   });
 });

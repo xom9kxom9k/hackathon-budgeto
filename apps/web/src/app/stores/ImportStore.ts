@@ -37,6 +37,9 @@ export class ImportStore {
     this.status = 'idle';
     this.errorCode = null;
   }
+  clearSelectedFile(): void {
+    this.selectedFile = null;
+  }
   async createJob(): Promise<ImportJob | null> {
     if (!this.selectedFile) return null;
     this.status = 'loading';

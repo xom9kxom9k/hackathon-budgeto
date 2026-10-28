@@ -9,12 +9,15 @@ import {
   Patch,
   Post,
   UploadedFile,
+  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '../auth/auth.guard';
+import { ImportErrorFilter } from './import-error.filter';
+import { ImportErrorCode } from '../../shared/import-parser/import-errors';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { AuthPrincipal } from '../auth/auth.types';
 import {
@@ -35,6 +38,7 @@ import type { VaultProofDto } from '../vault/vault.dto';
 
 @Controller('imports')
 @UseGuards(AuthGuard)
+@UseFilters(ImportErrorFilter)
 export class ImportsController {
   constructor(
     private readonly commands: CommandBus,
@@ -59,7 +63,7 @@ export class ImportsController {
     @CurrentUser() user: AuthPrincipal,
     @UploadedFile() file?: { originalname: string; buffer: Buffer },
   ): Promise<unknown> {
-    if (!file) throw new BadRequestException('IMPORT_FILE_REQUIRED');
+    if (!file) throw new BadRequestException(ImportErrorCode.IMPORT_FILE_REQUIRED);
     return this.commands.execute(
       new CreateImportJobCommand(user.userId, file.originalname, file.buffer),
     );
@@ -76,7 +80,16 @@ export class ImportsController {
     @Param('id') id: string,
     @Body() body: UpdateImportRowsDto,
   ): Promise<unknown> {
-    return this.commands.execute(new UpdateImportRowsCommand(user.userId, id, body.rows));
+    return this.commands.execute(
+      new UpdateImportRowsCommand(
+        user.userId,
+        id,
+        body.rows.map((row) => ({
+          ...row,
+          sourceRef: row.sourceRef ?? { kind: 'xlsx', record: row.sourceRow },
+        })),
+      ),
+    );
   }
 
   @Post(':id/confirm')

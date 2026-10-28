@@ -13,12 +13,41 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import type { ImportIssueCode, ImportTransactionType } from '../../shared/import-parser/types';
+import type {
+  ImportIssueCode,
+  ImportSourceKind,
+  ImportTransactionType,
+} from '../../shared/import-parser/types';
+
+export class ImportSourceRefDto {
+  @IsIn(['xlsx', 'csv', 'pdf'])
+  kind!: ImportSourceKind;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  sheet?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  record?: number;
+}
 
 export class ImportRowDto {
   @IsInt()
   @Min(1)
   sourceRow!: number;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ImportSourceRefDto)
+  sourceRef?: ImportSourceRefDto;
 
   @IsOptional()
   @IsDateString()

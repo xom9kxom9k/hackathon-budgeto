@@ -1,0 +1,20 @@
+[
+  {
+    "id": "example-bank-pdf-v1",
+    "version": "1.0.0",
+    "format": "pdf",
+    "match": {
+      "textAnchors": ["ANONYMIZED BANK STATEMENT"]
+    },
+    "layout": {
+      "kind": "pdf-lines",
+      "amountRule": "signed-amount",
+      "descriptionRule": "between-date-and-amount",
+      "recordRule": "date-block"
+    },
+    "review": {
+      "alwaysRequired": true,
+      "minConfidence": 0.9
+    }
+  }
+]

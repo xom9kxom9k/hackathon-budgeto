@@ -1,0 +1,91 @@
+'use strict';
+
+const ImportErrorCode = Object.freeze({
+  IMPORT_FILE_REQUIRED: 'IMPORT_FILE_REQUIRED',
+  IMPORT_FILE_EMPTY: 'IMPORT_FILE_EMPTY',
+  IMPORT_FILE_TOO_LARGE: 'IMPORT_FILE_TOO_LARGE',
+  IMPORT_FILE_TYPE: 'IMPORT_FILE_TYPE',
+  IMPORT_FILE_SIGNATURE_MISMATCH: 'IMPORT_FILE_SIGNATURE_MISMATCH',
+  IMPORT_SOURCE_CHANGED: 'IMPORT_SOURCE_CHANGED',
+  IMPORT_SOURCE_HASH_REQUIRED: 'IMPORT_SOURCE_HASH_REQUIRED',
+  IMPORT_PARSE_FAILED: 'IMPORT_PARSE_FAILED',
+  IMPORT_HEADERS_NOT_FOUND: 'IMPORT_HEADERS_NOT_FOUND',
+  IMPORT_NOT_RETRYABLE: 'IMPORT_NOT_RETRYABLE',
+  IMPORT_NOT_EDITABLE: 'IMPORT_NOT_EDITABLE',
+  IMPORT_ROWS_CHANGED: 'IMPORT_ROWS_CHANGED',
+  IMPORT_NOT_READY: 'IMPORT_NOT_READY',
+  IMPORT_HAS_INVALID_ROWS: 'IMPORT_HAS_INVALID_ROWS',
+  IMPORT_REVIEW_REQUIRED: 'IMPORT_REVIEW_REQUIRED',
+  IMPORT_REFERENCE_INVALID: 'IMPORT_REFERENCE_INVALID',
+  IMPORT_PROFILE_INVALID: 'IMPORT_PROFILE_INVALID',
+  IMPORT_PROFILE_UNSAFE: 'IMPORT_PROFILE_UNSAFE',
+  IMPORT_PROFILE_DUPLICATE: 'IMPORT_PROFILE_DUPLICATE',
+  IMPORT_PROFILE_NOT_FOUND: 'IMPORT_PROFILE_NOT_FOUND',
+  IMPORT_STAGING_KEY_REQUIRED: 'IMPORT_STAGING_KEY_REQUIRED',
+  IMPORT_STAGING_DECRYPT_FAILED: 'IMPORT_STAGING_DECRYPT_FAILED',
+  IMPORT_STAGING_KEY_VERSION_UNSUPPORTED: 'IMPORT_STAGING_KEY_VERSION_UNSUPPORTED',
+  IMPORT_STAGING_CLEANUP_FAILED: 'IMPORT_STAGING_CLEANUP_FAILED',
+  INVALID_XLSX: 'INVALID_XLSX',
+  INVALID_PDF: 'INVALID_PDF',
+  PDF_TOO_MANY_PAGES: 'PDF_TOO_MANY_PAGES',
+  PDF_TEXT_NOT_FOUND: 'PDF_TEXT_NOT_FOUND',
+  PDF_AMOUNT_AMBIGUOUS: 'PDF_AMOUNT_AMBIGUOUS',
+  VAULT_KEY_REQUIRED: 'VAULT_KEY_REQUIRED',
+  VAULT_PROOFS_REQUIRED: 'VAULT_PROOFS_REQUIRED',
+  VAULT_PROOF_INVALID: 'VAULT_PROOF_INVALID',
+  CSV_DELIMITER_NOT_FOUND: 'CSV_DELIMITER_NOT_FOUND',
+  CSV_DELIMITER_AMBIGUOUS: 'CSV_DELIMITER_AMBIGUOUS',
+  CSV_QUOTE_NOT_CLOSED: 'CSV_QUOTE_NOT_CLOSED',
+  CSV_TEXT_TOO_LARGE: 'CSV_TEXT_TOO_LARGE',
+});
+
+class ImportError extends Error {
+  constructor(code, message, options) {
+    super(message || code, options);
+    this.name = 'ImportError';
+    this.code = code;
+    if (options && options.cause !== undefined) this.cause = options.cause;
+  }
+}
+
+class InvalidPdfError extends ImportError {
+  constructor(message, options) {
+    super(ImportErrorCode.INVALID_PDF, message, options);
+    this.name = 'InvalidPdfError';
+  }
+}
+
+class PdfTooManyPagesError extends ImportError {
+  constructor(message, options) {
+    super(ImportErrorCode.PDF_TOO_MANY_PAGES, message, options);
+    this.name = 'PdfTooManyPagesError';
+  }
+}
+
+class PdfTextNotFoundError extends ImportError {
+  constructor(message, options) {
+    super(ImportErrorCode.PDF_TEXT_NOT_FOUND, message, options);
+    this.name = 'PdfTextNotFoundError';
+  }
+}
+
+class InvalidXlsxError extends ImportError {
+  constructor(message, options) {
+    super(ImportErrorCode.INVALID_XLSX, message, options);
+    this.name = 'InvalidXlsxError';
+  }
+}
+
+function isImportError(error) {
+  return error instanceof ImportError;
+}
+
+module.exports = {
+  ImportErrorCode,
+  ImportError,
+  InvalidPdfError,
+  PdfTooManyPagesError,
+  PdfTextNotFoundError,
+  InvalidXlsxError,
+  isImportError,
+};

@@ -377,6 +377,10 @@ export class VaultService {
         item.name.toLocaleLowerCase('ru-RU') === row.categoryName?.toLocaleLowerCase('ru-RU') &&
         item.kind === (row.type === 'income' ? CategoryKind.Income : CategoryKind.Expense),
     );
+    const preview = job.preview as ParsedImportPreview;
+    const originalRow =
+      preview.originalRows?.find((item) => item.sourceRow === row.sourceRow) ?? null;
+    const editLog = preview.editLog?.filter((edit) => edit.sourceRow === row.sourceRow) ?? [];
     if (
       !account ||
       (row.type === 'transfer' && !destination) ||
@@ -410,6 +414,16 @@ export class VaultService {
       note: row.note,
       importJobId: job.id,
       importRow: row.sourceRow,
+      sourceRef: row.sourceRef,
+      sourceSha256: preview.sourceSha256 ?? job.sourceSha256 ?? null,
+      parserId: preview.parserId,
+      parserVersion: preview.parserVersion,
+      templateId: preview.templateId,
+      profileId: preview.profileId,
+      profileVersion: preview.profileVersion,
+      profileDigest: preview.profileDigest,
+      originalImportRow: originalRow,
+      importEdits: editLog,
       fingerprint,
     };
     const canonicalPayload = canonicalize(payload);
