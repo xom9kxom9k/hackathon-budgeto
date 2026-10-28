@@ -19,7 +19,11 @@ export function validateImportProfile(value: unknown): ImportProfile {
   if (typeof value.id !== 'string' || !/^[a-z0-9][a-z0-9._-]{1,63}$/.test(value.id)) {
     throw new ImportError(ImportErrorCode.IMPORT_PROFILE_INVALID);
   }
-  if (typeof value.version !== 'string' || !/^\d+\.\d+\.\d+$/.test(value.version)) {
+  if (
+    typeof value.version !== 'string' ||
+    value.version.length > 32 ||
+    !/^\d+\.\d+\.\d+$/.test(value.version)
+  ) {
     throw new ImportError(ImportErrorCode.IMPORT_PROFILE_INVALID);
   }
   if (typeof value.format !== 'string' || !formats.has(value.format)) {
@@ -45,8 +49,12 @@ export function validateImportProfile(value: unknown): ImportProfile {
   if (
     value.match.requiredHeaders !== undefined &&
     (!Array.isArray(value.match.requiredHeaders) ||
+      value.match.requiredHeaders.length > 32 ||
       value.match.requiredHeaders.some(
-        (group) => !Array.isArray(group) || group.some((item) => typeof item !== 'string'),
+        (group) =>
+          !Array.isArray(group) ||
+          group.length > 16 ||
+          group.some((item) => typeof item !== 'string' || item.length > 128),
       ))
   ) {
     throw new ImportError(ImportErrorCode.IMPORT_PROFILE_INVALID);
@@ -54,7 +62,8 @@ export function validateImportProfile(value: unknown): ImportProfile {
   if (
     value.match.textAnchors !== undefined &&
     (!Array.isArray(value.match.textAnchors) ||
-      value.match.textAnchors.some((item) => typeof item !== 'string'))
+      value.match.textAnchors.length > 32 ||
+      value.match.textAnchors.some((item) => typeof item !== 'string' || item.length > 128))
   ) {
     throw new ImportError(ImportErrorCode.IMPORT_PROFILE_INVALID);
   }
@@ -79,6 +88,7 @@ export function validateImportProfile(value: unknown): ImportProfile {
     const hasValidColumns =
       value.layout.columns === undefined ||
       (isRecord(value.layout.columns) &&
+        Object.keys(value.layout.columns).length <= 9 &&
         Object.keys(value.layout.columns).every((field) =>
           [
             'date',
@@ -94,7 +104,9 @@ export function validateImportProfile(value: unknown): ImportProfile {
         ) &&
         Object.values(value.layout.columns).every(
           (aliases) =>
-            Array.isArray(aliases) && aliases.every((alias) => typeof alias === 'string'),
+            Array.isArray(aliases) &&
+            aliases.length <= 32 &&
+            aliases.every((alias) => typeof alias === 'string' && alias.length <= 128),
         ));
     if (
       !hasValidAmountMode ||
