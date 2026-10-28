@@ -13,6 +13,7 @@ import { TransactionEntity, TransactionKind } from '../transactions/entities/tra
 import type { ParsedImportPreview, ParsedImportRow } from '../../shared/import-parser/types';
 import { detectImportFormat, sha256 } from '../../shared/import-parser/document-parser';
 import { ImportError, ImportErrorCode } from '../../shared/import-parser/import-errors';
+import { assertImportStagingKey, encryptImportStaging } from '../../shared/import-staging-crypto';
 import type { VaultProofDto } from '../vault/vault.dto';
 import { VaultService } from '../vault/vault.service';
 import { VaultEventType } from '../vault/entities/vault-event.entity';
@@ -31,32 +32,58 @@ export class ImportsService {
     private readonly transactions: Repository<TransactionEntity>,
     private readonly dataSource: DataSource,
     private readonly vault: VaultService,
-  ) {}
+  ) {
+    assertImportStagingKey();
+  }
 
   async create(userId: string, fileName: string, content: Buffer): Promise<unknown> {
     if (!content.length) throw new ImportError(ImportErrorCode.IMPORT_FILE_EMPTY);
     if (content.length > 8 * 1024 * 1024)
       throw new ImportError(ImportErrorCode.IMPORT_FILE_TOO_LARGE);
     detectImportFormat(fileName, content);
-    await mkdir(this.stagingDir, { recursive: true });
+    await mkdir(this.stagingDir, { recursive: true, mode: 0o700 });
     const filePath = join(this.stagingDir, `${randomUUID()}.upload`);
     const sourceSha256 = sha256(content);
-    await writeFile(filePath, content, { flag: 'wx' });
-    const job = await this.jobs.save(
-      this.jobs.create({
-        userId,
-        fileName,
-        filePath,
-        sourceSha256,
-        status: ImportJobStatus.Queued,
-      }),
-    );
-    await this.queue.add(
-      'parse',
-      { jobId: job.id },
-      { removeOnComplete: true, removeOnFail: false },
-    );
-    return this.toView(job);
+    let job: ImportJobEntity | null = null;
+    try {
+      await writeFile(filePath, encryptImportStaging(content), { flag: 'wx', mode: 0o600 });
+      job = await this.jobs.save(
+        this.jobs.create({
+          userId,
+          fileName,
+          filePath,
+          sourceSha256,
+          status: ImportJobStatus.Queued,
+        }),
+      );
+      await this.queue.add(
+        'parse',
+        { jobId: job.id },
+        { removeOnComplete: true, removeOnFail: false },
+      );
+      return this.toView(job);
+    } catch (error) {
+      try {
+        await unlink(filePath);
+      } catch (cleanupError) {
+        if (!(
+          cleanupError &&
+          typeof cleanupError === 'object' &&
+          'code' in cleanupError &&
+          cleanupError.code === 'ENOENT'
+        )) {
+          console.error('Import staging rollback cleanup failed', { filePath, cleanupError });
+        }
+      }
+      if (job) {
+        try {
+          await this.jobs.remove(job);
+        } catch (cleanupError) {
+          console.error('Import job rollback cleanup failed', { jobId: job.id, cleanupError });
+        }
+      }
+      throw error;
+    }
   }
 
   async get(userId: string, jobId: string): Promise<ImportJobEntity> {
@@ -76,7 +103,10 @@ export class ImportsService {
 
   async retry(userId: string, jobId: string): Promise<unknown> {
     const job = await this.get(userId, jobId);
-    if (job.status !== ImportJobStatus.Failed)
+    if (
+      job.status !== ImportJobStatus.Failed ||
+      job.errorCode !== ImportErrorCode.IMPORT_PARSE_FAILED
+    )
       throw new ImportError(ImportErrorCode.IMPORT_NOT_RETRYABLE);
     await this.jobs.update(job.id, { status: ImportJobStatus.Queued, errorCode: null });
     await this.queue.add(
@@ -89,7 +119,10 @@ export class ImportsService {
 
   async deleteStaging(userId: string, jobId: string): Promise<void> {
     const job = await this.get(userId, jobId);
-    await unlink(job.filePath).catch(() => undefined);
+    if (job.status !== ImportJobStatus.Failed && job.status !== ImportJobStatus.Confirmed) {
+      throw new ImportError(ImportErrorCode.IMPORT_NOT_EDITABLE);
+    }
+    if (job.filePath) await this.removeStagingFile(job.filePath);
     await this.jobs.update(job.id, { filePath: '' });
   }
 
@@ -285,9 +318,29 @@ export class ImportsService {
       return { created, skipped };
     });
     const confirmedJob = await this.get(userId, jobId);
-    await unlink(confirmedJob.filePath).catch(() => undefined);
-    if (confirmedJob.filePath) await this.jobs.update(confirmedJob.id, { filePath: '' });
+    if (confirmedJob.filePath) {
+      try {
+        await this.removeStagingFile(confirmedJob.filePath);
+        await this.jobs.update(confirmedJob.id, { filePath: '' });
+      } catch (error) {
+        console.error('Import staging cleanup failed', {
+          jobId: confirmedJob.id,
+          error,
+        });
+      }
+    }
     return result;
+  }
+
+  private async removeStagingFile(filePath: string): Promise<void> {
+    try {
+      await unlink(filePath);
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') return;
+      throw new ImportError(ImportErrorCode.IMPORT_STAGING_CLEANUP_FAILED, undefined, {
+        cause: error,
+      });
+    }
   }
 
   async template(): Promise<Buffer> {

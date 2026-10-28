@@ -56,6 +56,7 @@ Budgeto превращает банковскую выписку в провер
 - AI остаётся read-only и получает только разрешённую проекцию данных.
 - Банковские пароли не храним.
 - S3/MinIO закрыт, файлы шифруются, клиент не получает постоянные credentials.
+- Локальный import staging использует AES-256-GCM envelope с версией ключа; в production требуется `AUTH_ENCRYPTION_KEY`, а plaintext compatibility mode разрешается только явным dev-флагом. При ротации `IMPORT_STAGING_KEY_VERSION` незавершённые jobs нужно заранее drain-ить или мигрировать.
 
 ## Порядок работы
 

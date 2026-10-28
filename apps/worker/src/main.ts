@@ -5,6 +5,10 @@ import { readFile } from 'node:fs/promises';
 import { parseImportDocument, sha256 } from '../../api/src/shared/import-parser/document-parser';
 import { ImportError, ImportErrorCode } from '../../api/src/shared/import-parser/import-errors';
 import {
+  assertImportStagingKey,
+  decryptImportStaging,
+} from '../../api/src/shared/import-staging-crypto';
+import {
   ImportJobEntity,
   ImportJobStatus,
 } from '../../api/src/modules/imports/entities/import-job.entity';
@@ -24,8 +28,11 @@ async function processJob(jobId: string): Promise<void> {
   const job = await jobs.findOneByOrFail({ id: jobId });
   await jobs.update(job.id, { status: ImportJobStatus.Parsing, errorCode: null });
   try {
-    const content = await readFile(job.filePath);
-    if (job.sourceSha256 && sha256(content) !== job.sourceSha256) {
+    const content = decryptImportStaging(await readFile(job.filePath));
+    if (!job.sourceSha256) {
+      throw new ImportError(ImportErrorCode.IMPORT_SOURCE_HASH_REQUIRED);
+    }
+    if (sha256(content) !== job.sourceSha256) {
       throw new ImportError(ImportErrorCode.IMPORT_SOURCE_CHANGED);
     }
     const preview = await parseImportDocument(content, job.fileName);
@@ -75,6 +82,7 @@ async function processJob(jobId: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  assertImportStagingKey();
   await dataSource.initialize();
   const worker = new Worker(IMPORT_QUEUE, async (job) => processJob(job.data.jobId), {
     connection: { url: process.env.REDIS_URL ?? 'redis://localhost:6379' },
