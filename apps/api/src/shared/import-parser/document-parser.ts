@@ -3,7 +3,6 @@ import { createHash } from 'node:crypto';
 import { extractCsvHeaders, parseCsv } from './csv-parser';
 import { extractPdfText, parsePdf } from './pdf-parser';
 import { ImportError, ImportErrorCode } from './import-errors';
-import { builtinImportProfiles } from './profiles/builtins';
 import {
   classifyImportProfile,
   createImportProfileRegistry,
@@ -40,9 +39,7 @@ export async function parseImportDocument(
 ): Promise<ParsedImportPreview> {
   const sourceSha256 = createHash('sha256').update(content).digest('hex');
   const sourceKind = detectImportFormat(fileName, content);
-  const configuredProfiles =
-    profiles === builtinImportProfiles ? profiles : [...builtinImportProfiles, ...profiles];
-  const profileRegistry = createImportProfileRegistry(configuredProfiles);
+  const profileRegistry = createImportProfileRegistry(profiles);
   let preview: ParsedImportPreview;
   let selection;
   switch (sourceKind) {
@@ -83,8 +80,29 @@ export async function parseImportDocument(
       break;
     }
     case 'csv': {
-      const headers = extractCsvHeaders(content);
-      selection = classifyImportProfile({ format: sourceKind, headers }, profileRegistry);
+      const delimiterHints = profileRegistry
+        .filter(
+          (profile) =>
+            profile.format === 'csv' && profile.layout.kind === 'table' && profile.layout.delimiter,
+        )
+        .map((profile) => (profile.layout.kind === 'table' ? profile.layout.delimiter : undefined))
+        .filter((delimiter): delimiter is ',' | ';' | '\t' => delimiter !== undefined);
+      const delimiters = [...new Set([...delimiterHints, undefined])];
+      const selections = [];
+      let lastError: unknown;
+      for (const preferredDelimiter of delimiters) {
+        try {
+          const headers = extractCsvHeaders(content, preferredDelimiter);
+          selections.push(classifyImportProfile({ format: sourceKind, headers }, profileRegistry));
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      if (!selections.length) throw lastError;
+      selection = selections.sort(
+        (left, right) =>
+          right.confidence - left.confidence || left.profile.id.localeCompare(right.profile.id),
+      )[0];
       preview = parseCsv(content, sourceSha256, selection.profile);
       break;
     }

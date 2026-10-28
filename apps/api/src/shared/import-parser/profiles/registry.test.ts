@@ -32,6 +32,28 @@ describe('import profile registry', () => {
     expect(result.reviewReasons).toContain('PROFILE_REVIEW_REQUIRED');
   });
 
+  it('prefers a header-specific profile over a preview-only built-in', () => {
+    const customProfile = {
+      id: 'custom-xlsx-columns',
+      version: '1.0.0',
+      format: 'xlsx' as const,
+      match: { requiredHeaders: [['Дата'], ['Сумма'], ['Счёт']] },
+      layout: { kind: 'table' as const, amountMode: 'signed' as const },
+      review: { alwaysRequired: false, minConfidence: 0.8 },
+    };
+
+    const result = classifyImportProfile(
+      {
+        format: 'xlsx',
+        previewFormat: 'budgeto-xlsx',
+        headers: ['Дата', 'Сумма', 'Счёт'],
+      },
+      [...listImportProfiles(), customProfile],
+    );
+
+    expect(result.profile.id).toBe('custom-xlsx-columns');
+  });
+
   it('produces stable profile digests and exposes only built-ins', () => {
     const profiles = listImportProfiles();
     expect(profiles.length).toBeGreaterThanOrEqual(4);
@@ -51,6 +73,9 @@ describe('import profile registry', () => {
     ).toThrow('IMPORT_PROFILE_UNSAFE');
     expect(() => createImportProfileRegistry([profile, profile])).toThrow(
       'IMPORT_PROFILE_DUPLICATE',
+    );
+    expect(() => createImportProfileRegistry([{ ...profile, match: {} } as never])).toThrow(
+      'IMPORT_PROFILE_INVALID',
     );
     expect(() =>
       createImportProfileRegistry([

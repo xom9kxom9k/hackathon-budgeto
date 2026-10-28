@@ -14,6 +14,7 @@ import {
 } from './normalization';
 
 const delimiters = [',', ';', '\t'] as const;
+type CsvRecord = { values: string[]; sourceRow: number };
 
 function countDelimiter(line: string, delimiter: string): number {
   let quoted = false;
@@ -38,11 +39,12 @@ function detectDelimiter(text: string, preferred?: string): string {
   return ranked[0].delimiter;
 }
 
-function parseRecords(text: string, delimiter: string): string[][] {
-  const records: string[][] = [];
+function parseRecords(text: string, delimiter: string): CsvRecord[] {
+  const records: CsvRecord[] = [];
   let record: string[] = [];
   let value = '';
   let quoted = false;
+  let sourceRow = 1;
   for (let index = 0; index < text.length; index += 1) {
     const character = text[index];
     const next = text[index + 1];
@@ -64,15 +66,17 @@ function parseRecords(text: string, delimiter: string): string[][] {
       if (character === '\r' && next === '\n') index += 1;
       record.push(value);
       value = '';
-      if (record.some((cell) => normalize(cell) !== '')) records.push(record);
+      if (record.some((cell) => normalize(cell) !== ''))
+        records.push({ values: record, sourceRow });
       record = [];
+      sourceRow += 1;
       continue;
     }
     value += character;
   }
   if (quoted) throw new ImportError(ImportErrorCode.CSV_QUOTE_NOT_CLOSED);
   record.push(value);
-  if (record.some((cell) => normalize(cell) !== '')) records.push(record);
+  if (record.some((cell) => normalize(cell) !== '')) records.push({ values: record, sourceRow });
   return records;
 }
 
@@ -112,17 +116,17 @@ function amountValue(
       : null;
 }
 
-export function extractCsvHeaders(content: Buffer): string[] {
+export function extractCsvHeaders(content: Buffer, preferredDelimiter?: string): string[] {
   const text = content.toString('utf8').replace(/^\uFEFF/, '');
-  const records = parseRecords(text, detectDelimiter(text));
-  const header = records.find((record) => {
-    const columns = headerMap(record);
+  const records = parseRecords(text, detectDelimiter(text, preferredDelimiter));
+  const header = records.find(({ values }) => {
+    const columns = headerMap(values);
     return (
       columns.date !== undefined &&
       (columns.amount !== undefined || columns.debit !== undefined || columns.credit !== undefined)
     );
   });
-  return header ?? records.find((record) => record.length > 1) ?? [];
+  return header?.values ?? records.find(({ values }) => values.length > 1)?.values ?? [];
 }
 
 export function parseCsv(
@@ -138,15 +142,15 @@ export function parseCsv(
   const fieldAliases = tableLayout?.columns ? { ...aliases, ...tableLayout.columns } : aliases;
   const delimiter = detectDelimiter(text, tableLayout?.delimiter);
   const records = parseRecords(text, delimiter);
-  const headerIndex = records.findIndex((record) => {
-    const columns = headerMap(record, fieldAliases);
+  const headerIndex = records.findIndex(({ values }) => {
+    const columns = headerMap(values, fieldAliases);
     return (
       columns.date !== undefined &&
       (columns.amount !== undefined || columns.debit !== undefined || columns.credit !== undefined)
     );
   });
   if (headerIndex < 0) throw new ImportError(ImportErrorCode.IMPORT_HEADERS_NOT_FOUND);
-  const headers = records[headerIndex];
+  const headers = records[headerIndex].values;
   const sourceColumns = headerMap(headers, fieldAliases);
   const columns =
     sourceColumns.amount === undefined
@@ -154,12 +158,12 @@ export function parseCsv(
       : sourceColumns;
   const rows = records
     .slice(headerIndex + 1)
-    .filter((record) => !isEmpty(record))
-    .map((record, index) => {
-      const row = [...record];
-      row[columns.amount] = amountValue(record, sourceColumns, amountMode) ?? '';
-      const type = inferType(record, sourceColumns, amountMode);
-      return rowPreview(row, index + 1, { kind: 'csv', record: index + 1 }, columns, type);
+    .filter(({ values }) => !isEmpty(values))
+    .map(({ values, sourceRow }) => {
+      const row = [...values];
+      row[columns.amount] = amountValue(values, sourceColumns, amountMode) ?? '';
+      const type = inferType(values, sourceColumns, amountMode);
+      return rowPreview(row, sourceRow, { kind: 'csv', record: sourceRow }, columns, type);
     });
   return recountPreview({
     format: 'generic-csv',

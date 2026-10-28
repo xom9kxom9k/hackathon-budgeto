@@ -26,7 +26,7 @@ function scoreProfile(
   let matchedHeaders = 0;
   let matchedAnchors = 0;
   if (profile.match.previewFormat && profile.match.previewFormat === input.previewFormat) {
-    score += 0.7;
+    score += 0.45;
   }
   if (profile.match.requiredHeaders?.length) {
     matchedHeaders = profile.match.requiredHeaders.filter((expected) =>

@@ -67,6 +67,13 @@ export function validateImportProfile(value: unknown): ImportProfile {
   ) {
     throw new ImportError(ImportErrorCode.IMPORT_PROFILE_INVALID);
   }
+  const hasDiscriminator =
+    typeof value.match.previewFormat === 'string' ||
+    value.match.requiredHeaders?.some((group: unknown[]) =>
+      group.some((item: unknown) => typeof item === 'string' && item.trim().length > 0),
+    ) === true ||
+    value.match.textAnchors?.some((anchor) => anchor.trim().length > 0) === true;
+  if (!hasDiscriminator) throw new ImportError(ImportErrorCode.IMPORT_PROFILE_INVALID);
   if (typeof value.layout.kind !== 'string' || !layoutKinds.has(value.layout.kind)) {
     throw new ImportError(ImportErrorCode.IMPORT_PROFILE_INVALID);
   }
