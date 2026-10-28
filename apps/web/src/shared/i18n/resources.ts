@@ -192,6 +192,8 @@ const ru: TranslationMap = {
   [I18nKey.ImportsTitle]: 'Импорт выписки',
   [I18nKey.ImportsDescription]:
     'Выберите XLSX, CSV или текстовый PDF. Перед импортом мы проверим структуру файла и покажем найденные ошибки.',
+  [I18nKey.ImportsHistoryKicker]: 'Последние файлы',
+  [I18nKey.ImportsHistoryTitle]: 'История импортов',
   [I18nKey.ImportsStepTitle]: 'Выберите файл',
   [I18nKey.ImportsStepDescription]:
     'Файл будет проверен на сервере и не изменит данные до подтверждения.',
@@ -642,6 +644,8 @@ const en: TranslationMap = {
   [I18nKey.ImportsTitle]: 'Statement import',
   [I18nKey.ImportsDescription]:
     'Choose XLSX, CSV, or a text PDF. We will check the structure and show issues before import.',
+  [I18nKey.ImportsHistoryKicker]: 'Recent files',
+  [I18nKey.ImportsHistoryTitle]: 'Import history',
   [I18nKey.ImportsStepTitle]: 'Choose a file',
   [I18nKey.ImportsStepDescription]:
     'The file is checked on the server and cannot change data before confirmation.',

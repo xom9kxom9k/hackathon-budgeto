@@ -48,16 +48,16 @@ export const ImportsPage = observer(function ImportsPage() {
       <ImportForm onJobCreated={(id) => void setJobId(id)} onNewImport={startNewImport} />
       {importStore.history.length ? (
         <section className="plain-panel import-history-panel">
-          <span className="section-kicker">{t(I18nKey.ImportsTitle)}</span>
+          <span className="section-kicker">{t(I18nKey.ImportsHistoryKicker)}</span>
           <T font="Header/H4" as="h2">
-            {t(I18nKey.ImportsDescription)}
+            {t(I18nKey.ImportsHistoryTitle)}
           </T>
           <div className="import-history-list">
             {importStore.history.map((item) => (
               <div className="import-history-row" key={item.id}>
-                <div>
+                <div className="import-history-file">
                   <strong>{item.fileName}</strong>
-                  <span>
+                  <span className="import-history-meta">
                     {item.status} · {item.rowCount}
                   </span>
                 </div>

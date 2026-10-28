@@ -12,6 +12,12 @@ interface ReferenceFormProps {
   saving: boolean;
 }
 
+export type ReferenceFormValue = {
+  name: string;
+  currency?: string;
+  kind?: CategoryKind;
+};
+
 export function ReferenceForm({ initial, mode, onCancel, onSubmit, saving }: ReferenceFormProps) {
   const { t } = useTranslation();
   const [name, setName] = useState(initial?.name ?? '');

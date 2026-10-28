@@ -180,6 +180,8 @@ export enum I18nKey {
   ImportsKicker = 'imports.kicker',
   ImportsTitle = 'imports.title',
   ImportsDescription = 'imports.description',
+  ImportsHistoryKicker = 'imports.historyKicker',
+  ImportsHistoryTitle = 'imports.historyTitle',
   ImportsStepTitle = 'imports.stepTitle',
   ImportsStepDescription = 'imports.stepDescription',
   ImportsFileLabel = 'imports.fileLabel',

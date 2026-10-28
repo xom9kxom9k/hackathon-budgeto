@@ -9,7 +9,7 @@ import { StoreName } from '@/app/stores/StoreName';
 import { I18nKey } from '@/shared/i18n';
 import { FinanceBreadcrumbs } from '@/shared/ui/FinanceBreadcrumbs';
 import { AccountsExplorer } from '@/widgets/accounts/AccountsExplorer';
-import { ReferenceForm } from '@/widgets/references/ReferenceForm';
+import { ReferenceEditorDrawer } from '@/widgets/references/ReferenceEditorDrawer';
 import { ReferenceTabs } from '@/shared/ui/ReferenceTabs';
 import type { Account } from '@/entities/account/model/types';
 
@@ -69,26 +69,19 @@ export const AccountsPage = observer(function AccountsPage() {
 
       <ReferenceTabs />
 
-      {formOpen ? (
-        <section
-          className="reference-editor"
-          aria-label={t(editing ? I18nKey.AccountsEdit : I18nKey.AccountsAdd)}
-        >
-          <h3>{t(editing ? I18nKey.AccountsEdit : I18nKey.AccountsAdd)}</h3>
-          <ReferenceForm
-            initial={editing ?? undefined}
-            mode="account"
-            onCancel={() => {
-              setFormOpen(false);
-              setEditing(null);
-            }}
-            onSubmit={(value) => {
-              void submitForm(value);
-            }}
-            saving={accountsStore.mutationStatus === 'saving'}
-          />
-        </section>
-      ) : null}
+      <ReferenceEditorDrawer
+        initial={editing ?? undefined}
+        mode="account"
+        onClose={() => {
+          setFormOpen(false);
+          setEditing(null);
+        }}
+        onSubmit={(value) => {
+          void submitForm(value);
+        }}
+        open={formOpen}
+        saving={accountsStore.mutationStatus === 'saving'}
+      />
       {accountsStore.mutationStatus === 'error' ? (
         <div className="state-callout state-callout--error">
           {t(I18nKey.ReferencesMutationError)}

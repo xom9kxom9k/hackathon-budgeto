@@ -12,6 +12,8 @@ import { translateValidationError } from '@/shared/forms/validation';
 import { I18nKey } from '@/shared/i18n';
 import type { CategoryKind } from '@/shared/services/CategoriesService';
 import { VaultKeyPanel } from '@/shared/ui/VaultKeyPanel';
+import { ReferenceEditorDrawer } from '@/widgets/references/ReferenceEditorDrawer';
+import type { ReferenceFormValue } from '@/widgets/references/ReferenceForm';
 
 const maxFileSize = 8 * 1024 * 1024;
 const issueTranslations: Record<string, I18nKey> = {
@@ -80,6 +82,7 @@ export const ImportForm = observer(function ImportForm({
   const [fileInputKey, setFileInputKey] = useState(0);
   const [selectedSourceRow, setSelectedSourceRow] = useState<number | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [referenceEditor, setReferenceEditor] = useState<'account' | 'category' | null>(null);
   const {
     control,
     handleSubmit,
@@ -92,6 +95,19 @@ export const ImportForm = observer(function ImportForm({
   });
   const preview = importStore.preview;
   const selectedFile = importStore.selectedFile;
+
+  const submitReference = async (value: ReferenceFormValue) => {
+    if (referenceEditor === 'account') {
+      await accountsStore.create({ name: value.name, currency: value.currency ?? 'RUB' });
+      if (accountsStore.mutationStatus === 'success') setReferenceEditor(null);
+      return;
+    }
+
+    if (referenceEditor === 'category') {
+      await categoriesStore.create({ name: value.name, kind: value.kind ?? 'expense' });
+      if (categoriesStore.mutationStatus === 'success') setReferenceEditor(null);
+    }
+  };
 
   useEffect(() => {
     void accountsStore.load();
@@ -345,10 +361,28 @@ export const ImportForm = observer(function ImportForm({
           </div>
           <p className="panel-copy">{t(I18nKey.ImportsPreviewDescription)}</p>
           {accountsStore.status === 'empty' ? (
-            <p className="state-callout">{t(I18nKey.ImportsNoAccounts)}</p>
+            <div className="state-callout">
+              <span>{t(I18nKey.ImportsNoAccounts)}</span>
+              <Button
+                appearance="secondary"
+                dimension="s"
+                onClick={() => setReferenceEditor('account')}
+              >
+                {t(I18nKey.AccountsAdd)}
+              </Button>
+            </div>
           ) : null}
           {categoriesStore.status === 'empty' ? (
-            <p className="state-callout">{t(I18nKey.ImportsNoCategories)}</p>
+            <div className="state-callout">
+              <span>{t(I18nKey.ImportsNoCategories)}</span>
+              <Button
+                appearance="secondary"
+                dimension="s"
+                onClick={() => setReferenceEditor('category')}
+              >
+                {t(I18nKey.CategoriesAdd)}
+              </Button>
+            </div>
           ) : null}
           {accountsStore.status === 'error' || categoriesStore.status === 'error' ? (
             <div className="state-callout state-callout--error">
@@ -704,6 +738,17 @@ export const ImportForm = observer(function ImportForm({
           ) : null}
         </div>
       ) : null}
+      <ReferenceEditorDrawer
+        mode={referenceEditor ?? 'account'}
+        onClose={() => setReferenceEditor(null)}
+        onSubmit={(value) => {
+          void submitReference(value);
+        }}
+        open={referenceEditor !== null}
+        saving={
+          accountsStore.mutationStatus === 'saving' || categoriesStore.mutationStatus === 'saving'
+        }
+      />
     </section>
   );
 });

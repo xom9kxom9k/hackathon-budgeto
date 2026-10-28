@@ -10,7 +10,7 @@ import type { Category, CategoryKind } from '@/shared/services/CategoriesService
 import { I18nKey } from '@/shared/i18n';
 import { FinanceBreadcrumbs } from '@/shared/ui/FinanceBreadcrumbs';
 import { ReferenceTabs } from '@/shared/ui/ReferenceTabs';
-import { ReferenceForm } from '@/widgets/references/ReferenceForm';
+import { ReferenceEditorDrawer } from '@/widgets/references/ReferenceEditorDrawer';
 
 export const CategoriesPage = observer(function CategoriesPage() {
   const { t } = useTranslation();
@@ -64,26 +64,19 @@ export const CategoriesPage = observer(function CategoriesPage() {
         </Button>
       </section>
       <ReferenceTabs />
-      {formOpen ? (
-        <section
-          className="reference-editor"
-          aria-label={t(editing ? I18nKey.CategoriesEdit : I18nKey.CategoriesAdd)}
-        >
-          <h3>{t(editing ? I18nKey.CategoriesEdit : I18nKey.CategoriesAdd)}</h3>
-          <ReferenceForm
-            initial={editing ?? undefined}
-            mode="category"
-            onCancel={() => {
-              setFormOpen(false);
-              setEditing(null);
-            }}
-            onSubmit={(value) => {
-              void submitForm(value);
-            }}
-            saving={categoriesStore.mutationStatus === 'saving'}
-          />
-        </section>
-      ) : null}
+      <ReferenceEditorDrawer
+        initial={editing ?? undefined}
+        mode="category"
+        onClose={() => {
+          setFormOpen(false);
+          setEditing(null);
+        }}
+        onSubmit={(value) => {
+          void submitForm(value);
+        }}
+        open={formOpen}
+        saving={categoriesStore.mutationStatus === 'saving'}
+      />
       {categoriesStore.mutationStatus === 'error' ? (
         <div className="state-callout state-callout--error">
           {t(I18nKey.ReferencesMutationError)}
