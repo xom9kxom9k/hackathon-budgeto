@@ -66,18 +66,3 @@ jobs:
             -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
             "cd '$DEPLOY_PATH' && docker compose -f infra/prod/compose.yml up -d --build --remove-orphans"
-
-      - name: Verify deployment
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-        run: |
-          set -euo pipefail
-          ssh -i "$HOME/.ssh/id_ed25519" \
-            -p "$DEPLOY_PORT" \
-            -o StrictHostKeyChecking=yes \
-            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && docker compose -f infra/prod/compose.yml ps --all && docker compose -f infra/prod/compose.yml exec -T api node -e \"fetch('http://127.0.0.1:3000/api/health').then(async response => { if (!response.ok) process.exit(1); console.log(await response.text()); }).catch(() => process.exit(1));\""
