@@ -49,6 +49,9 @@ export const importFileSchema = z.object({
 });
 type ImportFormValues = z.infer<typeof importFileSchema>;
 type RowFilter = 'all' | 'invalid' | 'valid';
+type SortField = 'date' | 'amount' | 'sourceRow';
+type SortDirection = 'asc' | 'desc';
+type BulkField = 'accountName' | 'destinationAccountName' | 'categoryName';
 type ImportFormProps = {
   onJobCreated: (jobId: string) => void;
   onNewImport: () => void;
@@ -77,6 +80,11 @@ export const ImportForm = observer(function ImportForm({
   const categoriesStore = useStore(StoreName.Categories);
   const [rows, setRows] = useState<ImportRow[]>([]);
   const [filter, setFilter] = useState<RowFilter>('all');
+  const [sortField, setSortField] = useState<SortField>('sourceRow');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(() => new Set());
+  const [bulkField, setBulkField] = useState<BulkField>('categoryName');
+  const [bulkValue, setBulkValue] = useState('');
   const [isDirty, setIsDirty] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(0);
@@ -118,6 +126,10 @@ export const ImportForm = observer(function ImportForm({
     setRows(preview?.rows ?? []);
     setIsDirty(false);
     setFilter('all');
+    setSortField('sourceRow');
+    setSortDirection('asc');
+    setSelectedRows(new Set());
+    setBulkValue('');
     setSelectedSourceRow(
       preview?.format === 'generic-pdf' ? (preview.rows[0]?.sourceRow ?? null) : null,
     );
@@ -137,16 +149,55 @@ export const ImportForm = observer(function ImportForm({
     if (!selectedFile) setFileInputKey((value) => value + 1);
   }, [selectedFile]);
 
-  const visibleRows = useMemo(
-    () =>
-      rows.filter((row) => {
-        if (filter === 'invalid') return rowHasIssues(row);
-        if (filter === 'valid') return !rowHasIssues(row);
-        return true;
-      }),
-    [filter, rows],
-  );
+  const visibleRows = useMemo(() => {
+    const filteredRows = rows.filter((row) => {
+      if (filter === 'invalid') return rowHasIssues(row);
+      if (filter === 'valid') return !rowHasIssues(row);
+      return true;
+    });
+
+    return [...filteredRows].sort((left, right) => {
+      const leftValue =
+        sortField === 'sourceRow'
+          ? left.sourceRow
+          : sortField === 'amount'
+            ? left.amount
+            : left.date;
+      const rightValue =
+        sortField === 'sourceRow'
+          ? right.sourceRow
+          : sortField === 'amount'
+            ? right.amount
+            : right.date;
+      const leftMissing = leftValue === null || leftValue === '';
+      const rightMissing = rightValue === null || rightValue === '';
+      if (leftMissing || rightMissing) {
+        if (leftMissing && rightMissing) return 0;
+        return leftMissing ? 1 : -1;
+      }
+      const comparison = leftValue < rightValue ? -1 : leftValue > rightValue ? 1 : 0;
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [filter, rows, sortDirection, sortField]);
   const invalidRows = rows.filter(rowHasIssues).length;
+  const selectedCount = selectedRows.size;
+  const allVisibleRowsSelected =
+    visibleRows.length > 0 && visibleRows.every((row) => selectedRows.has(row.sourceRow));
+  const bulkOptions = useMemo(() => {
+    if (bulkField === 'categoryName') {
+      return categoriesStore.categories.map((category) => ({
+        value: category.name,
+        label: `${category.name} · ${
+          category.kind === 'income' ? t(I18nKey.CategoriesIncome) : t(I18nKey.CategoriesExpense)
+        }`,
+      }));
+    }
+
+    return accountsStore.accounts.map((account) => ({
+      value: account.name,
+      label: `${account.name} · ${account.currency}`,
+    }));
+  }, [accountsStore.accounts, bulkField, categoriesStore.categories, t]);
   const isProcessing = importStore.status === 'loading';
   const isConfirmed = importStore.job?.status === 'confirmed';
   const canConfirm = Boolean(
@@ -183,6 +234,53 @@ export const ImportForm = observer(function ImportForm({
       ),
     );
     setIsDirty(true);
+  };
+
+  const toggleRowSelection = (sourceRow: number) => {
+    setSelectedRows((current) => {
+      const next = new Set(current);
+      if (next.has(sourceRow)) next.delete(sourceRow);
+      else next.add(sourceRow);
+      return next;
+    });
+  };
+
+  const toggleAllVisibleRows = () => {
+    setSelectedRows((current) => {
+      const next = new Set(current);
+      if (allVisibleRowsSelected) visibleRows.forEach((row) => next.delete(row.sourceRow));
+      else visibleRows.forEach((row) => next.add(row.sourceRow));
+      return next;
+    });
+  };
+
+  const applyBulkChange = () => {
+    if (!bulkValue || selectedCount === 0) return;
+
+    const hasApplicableRows = rows.some(
+      (row) =>
+        selectedRows.has(row.sourceRow) &&
+        (bulkField === 'accountName' ||
+          (bulkField === 'destinationAccountName' && row.type === 'transfer') ||
+          (bulkField === 'categoryName' && row.type !== 'transfer')),
+    );
+    if (!hasApplicableRows) return;
+
+    setRows((current) =>
+      current.map((row) => {
+        if (!selectedRows.has(row.sourceRow)) return row;
+        if (bulkField === 'destinationAccountName' && row.type !== 'transfer') return row;
+        if (bulkField === 'categoryName' && row.type === 'transfer') return row;
+        return {
+          ...row,
+          [bulkField]: bulkValue,
+          valid: false,
+          errors: ['EDIT_REQUIRES_RECHECK'],
+        };
+      }),
+    );
+    setIsDirty(true);
+    setBulkValue('');
   };
 
   const saveRows = async () => {
@@ -400,20 +498,101 @@ export const ImportForm = observer(function ImportForm({
             </div>
           ) : null}
           <div className="import-preview-toolbar">
+            <div className="import-toolbar-controls">
+              <label className="filter-select">
+                {t(I18nKey.ImportsFilter)}
+                <select
+                  value={filter}
+                  onChange={(event) => setFilter(event.target.value as RowFilter)}
+                >
+                  <option value="all">{t(I18nKey.ImportsFilterAll)}</option>
+                  <option value="invalid">{t(I18nKey.ImportsFilterInvalid)}</option>
+                  <option value="valid">{t(I18nKey.ImportsFilterValid)}</option>
+                </select>
+              </label>
+              <label className="filter-select">
+                {t(I18nKey.ImportsSort)}
+                <select
+                  value={`${sortField}:${sortDirection}`}
+                  onChange={(event) => {
+                    const [field, direction] = event.target.value.split(':') as [
+                      SortField,
+                      SortDirection,
+                    ];
+                    setSortField(field);
+                    setSortDirection(direction);
+                  }}
+                >
+                  <option value="sourceRow:asc">{t(I18nKey.ImportsSortSourceRow)}</option>
+                  <option value="date:asc">
+                    {t(I18nKey.ImportsSortDate)} · {t(I18nKey.ImportsSortAscending)}
+                  </option>
+                  <option value="date:desc">
+                    {t(I18nKey.ImportsSortDate)} · {t(I18nKey.ImportsSortDescending)}
+                  </option>
+                  <option value="amount:asc">
+                    {t(I18nKey.ImportsSortAmount)} · {t(I18nKey.ImportsSortAscending)}
+                  </option>
+                  <option value="amount:desc">
+                    {t(I18nKey.ImportsSortAmount)} · {t(I18nKey.ImportsSortDescending)}
+                  </option>
+                </select>
+              </label>
+            </div>
+            <span className="import-row-count">
+              {t(I18nKey.ImportsSelectedCount, { count: selectedCount })} · {visibleRows.length}/
+              {rows.length}
+            </span>
+          </div>
+          <div className="import-bulk-toolbar">
+            <label className="import-select-all import-select-all--toolbar">
+              <input
+                type="checkbox"
+                checked={allVisibleRowsSelected}
+                disabled={isProcessing || isConfirmed || visibleRows.length === 0}
+                aria-label={t(I18nKey.ImportsSelectAll)}
+                onChange={toggleAllVisibleRows}
+              />
+              <span>{t(I18nKey.ImportsSelectAll)}</span>
+            </label>
             <label className="filter-select">
-              {t(I18nKey.ImportsFilter)}
+              {t(I18nKey.ImportsBulkField)}
               <select
-                value={filter}
-                onChange={(event) => setFilter(event.target.value as RowFilter)}
+                disabled={isProcessing || isConfirmed}
+                value={bulkField}
+                onChange={(event) => {
+                  setBulkField(event.target.value as BulkField);
+                  setBulkValue('');
+                }}
               >
-                <option value="all">{t(I18nKey.ImportsFilterAll)}</option>
-                <option value="invalid">{t(I18nKey.ImportsFilterInvalid)}</option>
-                <option value="valid">{t(I18nKey.ImportsFilterValid)}</option>
+                <option value="accountName">{t(I18nKey.ImportsBulkAccount)}</option>
+                <option value="destinationAccountName">{t(I18nKey.ImportsBulkDestination)}</option>
+                <option value="categoryName">{t(I18nKey.ImportsBulkCategory)}</option>
               </select>
             </label>
-            <span className="import-row-count">
-              {visibleRows.length}/{rows.length}
-            </span>
+            <label className="filter-select">
+              {t(I18nKey.ImportsBulkValue)}
+              <select
+                disabled={isProcessing || isConfirmed || selectedCount === 0}
+                value={bulkValue}
+                onChange={(event) => setBulkValue(event.target.value)}
+              >
+                <option value="">{t(I18nKey.ImportsBulkValue)}</option>
+                {bulkOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button
+              appearance="secondary"
+              dimension="s"
+              disabled={isProcessing || isConfirmed || selectedCount === 0 || !bulkValue}
+              onClick={applyBulkChange}
+            >
+              {t(I18nKey.ImportsApplyToSelected)}
+            </Button>
           </div>
           {visibleRows.length ? (
             <div className="import-review-layout">
@@ -455,6 +634,15 @@ export const ImportForm = observer(function ImportForm({
                                   : (row.sourceRef?.sheet ?? '—')}
                               </span>
                             </button>
+                            <label className="import-row-select">
+                              <input
+                                type="checkbox"
+                                checked={selectedRows.has(row.sourceRow)}
+                                disabled={isProcessing || isConfirmed}
+                                aria-label={`${t(I18nKey.ImportsSelectRows)} ${row.sourceRow}`}
+                                onChange={() => toggleRowSelection(row.sourceRow)}
+                              />
+                            </label>
                             <input
                               disabled={isProcessing || isConfirmed}
                               aria-label={`${t(I18nKey.Date)} ${row.sourceRow}`}

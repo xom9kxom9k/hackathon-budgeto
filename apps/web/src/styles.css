@@ -1001,6 +1001,23 @@ input:focus-visible {
 .import-preview-toolbar .filter-select {
   min-width: 220px;
 }
+.import-toolbar-controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.import-bulk-toolbar {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(180px, 0.8fr) minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  border-bottom: 1px solid var(--admiral-color-Neutral_Neutral20);
+  padding-bottom: 14px;
+}
+.import-bulk-toolbar .filter-select {
+  min-width: 0;
+}
 .import-preview-toolbar select,
 .import-data-table input,
 .import-data-table select {
@@ -1134,6 +1151,26 @@ input:focus-visible {
   min-width: 0;
   box-sizing: border-box;
   font-size: 13px;
+}
+.import-data-table input[type='checkbox'] {
+  width: 18px;
+  min-height: 18px;
+  accent-color: var(--admiral-color-Primary_Primary60Main);
+}
+.import-select-all,
+.import-row-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.import-select-all {
+  cursor: pointer;
+}
+.import-select-all--toolbar {
+  min-height: 44px;
+}
+.import-row-select {
+  min-height: 20px;
 }
 .import-source-cell,
 .import-operation-fields,
@@ -1845,8 +1882,16 @@ input:focus-visible {
     align-items: stretch;
     flex-direction: column;
   }
+  .import-toolbar-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
   .import-preview-toolbar .filter-select {
     min-width: 0;
+  }
+  .import-bulk-toolbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
   .import-history-row {
     grid-template-columns: 1fr;

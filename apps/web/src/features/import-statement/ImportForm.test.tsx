@@ -120,6 +120,18 @@ describe('ImportForm', () => {
     await user.selectOptions(screen.getByLabelText('Показать строки'), 'invalid');
     expect(screen.getByRole('combobox', { name: 'Счёт 2' })).toHaveValue('Карта');
     expect(screen.queryByDisplayValue('2026-01-01')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('checkbox', { name: 'Выбрать строки 2' }));
+    expect(screen.getByText(/Выбрано: 1/)).toBeInTheDocument();
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Сортировка' }), 'date:desc');
+    expect(screen.getByRole('combobox', { name: 'Сортировка' })).toHaveValue('date:desc');
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Изменить у выбранных' }),
+      'accountName',
+    );
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Новое значение' }), 'Карта');
+    await user.click(screen.getByRole('button', { name: 'Применить к выбранным' }));
+    expect(screen.getByRole('button', { name: 'Сохранить исправления' })).toBeEnabled();
   });
 
   it('marks edited rows for recheck and blocks confirmation until saved', async () => {
