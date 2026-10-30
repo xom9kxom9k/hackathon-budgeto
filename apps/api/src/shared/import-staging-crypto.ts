@@ -17,7 +17,12 @@ function currentKeyVersion(): number {
 
 function encryptionKey(): Buffer {
   const configuredKey = process.env.AUTH_ENCRYPTION_KEY;
-  if (process.env.NODE_ENV === 'production' && !configuredKey) {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!configuredKey ||
+      configuredKey.length < 32 ||
+      /replace-with|budgeto-local-development-key/i.test(configuredKey))
+  ) {
     throw new ImportError(ImportErrorCode.IMPORT_STAGING_KEY_REQUIRED);
   }
   const rootKey = createHash('sha256')

@@ -2,6 +2,10 @@ import { ImportJobEntity, ImportJobStatus } from './entities/import-job.entity';
 import { ImportsService } from './imports.service';
 import { AccountEntity } from '../accounts/entities/account.entity';
 import { CategoryEntity } from '../categories/entities/category.entity';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { ImportStagingStore } from '../../shared/import-staging-store';
 
 vi.mock('./imports.queue', () => ({
   createImportQueue: () => ({ add: vi.fn() }),
@@ -158,6 +162,22 @@ function createService() {
 }
 
 describe('ImportsService confirmation', () => {
+  it('removes the encrypted source after confirming and clears its database path', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'budgeto-confirm-'));
+    vi.stubEnv('IMPORT_STAGING_DIR', root);
+    try {
+      const { service, job } = createService();
+      const path = await new ImportStagingStore().write(Buffer.from('private statement'));
+      job.filePath = path;
+      await service.confirm('user-1', 'job-1', [{ sourceRow: 2 }] as never);
+      expect(job.filePath).toBe('');
+      await expect(readFile(path)).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally {
+      vi.unstubAllEnvs();
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it('serializes concurrent confirms and returns stored counters on retry', async () => {
     const { service, job, appendCalls, vault } = createService();
     const proof = { sourceRow: 2 };

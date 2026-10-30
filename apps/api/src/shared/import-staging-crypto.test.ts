@@ -8,6 +8,7 @@ describe('import staging encryption', () => {
     delete process.env.NODE_ENV;
     delete process.env.AUTH_ENCRYPTION_KEY;
     delete process.env.IMPORT_STAGING_ALLOW_PLAINTEXT;
+    delete process.env.IMPORT_STAGING_KEY_VERSION;
   });
 
   it('round-trips plaintext and does not store it directly', () => {
@@ -32,6 +33,29 @@ describe('import staging encryption', () => {
 
     expect(() => encryptImportStaging(Buffer.from('statement'))).toThrow(
       ImportErrorCode.IMPORT_STAGING_KEY_REQUIRED,
+    );
+  });
+
+  it('rejects placeholder and short production keys', () => {
+    process.env.NODE_ENV = 'production';
+    for (const key of [
+      'short',
+      'replace-with-a-long-random-secret',
+      'budgeto-local-development-key',
+    ]) {
+      process.env.AUTH_ENCRYPTION_KEY = key;
+      expect(() => encryptImportStaging(Buffer.from('statement'))).toThrow(
+        ImportErrorCode.IMPORT_STAGING_KEY_REQUIRED,
+      );
+    }
+  });
+
+  it('rejects plaintext in production even when compatibility is requested', () => {
+    process.env.NODE_ENV = 'production';
+    process.env.AUTH_ENCRYPTION_KEY = 'a'.repeat(64);
+    process.env.IMPORT_STAGING_ALLOW_PLAINTEXT = 'true';
+    expect(() => decryptImportStaging(Buffer.from('statement'))).toThrow(
+      ImportErrorCode.IMPORT_STAGING_DECRYPT_FAILED,
     );
   });
 
