@@ -39,6 +39,10 @@ PostgreSQL 16 и Redis 7, устанавливает зависимости че
 lint, Prettier, проверку типов API и web, unit-тесты API и web, интеграционные
 тесты PostgreSQL и Redis, сборки API, worker и web. Проверка типов worker
 входит в его сборку. Production deploy зависит от успешного quality gate.
+Отдельный job `Deployment smoke test` собирает production-образы и проверяет
+Compose с одноразовыми PostgreSQL/Redis, API, worker и Caddy. Команда для Linux
+с Docker: `bash scripts/smoke-deployment.sh`. Скрипт занимает 80/443 и удаляет
+собственные тестовые тома после завершения. Подробности в [deployment.md](deployment.md).
 
 Lockfile хранится в репозитории; Actions кэширует npm по нему. `.gitattributes`
 фиксирует LF, чтобы Prettier одинаково проверял checkout на Windows и Linux.

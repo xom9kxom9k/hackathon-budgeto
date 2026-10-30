@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, IsNull, Repository } from 'typeorm';
 import { Workbook } from 'exceljs';
@@ -19,7 +19,7 @@ import { canonicalize, sha256 as sha256Text } from '../vault/vault.crypto';
 import type { ImportEditableField, ImportRowEdit } from '../../shared/import-parser/types';
 
 @Injectable()
-export class ImportsService {
+export class ImportsService implements OnModuleInit {
   private readonly staging = new ImportStagingStore();
   private readonly queue = createImportQueue();
 
@@ -33,6 +33,10 @@ export class ImportsService {
     private readonly vault: VaultService,
   ) {
     assertImportStagingKey();
+  }
+
+  async onModuleInit(): Promise<void> {
+    await this.staging.prepare();
   }
 
   async create(userId: string, fileName: string, content: Buffer): Promise<unknown> {
