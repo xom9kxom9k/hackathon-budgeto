@@ -11,10 +11,10 @@
 7. Append-only Vault events, schema-version compatibility, proof validation, hash-chain и operation-based idempotency.
 8. Web flows для references, transactions, imports, Vault, profile, `/profile/edit` и security center.
 9. Strict TypeScript gate для API, worker и web; lint и API unit tests должны запускаться локально.
+10. PostgreSQL integration tests для полной цепочки migrations и rollback, concurrent confirmation, duplicate fingerprints и Vault legacy events.
 
 ## P1: следующий рабочий срез
 
-- Добавить PostgreSQL integration tests для migrations, concurrent confirmation, duplicate fingerprints и Vault legacy events.
 - Добавить web tests для Profile Edit, повторной отправки и CSRF refresh после истёкшего токена.
 - Подключить CI quality gate после проверки реального окружения Node, PostgreSQL и Redis.
 - Проверить deployment configuration и безопасное хранение import staging files.
