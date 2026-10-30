@@ -304,7 +304,7 @@ export class ImportsService {
           })
           .orIgnore()
           .execute();
-        if (!insertResult.identifiers.length) {
+        if (!insertResult.raw.length) {
           skipped += 1;
           continue;
         }
