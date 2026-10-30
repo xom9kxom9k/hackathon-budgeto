@@ -1,0 +1,59 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [dev, main, master]
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: budgeto
+          POSTGRES_PASSWORD: budgeto_test
+          POSTGRES_DB: budgeto_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U budgeto -d budgeto_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://budgeto:budgeto_test@127.0.0.1:5432/budgeto_test
+      TEST_REDIS_URL: redis://127.0.0.1:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --version && npm --version
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm run typecheck:web
+      - run: npm run test:api
+      - run: npm test
+      - run: npm run test:api:integration
+      - run: npm run build:api
+      - run: npm run build:worker
+      - run: npm run build:web
