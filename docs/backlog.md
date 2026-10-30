@@ -11,11 +11,11 @@
 7. Append-only Vault events, schema-version compatibility, proof validation, hash-chain и operation-based idempotency.
 8. Web flows для references, transactions, imports, Vault, profile, `/profile/edit` и security center.
 9. Strict TypeScript gate для API, worker и web; lint и API unit tests должны запускаться локально.
+10. Web tests для Profile Edit, защиты от повторного submit и CSRF refresh после истёкшего токена. `npm run test:web:profile` требует 100% statements, branches, functions и lines в ProfileEditPage, ProfileStore, ProfileService и BaseApiClient.
 
 ## P1: следующий рабочий срез
 
 - Добавить PostgreSQL integration tests для migrations, concurrent confirmation, duplicate fingerprints и Vault legacy events.
-- Добавить web tests для Profile Edit, повторной отправки и CSRF refresh после истёкшего токена.
 - Подключить CI quality gate после проверки реального окружения Node, PostgreSQL и Redis.
 - Проверить deployment configuration и безопасное хранение import staging files.
 
