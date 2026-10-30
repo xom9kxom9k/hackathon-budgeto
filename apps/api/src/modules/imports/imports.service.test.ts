@@ -62,10 +62,13 @@ function createService() {
         orIgnore: () => builder,
         execute: async () => {
           const fingerprint = 'fingerprint-1';
-          if (fingerprints.has(fingerprint)) return { identifiers: [] };
+          if (fingerprints.has(fingerprint)) return { identifiers: [], raw: [] };
           fingerprints.add(fingerprint);
           transactionNumber += 1;
-          return { identifiers: [{ id: `transaction-${transactionNumber}` }] };
+          return {
+            identifiers: [{ id: `transaction-${transactionNumber}` }],
+            raw: [{ id: `transaction-${transactionNumber}` }],
+          };
         },
       };
       return builder;
