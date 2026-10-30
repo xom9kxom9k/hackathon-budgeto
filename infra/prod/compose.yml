@@ -105,7 +105,10 @@ services:
     <<: *server
     networks: [backend]
     restart: unless-stopped
-    environment: *app-environment
+    environment:
+      <<: *app-environment
+      IMPORT_PROFILES_JSON: ${IMPORT_PROFILES_JSON:-}
+      IMPORT_PROFILES_FILE: ${IMPORT_PROFILES_FILE:-}
     command: ['node', 'dist/apps/worker/worker/src/main.js']
     volumes:
       - import_data:/app/.data

@@ -43,6 +43,12 @@ sudo install --directory --owner deploy --group deploy /opt/budgeto
 - `IMPORT_STAGING_TTL_SECONDS`: срок хранения оригиналов, по умолчанию
   `86400` (24 часа), допустимо от 60 до 604800 секунд.
 
+Дополнительные parser profiles можно передать worker через
+`IMPORT_PROFILES_JSON` (JSON-массив). Если используете `IMPORT_PROFILES_FILE`,
+файл нужно отдельно смонтировать read-only в worker через Compose override;
+в runtime-образ он автоматически не включается. Такой override добавляйте
+и в команды workflow деплоя. Банковские выписки в profiles не включайте.
+
 Защитите файл и запустите production из корня проекта:
 
 ```bash

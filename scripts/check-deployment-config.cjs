@@ -27,6 +27,10 @@ assert.equal(
 assert.equal(config.services.caddy.depends_on.api.condition, 'service_healthy');
 assert.equal(config.networks.backend.internal, true);
 assert.equal(config.services.caddy.networks.backend, undefined);
+assert.equal(
+  config.services.worker.environment.IMPORT_PROFILES_JSON,
+  process.env.IMPORT_PROFILES_JSON,
+);
 console.log(
   'Deployment port exposure, secret scope, shared staging configuration and runtime restrictions verified',
 );

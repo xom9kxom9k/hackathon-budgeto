@@ -11,6 +11,8 @@ AUTH_ENCRYPTION_KEY=$(openssl rand -hex 32)
 export WEB_ORIGIN=https://localhost
 export CADDY_DOMAIN=http://localhost
 export BUDGETO_IMAGE_TAG=deployment-smoke
+export IMPORT_PROFILES_JSON
+IMPORT_PROFILES_JSON=$(cat docs/import-profiles.example.json)
 
 compose=(docker compose -p budgeto-deployment-smoke -f infra/prod/compose.yml)
 config_path=$(mktemp)

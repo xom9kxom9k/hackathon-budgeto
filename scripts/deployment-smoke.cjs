@@ -2,7 +2,9 @@ const assert = require('node:assert/strict');
 const { createHash, randomBytes, randomUUID } = require('node:crypto');
 const { lstat, readFile, utimes } = require('node:fs/promises');
 const { Client } = require('pg');
-const { ImportStagingStore } = require(`${process.cwd()}/dist/apps/api/shared/import-staging-store`);
+const { ImportStagingStore } = require(
+  `${process.cwd()}/dist/apps/api/shared/import-staging-store`,
+);
 
 const csv = 'date,amount,account,note\n2026-02-01,-12.50,Card,STAGING-SMOKE-PRIVATE\n';
 const client = new Client({ connectionString: process.env.DATABASE_URL });
