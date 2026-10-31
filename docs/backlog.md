@@ -12,11 +12,11 @@
 8. Web flows для references, transactions, imports, Vault, profile, `/profile/edit` и security center.
 9. Strict TypeScript gate для API, worker и web; lint и API unit tests должны запускаться локально.
 10. PostgreSQL integration tests для полной цепочки migrations и rollback, concurrent confirmation, duplicate fingerprints и Vault legacy events.
-11. Web tests для Profile Edit, защиты от повторного submit и CSRF refresh после истёкшего токена. `npm run test:web:profile` требует 100% statements, branches, functions и lines в ProfileEditPage, ProfileStore, ProfileService и BaseApiClient.
+11. CI quality gate с Node.js 22, PostgreSQL 16 и Redis 7: lint, форматирование, типы, unit/integration tests и все сборки. Проверено [запуском Actions](https://github.com/xom9kxom9k/hackathon-budgeto/actions/runs/41109172082); production deploy зависит от этого gate.
 
 ## P1: следующий рабочий срез
 
-- Подключить CI quality gate после проверки реального окружения Node, PostgreSQL и Redis.
+- Добавить web tests для Profile Edit, повторной отправки и CSRF refresh после истёкшего токена.
 - Проверить deployment configuration и безопасное хранение import staging files.
 
 ## P2: продуктовые расширения
