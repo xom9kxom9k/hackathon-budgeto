@@ -69,4 +69,4 @@ jobs:
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
             "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && docker compose -f infra/prod/compose.yml up -d --build --remove-orphans"
+            "cd '$DEPLOY_PATH' && docker compose --env-file .env -f infra/prod/compose.yml config --quiet && docker compose --env-file .env -f infra/prod/compose.yml up -d --build --wait --wait-timeout 180 --remove-orphans"

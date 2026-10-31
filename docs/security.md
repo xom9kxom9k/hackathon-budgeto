@@ -1,5 +1,10 @@
 # Базовые требования безопасности
 
+Import staging хранится в закрытом общем томе API/worker, шифруется AES-GCM
+и удаляется после подтверждения либо по TTL. Проверки путей, symlink, прав
+доступа и user scoping входят в тесты. Ключи, переход со старых томов и
+эксплуатационные ограничения описаны в [deployment.md](deployment.md#import-staging).
+
 - Клиент и его поля недоверенные. Доступ к операциям и счетам проверяется на сервере по authenticated user id.
 - Планируем passkey/WebAuthn, резервный passkey и recovery-коды; механизм ещё не реализован.
 - HTTPS, httpOnly + Secure + SameSite cookies, CSRF-защита и ограничение попыток.
