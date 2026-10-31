@@ -8,8 +8,8 @@ describe('configured import profiles', () => {
   it('keeps built-ins when no external configuration is provided', () => {
     const profiles = loadConfiguredImportProfiles('');
     expect(profiles.map((profile) => profile.id)).toEqual([
-      'budgeto-xlsx',
-      'budgeto-finance-xlsx',
+      'budgetto-xlsx',
+      'budgetto-finance-xlsx',
       'generic-csv-table',
       'generic-pdf-text-table',
       'ozon-pdf-v1',

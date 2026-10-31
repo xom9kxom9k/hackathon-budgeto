@@ -2,15 +2,15 @@ import type { ImportProfile } from './types';
 
 export const builtinImportProfiles: readonly ImportProfile[] = [
   {
-    id: 'budgeto-xlsx',
+    id: 'budgetto-xlsx',
     version: '1.0.0',
     format: 'xlsx',
-    match: { previewFormat: 'budgeto-xlsx' },
+    match: { previewFormat: 'budgetto-xlsx' },
     layout: { kind: 'table', amountMode: 'signed' },
     review: { alwaysRequired: false, minConfidence: 0.9 },
   },
   {
-    id: 'budgeto-finance-xlsx',
+    id: 'budgetto-finance-xlsx',
     version: '1.0.0',
     format: 'xlsx',
     match: { previewFormat: 'finance-export-xlsx' },

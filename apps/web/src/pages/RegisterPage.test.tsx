@@ -53,7 +53,7 @@ describe('RegisterPage', () => {
     const store = new RootStore();
     vi.spyOn(store.services.auth, 'register').mockResolvedValue({
       challengeToken: 'challenge-token',
-      otpauthUri: 'otpauth://totp/Budgeto:test@example.com?secret=SECRET',
+      otpauthUri: 'otpauth://totp/Budgetto:test@example.com?secret=SECRET',
     });
     renderPage(store);
 

@@ -1,4 +1,4 @@
-name: budgeto-dev
+name: budgetto-dev
 
 services:
   postgres:

@@ -4,7 +4,7 @@ import { ImportError, ImportErrorCode } from '../import-errors';
 const formats = new Set(['xlsx', 'csv', 'pdf']);
 const layoutKinds = new Set(['table', 'pdf-lines']);
 const previewFormats = new Set([
-  'budgeto-xlsx',
+  'budgetto-xlsx',
   'finance-export-xlsx',
   'generic-csv',
   'generic-pdf',

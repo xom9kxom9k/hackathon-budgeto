@@ -1,12 +1,12 @@
 ---
 name: apple-hig-web
-description: Apply Apple Human Interface Guidelines principles when designing or reviewing Budgeto's responsive finance web UI, emphasizing clarity, hierarchy, accessibility, interaction feedback, and platform familiarity.
+description: Apply Apple Human Interface Guidelines principles when designing or reviewing Budgetto's responsive finance web UI, emphasizing clarity, hierarchy, accessibility, interaction feedback, and platform familiarity.
 ---
 # Apple HIG-inspired web design
 
 This is a project-authored adaptation for a **web app**, not an official Apple skill. Consult Apple's [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/) when choosing a pattern.
 
-## Apply to Budgeto
+## Apply to Budgetto
 - Design for clear information hierarchy: balances, transaction dates and amounts, and destructive actions must be unmistakable.
 - Prefer familiar controls, minimal visual noise, consistent spacing and typography, and meaningful whitespace.
 - Always supply explicit loading, empty, error, offline, and success states; never disguise failures.

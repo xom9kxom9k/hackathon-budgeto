@@ -47,7 +47,7 @@ export class ImportsController {
 
   @Get('template')
   @Header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-  @Header('Content-Disposition', 'attachment; filename="budgeto-import-template.xlsx"')
+  @Header('Content-Disposition', 'attachment; filename="budgetto-import-template.xlsx"')
   async template(): Promise<Buffer> {
     return this.queries.execute<GetImportTemplateQuery, Buffer>(new GetImportTemplateQuery());
   }

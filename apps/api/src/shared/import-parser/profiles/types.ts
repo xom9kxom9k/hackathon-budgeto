@@ -4,4 +4,4 @@ export type {
   ImportProfileClassificationInput,
   ImportProfileLayout,
   ImportProfileSelection,
-} from '@budgeto/contracts';
+} from '@budgetto/contracts';

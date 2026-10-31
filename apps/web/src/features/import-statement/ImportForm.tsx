@@ -289,7 +289,7 @@ export const ImportForm = observer(function ImportForm({
   };
 
   const step = !preview ? (isProcessing ? 1 : 0) : isDirty || invalidRows > 0 ? 2 : 3;
-  const formatLabel = preview?.format.replace('finance-export-', '').replace('budgeto-', '') ?? '';
+  const formatLabel = preview?.format.replace('finance-export-', '').replace('budgetto-', '') ?? '';
   const profileLabel = preview?.profileId
     ? `${preview.profileId}${preview.profileVersion ? ` · ${preview.profileVersion}` : ''}`
     : '';

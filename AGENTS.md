@@ -1,10 +1,10 @@
-# Budgeto agent instructions
+# Budgetto agent instructions
 
 Use project-local skills in `.agents/skills/` selectively:
 
 - **Always** apply `antislop` (core); use `antislop-code` for comment reviews.
 - React work: `vercel-react-best-practices`.
-- UI work: `antislop-ui`, `antislop-human`, `apple-hig-web`, `budgeto-finance-ux`.
+- UI work: `antislop-ui`, `antislop-human`, `apple-hig-web`, `budgetto-finance-ux`.
 - Mobile-responsive UI: `antislop-layoutmobile`.
 - User-facing text and documentation: `antislop-copywriting`.
 

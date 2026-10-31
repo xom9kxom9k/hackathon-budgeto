@@ -34,7 +34,7 @@ import {
   SidebarExpandIcon,
   SunIcon,
   VaultIcon,
-} from '@/shared/ui/BudgetoIcons';
+} from '@/shared/ui/BudgettoIcons';
 
 function getSelectedMenuItem(pathname: string): string {
   if (

@@ -6,4 +6,4 @@ export {
   PdfTextNotFoundError,
   InvalidXlsxError,
   isImportError,
-} from '@budgeto/contracts';
+} from '@budgetto/contracts';

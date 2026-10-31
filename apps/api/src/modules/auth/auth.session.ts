@@ -8,8 +8,8 @@ import { SessionEntity } from './entities/session.entity';
 
 import { AuthCryptoService } from './auth.crypto';
 
-export const sessionCookieName = 'budgeto_session';
-export const csrfCookieName = 'budgeto_csrf';
+export const sessionCookieName = 'budgetto_session';
+export const csrfCookieName = 'budgetto_csrf';
 
 @Injectable()
 export class AuthSessionService {

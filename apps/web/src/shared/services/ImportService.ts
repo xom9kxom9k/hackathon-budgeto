@@ -24,7 +24,7 @@ const rowSchema = z.object({
   warnings: z.array(z.string()),
 });
 const previewSchema = z.object({
-  format: z.enum(['budgeto-xlsx', 'finance-export-xlsx', 'generic-csv', 'generic-pdf']),
+  format: z.enum(['budgetto-xlsx', 'finance-export-xlsx', 'generic-csv', 'generic-pdf']),
   parserId: z.string().optional(),
   parserVersion: z.string().optional(),
   templateId: z.string().optional(),

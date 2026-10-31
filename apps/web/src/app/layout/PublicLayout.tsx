@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from '@/app/hooks/useStores';
 import { StoreName } from '@/app/stores/StoreName';
 import { I18nKey, Language } from '@/shared/i18n';
-import { MoonIcon, SunIcon } from '@/shared/ui/BudgetoIcons';
+import { MoonIcon, SunIcon } from '@/shared/ui/BudgettoIcons';
 
 export const PublicLayout = observer(function PublicLayout() {
   const { t } = useTranslation();

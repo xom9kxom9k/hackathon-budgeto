@@ -44,7 +44,7 @@ export async function parseImportDocument(
   let selection;
   switch (sourceKind) {
     case 'xlsx': {
-      const { extractXlsxHeaders, parseBudgetoXlsx } = await import('./xlsx-parser');
+      const { extractXlsxHeaders, parseBudgettoXlsx } = await import('./xlsx-parser');
       const customProfiles = profileRegistry.filter(
         (profile) => profile.format === 'xlsx' && !profile.match.previewFormat,
       );
@@ -52,7 +52,7 @@ export async function parseImportDocument(
         const headers = await extractXlsxHeaders(content);
         let defaultPreview: ParsedImportPreview | null = null;
         try {
-          defaultPreview = await parseBudgetoXlsx(content, sourceSha256);
+          defaultPreview = await parseBudgettoXlsx(content, sourceSha256);
         } catch (error) {
           if (
             !(error instanceof ImportError) ||
@@ -69,9 +69,9 @@ export async function parseImportDocument(
           },
           profileRegistry,
         );
-        preview = await parseBudgetoXlsx(content, sourceSha256, selection.profile);
+        preview = await parseBudgettoXlsx(content, sourceSha256, selection.profile);
       } else {
-        preview = await parseBudgetoXlsx(content, sourceSha256);
+        preview = await parseBudgettoXlsx(content, sourceSha256);
         selection = classifyImportProfile(
           { format: sourceKind, previewFormat: preview.format },
           profileRegistry,

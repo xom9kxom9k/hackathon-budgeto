@@ -15,7 +15,7 @@ function createService() {
     filePath: '',
     status: ImportJobStatus.Preview,
     preview: {
-      format: 'budgeto-xlsx',
+      format: 'budgetto-xlsx',
       total: 1,
       valid: 1,
       invalid: 0,

@@ -212,7 +212,7 @@ describe('PostgreSQL integration', () => {
     }
     admin = new DataSource({ type: 'postgres', url: databaseUrl });
     await admin.initialize();
-    schema = `budgeto_it_${process.pid}_${randomUUID().replaceAll('-', '')}`;
+    schema = `budgetto_it_${process.pid}_${randomUUID().replaceAll('-', '')}`;
     await createSchema(admin, schema);
     dataSource = new DataSource(databaseOptions(databaseUrl, schema));
     await dataSource.initialize();
@@ -379,7 +379,7 @@ describe('PostgreSQL integration', () => {
   itWithPostgres('migrates and verifies a schema v1 Vault event', async () => {
     await migrateLegacySchema(
       admin,
-      `budgeto_legacy_${process.pid}_${randomUUID().replaceAll('-', '')}`,
+      `budgetto_legacy_${process.pid}_${randomUUID().replaceAll('-', '')}`,
     );
   });
 });

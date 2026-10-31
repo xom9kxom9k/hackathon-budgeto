@@ -39,7 +39,7 @@ export class AuthDomainService {
     private readonly sessions: AuthSessionService,
     config: ConfigService,
   ) {
-    this.issuer = config.get<string>('AUTH_ISSUER') ?? 'Budgeto';
+    this.issuer = config.get<string>('AUTH_ISSUER') ?? 'Budgetto';
   }
 
   async register(email: string, password: string): Promise<TotpSetupResult> {

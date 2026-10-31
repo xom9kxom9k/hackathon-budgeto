@@ -151,7 +151,7 @@ function isEmpty(row: unknown[]): boolean {
   return row.every((value) => normalize(value) === '');
 }
 
-export async function parseBudgetoXlsx(
+export async function parseBudgettoXlsx(
   content: Buffer,
   sourceSha256?: string,
   profile?: ImportProfile,
@@ -235,10 +235,10 @@ export async function parseBudgetoXlsx(
   }
   const valid = rows.filter((row) => row.valid).length;
   return {
-    format: finance ? 'finance-export-xlsx' : 'budgeto-xlsx',
+    format: finance ? 'finance-export-xlsx' : 'budgetto-xlsx',
     parserId: 'xlsx-header-map',
     parserVersion: '1.0.0',
-    templateId: finance ? 'budgeto-finance-sheets' : 'generic-xlsx-table',
+    templateId: finance ? 'budgetto-finance-sheets' : 'generic-xlsx-table',
     confidence: rows.length ? 0.98 : 0.5,
     sourceSha256,
     total: rows.length,

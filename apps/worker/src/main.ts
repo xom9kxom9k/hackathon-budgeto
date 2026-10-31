@@ -19,7 +19,7 @@ import { IMPORT_QUEUE } from '../../api/src/modules/imports/imports.queue';
 
 const dataSource = new DataSource({
   type: 'postgres',
-  url: process.env.DATABASE_URL ?? 'postgresql://budgeto:budgeto_dev@localhost:5432/budgeto',
+  url: process.env.DATABASE_URL ?? 'postgresql://budgetto:budgetto_dev@localhost:5432/budgetto',
   entities: [ImportJobEntity, AccountEntity, CategoryEntity],
   synchronize: false,
 });

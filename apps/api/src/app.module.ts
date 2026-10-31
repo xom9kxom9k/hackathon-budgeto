@@ -24,7 +24,7 @@ import { CsrfGuard } from './modules/auth/csrf.guard';
         type: 'postgres' as const,
         url:
           config.get<string>('DATABASE_URL') ??
-          'postgresql://budgeto:budgeto_dev@localhost:5432/budgeto',
+          'postgresql://budgetto:budgetto_dev@localhost:5432/budgetto',
         entities: [`${__dirname}/modules/**/entities/*.entity{.js,.ts}`],
         synchronize: false,
         migrationsRun: false,

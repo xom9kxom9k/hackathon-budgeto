@@ -8,7 +8,7 @@ import {
   PdfTextNotFoundError,
   PdfTooManyPagesError,
 } from './import-errors';
-import type { ImportProfile, ParsedImportPreview } from '@budgeto/contracts';
+import type { ImportProfile, ParsedImportPreview } from '@budgetto/contracts';
 
 describe('shared import contracts', () => {
   it('keeps the runtime error contract available to API adapters', () => {

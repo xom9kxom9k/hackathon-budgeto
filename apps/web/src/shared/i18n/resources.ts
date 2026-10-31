@@ -3,9 +3,9 @@ import { I18nKey, Language } from './types';
 type TranslationMap = Record<I18nKey, string>;
 
 const ru: TranslationMap = {
-  [I18nKey.BrandName]: 'Budgeto',
+  [I18nKey.BrandName]: 'Budgetto',
   [I18nKey.BrandTagline]: 'Личная финансовая история',
-  [I18nKey.Workspace]: 'Budgeto workspace',
+  [I18nKey.Workspace]: 'Budgetto workspace',
   [I18nKey.DemoVault]: 'Vault',
   [I18nKey.NavigationOverview]: 'Обзор',
   [I18nKey.NavigationAccounts]: 'Счета',
@@ -52,7 +52,7 @@ const ru: TranslationMap = {
   [I18nKey.OverviewNextStep]: 'Следующий шаг',
   [I18nKey.OverviewPrepareFirstImport]: 'Подготовьте первый импорт',
   [I18nKey.OverviewPrepareFirstImportDescription]:
-    'Budgeto определит структуру выписки, покажет сопоставление колонок и даст проверить дубли до записи.',
+    'Budgetto определит структуру выписки, покажет сопоставление колонок и даст проверить дубли до записи.',
   [I18nKey.OverviewOpenImport]: 'Открыть импорт',
   [I18nKey.OverviewVaultHistory]: 'История Vault',
   [I18nKey.OverviewHistoryTitle]: 'Изменения не теряются',
@@ -100,7 +100,7 @@ const ru: TranslationMap = {
   [I18nKey.BreadcrumbBack]: 'Назад',
   [I18nKey.AccountsKicker]: 'Деньги',
   [I18nKey.AccountsTitle]: 'Счета',
-  [I18nKey.AccountsDescription]: 'Реальные счета, доступные в вашем пространстве Budgeto.',
+  [I18nKey.AccountsDescription]: 'Реальные счета, доступные в вашем пространстве Budgetto.',
   [I18nKey.AccountsSearch]: 'Найти счёт или валюту',
   [I18nKey.AccountsBanks]: 'Банки',
   [I18nKey.AccountsAccounts]: 'Счета',
@@ -322,7 +322,7 @@ const ru: TranslationMap = {
   [I18nKey.VaultKeyUnlocked]: 'Vault разблокирован',
   [I18nKey.VaultKeyRecoveryPhrase]: 'Ключ восстановления',
   [I18nKey.VaultKeyRecoveryWarning]:
-    'Сохраните эту строку вне Budgeto. Она показывается только сейчас и нужна для восстановления доступа.',
+    'Сохраните эту строку вне Budgetto. Она показывается только сейчас и нужна для восстановления доступа.',
   [I18nKey.VaultKeyRecoveryInput]: 'Введите ключ восстановления',
   [I18nKey.VaultKeyRecoveryInvalid]: 'Ключ восстановления не подходит.',
   [I18nKey.VaultKeyRequired]: 'Разблокируйте Vault перед подтверждением импорта.',
@@ -350,7 +350,7 @@ const ru: TranslationMap = {
     'Экспорты, входы и изменения доступа появятся после подключения auth и audit log.',
   [I18nKey.ProfileKicker]: 'Личный кабинет',
   [I18nKey.ProfileTitle]: 'Профиль',
-  [I18nKey.ProfileDescription]: 'Настройки пользователя и устройства, с которого открыт Budgeto.',
+  [I18nKey.ProfileDescription]: 'Настройки пользователя и устройства, с которого открыт Budgetto.',
   [I18nKey.ProfileUserName]: 'Пользователь',
   [I18nKey.ProfileDemoStatus]: 'Аккаунт подтверждён',
   [I18nKey.ProfilePreferences]: 'Предпочтения интерфейса',
@@ -360,7 +360,7 @@ const ru: TranslationMap = {
   [I18nKey.ProfileSessionDescription]:
     'Сессия управляется сервером и может быть завершена в любой момент.',
   [I18nKey.ProfileEditTitle]: 'Изменить профиль',
-  [I18nKey.ProfileEditDescription]: 'Обновите имя, цели и параметры отображения Budgeto.',
+  [I18nKey.ProfileEditDescription]: 'Обновите имя, цели и параметры отображения Budgetto.',
   [I18nKey.ProfileEditName]: 'Имя',
   [I18nKey.ProfileEditNameInvalid]: 'Введите имя длиной от 1 до 80 символов.',
   [I18nKey.ProfileEditGoals]: 'Цели',
@@ -378,7 +378,7 @@ const ru: TranslationMap = {
   [I18nKey.LandingKicker]: 'Проверяемая финансовая история',
   [I18nKey.LandingTitle]: 'Деньги остаются понятными после импорта',
   [I18nKey.LandingDescription]:
-    'Budgeto помогает проверить банковскую выписку, сохранить источник каждой операции и видеть историю изменений.',
+    'Budgetto помогает проверить банковскую выписку, сохранить источник каждой операции и видеть историю изменений.',
   [I18nKey.LandingPrimaryAction]: 'Создать аккаунт',
   [I18nKey.LandingSecondaryAction]: 'Войти',
   [I18nKey.LandingStatementsTitle]: 'Выписки',
@@ -392,7 +392,7 @@ const ru: TranslationMap = {
     'Изменения собираются в журнал, который можно проверить и откатить.',
   [I18nKey.LandingPrivacyNote]:
     'Финансовые данные остаются под вашим контролем и проходят проверку перед импортом.',
-  [I18nKey.AuthLoginTitle]: 'Войти в Budgeto',
+  [I18nKey.AuthLoginTitle]: 'Войти в Budgetto',
   [I18nKey.AuthLoginDescription]:
     'Введите email и пароль, затем подтвердите вход кодом из приложения-аутентификатора.',
   [I18nKey.AuthRegisterTitle]: 'Создать аккаунт',
@@ -452,7 +452,7 @@ const ru: TranslationMap = {
   [I18nKey.AuthCopyRecovery]: 'Скопировать резервные коды',
   [I18nKey.WelcomeTitle]: 'Давайте начнём',
   [I18nKey.WelcomeDescription]:
-    'Budgeto собирает финансовую историю в одном месте. Пока доступны просмотр счетов и подготовка выписки к импорту; данные появятся после подключения источника.',
+    'Budgetto собирает финансовую историю в одном месте. Пока доступны просмотр счетов и подготовка выписки к импорту; данные появятся после подключения источника.',
   [I18nKey.WelcomeAccounts]: 'Счета',
   [I18nKey.WelcomeAccountsDescription]: 'Смотрите счета и остатки, когда они будут добавлены.',
   [I18nKey.WelcomeTransactions]: 'Операции',
@@ -464,16 +464,16 @@ const ru: TranslationMap = {
   [I18nKey.WelcomeNameHint]: 'Имя будет видно только в вашем профиле.',
   [I18nKey.WelcomeGoals]: 'Что вам важнее сейчас?',
   [I18nKey.WelcomeGoalsHint]: 'Выберите от одного до трёх пунктов.',
-  [I18nKey.WelcomeContinue]: 'Перейти в Budgeto',
+  [I18nKey.WelcomeContinue]: 'Перейти в Budgetto',
   [I18nKey.WelcomeNameRequired]: 'Введите имя — от 1 до 80 символов',
   [I18nKey.WelcomeGoalRequired]: 'Выберите хотя бы один пункт',
   [I18nKey.WelcomeEdit]: 'Изменить настройки знакомства',
 };
 
 const en: TranslationMap = {
-  [I18nKey.BrandName]: 'Budgeto',
+  [I18nKey.BrandName]: 'Budgetto',
   [I18nKey.BrandTagline]: 'Personal financial history',
-  [I18nKey.Workspace]: 'Budgeto workspace',
+  [I18nKey.Workspace]: 'Budgetto workspace',
   [I18nKey.DemoVault]: 'Vault',
   [I18nKey.NavigationOverview]: 'Overview',
   [I18nKey.NavigationAccounts]: 'Accounts',
@@ -519,7 +519,7 @@ const en: TranslationMap = {
   [I18nKey.OverviewNextStep]: 'Next step',
   [I18nKey.OverviewPrepareFirstImport]: 'Prepare your first import',
   [I18nKey.OverviewPrepareFirstImportDescription]:
-    'Budgeto will detect the statement structure, show column mapping and let you check duplicates before writing.',
+    'Budgetto will detect the statement structure, show column mapping and let you check duplicates before writing.',
   [I18nKey.OverviewOpenImport]: 'Open import',
   [I18nKey.OverviewVaultHistory]: 'Vault history',
   [I18nKey.OverviewHistoryTitle]: 'Changes are never lost',
@@ -569,7 +569,7 @@ const en: TranslationMap = {
   [I18nKey.BreadcrumbBack]: 'Back',
   [I18nKey.AccountsKicker]: 'Money',
   [I18nKey.AccountsTitle]: 'Accounts',
-  [I18nKey.AccountsDescription]: 'Real accounts available in your Budgeto workspace.',
+  [I18nKey.AccountsDescription]: 'Real accounts available in your Budgetto workspace.',
   [I18nKey.AccountsSearch]: 'Find an account or currency',
   [I18nKey.AccountsBanks]: 'Banks',
   [I18nKey.AccountsAccounts]: 'Accounts',
@@ -787,7 +787,7 @@ const en: TranslationMap = {
   [I18nKey.VaultKeyUnlocked]: 'Vault is unlocked',
   [I18nKey.VaultKeyRecoveryPhrase]: 'Recovery key',
   [I18nKey.VaultKeyRecoveryWarning]:
-    'Save this outside Budgeto. It is shown only now and is required to recover access.',
+    'Save this outside Budgetto. It is shown only now and is required to recover access.',
   [I18nKey.VaultKeyRecoveryInput]: 'Enter recovery key',
   [I18nKey.VaultKeyRecoveryInvalid]: 'This recovery key is not valid.',
   [I18nKey.VaultKeyRequired]: 'Unlock Vault before confirming the import.',
@@ -815,7 +815,7 @@ const en: TranslationMap = {
     'Exports, sign-ins and access changes will appear after auth and audit log are connected.',
   [I18nKey.ProfileKicker]: 'Personal space',
   [I18nKey.ProfileTitle]: 'Profile',
-  [I18nKey.ProfileDescription]: 'User and device settings for the Budgeto session currently open.',
+  [I18nKey.ProfileDescription]: 'User and device settings for the Budgetto session currently open.',
   [I18nKey.ProfileUserName]: 'User',
   [I18nKey.ProfileDemoStatus]: 'Account confirmed',
   [I18nKey.ProfilePreferences]: 'Interface preferences',
@@ -825,7 +825,7 @@ const en: TranslationMap = {
   [I18nKey.ProfileSessionDescription]:
     'The session is managed by the server and can be ended at any time.',
   [I18nKey.ProfileEditTitle]: 'Edit profile',
-  [I18nKey.ProfileEditDescription]: 'Update your name, goals and Budgeto display preferences.',
+  [I18nKey.ProfileEditDescription]: 'Update your name, goals and Budgetto display preferences.',
   [I18nKey.ProfileEditName]: 'Name',
   [I18nKey.ProfileEditNameInvalid]: 'Enter a name between 1 and 80 characters.',
   [I18nKey.ProfileEditGoals]: 'Goals',
@@ -842,7 +842,7 @@ const en: TranslationMap = {
   [I18nKey.LandingKicker]: 'A verifiable financial history',
   [I18nKey.LandingTitle]: 'Keep money understandable after import',
   [I18nKey.LandingDescription]:
-    'Budgeto helps you review a bank statement, keep the source of each transaction and see what changed.',
+    'Budgetto helps you review a bank statement, keep the source of each transaction and see what changed.',
   [I18nKey.LandingPrimaryAction]: 'Create an account',
   [I18nKey.LandingSecondaryAction]: 'Sign in',
   [I18nKey.LandingStatementsTitle]: 'Statements',
@@ -856,7 +856,7 @@ const en: TranslationMap = {
     'Changes are collected in a journal that can be checked and rolled back.',
   [I18nKey.LandingPrivacyNote]:
     'Your financial data stays under your control and is checked before import.',
-  [I18nKey.AuthLoginTitle]: 'Sign in to Budgeto',
+  [I18nKey.AuthLoginTitle]: 'Sign in to Budgetto',
   [I18nKey.AuthLoginDescription]:
     'Enter your email and password, then confirm with a code from your authenticator app.',
   [I18nKey.AuthRegisterTitle]: 'Create an account',
@@ -871,7 +871,7 @@ const en: TranslationMap = {
   [I18nKey.AuthRegisterAction]: 'Create account',
   [I18nKey.AuthContinueAction]: 'Continue',
   [I18nKey.AuthBackToLogin]: 'Back to sign in',
-  [I18nKey.AuthNoAccount]: 'New to Budgeto?',
+  [I18nKey.AuthNoAccount]: 'New to Budgetto?',
   [I18nKey.AuthHaveAccount]: 'Already have an account?',
   [I18nKey.AuthSetupTotpTitle]: 'Protect your account',
   [I18nKey.AuthSetupTotpDescription]:
@@ -917,7 +917,7 @@ const en: TranslationMap = {
   [I18nKey.AuthCopyRecovery]: 'Copy backup codes',
   [I18nKey.WelcomeTitle]: 'Let’s get started',
   [I18nKey.WelcomeDescription]:
-    'Budgeto brings your financial history together. You can view accounts and prepare a statement for import; your data appears once a source is connected.',
+    'Budgetto brings your financial history together. You can view accounts and prepare a statement for import; your data appears once a source is connected.',
   [I18nKey.WelcomeAccounts]: 'Accounts',
   [I18nKey.WelcomeAccountsDescription]: 'View your accounts and balances once they are added.',
   [I18nKey.WelcomeTransactions]: 'Transactions',
@@ -928,7 +928,7 @@ const en: TranslationMap = {
   [I18nKey.WelcomeNameHint]: 'Your name is only shown in your profile.',
   [I18nKey.WelcomeGoals]: 'What matters most to you?',
   [I18nKey.WelcomeGoalsHint]: 'Choose one to three options.',
-  [I18nKey.WelcomeContinue]: 'Go to Budgeto',
+  [I18nKey.WelcomeContinue]: 'Go to Budgetto',
   [I18nKey.WelcomeNameRequired]: 'Enter a name between 1 and 80 characters',
   [I18nKey.WelcomeGoalRequired]: 'Choose at least one option',
   [I18nKey.WelcomeEdit]: 'Edit welcome preferences',

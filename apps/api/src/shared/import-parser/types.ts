@@ -8,4 +8,4 @@ export type {
   ImportTransactionType,
   ParsedImportPreview,
   ParsedImportRow,
-} from '@budgeto/contracts';
+} from '@budgetto/contracts';

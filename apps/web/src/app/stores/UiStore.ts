@@ -5,9 +5,9 @@ import { Language } from '@/shared/i18n';
 
 export type ThemeMode = 'light' | 'dark';
 
-const themeStorageKey = 'budgeto-theme';
-const localeStorageKey = 'budgeto-locale';
-const sidebarStorageKey = 'budgeto-sidebar-collapsed';
+const themeStorageKey = 'budgetto-theme';
+const localeStorageKey = 'budgetto-locale';
+const sidebarStorageKey = 'budgetto-sidebar-collapsed';
 
 function readStorage(key: string): string | null {
   return typeof window === 'undefined' ? null : window.localStorage.getItem(key);

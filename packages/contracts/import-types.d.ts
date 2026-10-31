@@ -3,7 +3,7 @@ export type ImportTransactionType = 'income' | 'expense' | 'transfer';
 export type ImportSourceKind = 'xlsx' | 'csv' | 'pdf';
 
 export type ImportPreviewFormat =
-  'budgeto-xlsx' | 'finance-export-xlsx' | 'generic-csv' | 'generic-pdf';
+  'budgetto-xlsx' | 'finance-export-xlsx' | 'generic-csv' | 'generic-pdf';
 
 export type ImportIssueCode =
   | 'INVALID_DATE'

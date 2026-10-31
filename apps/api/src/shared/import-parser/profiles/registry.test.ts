@@ -45,7 +45,7 @@ describe('import profile registry', () => {
     const result = classifyImportProfile(
       {
         format: 'xlsx',
-        previewFormat: 'budgeto-xlsx',
+        previewFormat: 'budgetto-xlsx',
         headers: ['Дата', 'Сумма', 'Счёт'],
       },
       [...listImportProfiles(), customProfile],

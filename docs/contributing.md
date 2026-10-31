@@ -15,11 +15,11 @@ the run finishes. Point `TEST_DATABASE_URL` at a dedicated database whose name
 contains `test`, then run:
 
 ```bash
-TEST_DATABASE_URL=postgresql://budgeto:budgeto_dev@localhost:5432/budgeto_test npm run test:api:integration
+TEST_DATABASE_URL=postgresql://budgetto:budgetto_dev@localhost:5432/budgetto_test npm run test:api:integration
 ```
 
 On PowerShell, set the variable with
-`$env:TEST_DATABASE_URL='postgresql://budgeto:budgeto_dev@localhost:5432/budgeto_test'`
+`$env:TEST_DATABASE_URL='postgresql://budgetto:budgetto_dev@localhost:5432/budgetto_test'`
 before running the npm script. These tests cover the full migration chain,
 legacy Vault event migration and verification, duplicate fingerprints, and
 concurrent import confirmation. The regular `npm run test:api` suite excludes

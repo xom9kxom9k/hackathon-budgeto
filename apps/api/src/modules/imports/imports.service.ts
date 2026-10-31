@@ -365,7 +365,7 @@ export class ImportsService {
     help.addRows([
       ['Как заполнять'],
       ['Тип: Доход, Расход или Перевод.'],
-      ['Счета и категории должны совпадать с названиями в Budgeto.'],
+      ['Счета и категории должны совпадать с названиями в Budgetto.'],
       ['После загрузки откроется preview, где строки можно исправить.'],
     ]);
     return Buffer.from(await workbook.xlsx.writeBuffer());
