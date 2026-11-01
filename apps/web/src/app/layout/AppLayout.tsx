@@ -273,6 +273,8 @@ export const AppLayout = observer(function AppLayout() {
               }
             }}
             onPointerDown={(event) => {
+              event.preventDefault();
+              event.currentTarget.focus();
               event.currentTarget.setPointerCapture(event.pointerId);
               uiStore.setSidebarCollapsed(false);
             }}
