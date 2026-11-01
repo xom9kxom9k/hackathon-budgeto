@@ -6,4 +6,5 @@ coverage/
 !.env.example
 !infra/**/.env.example
 *.log
+.data/demo/
 .DS_Store
