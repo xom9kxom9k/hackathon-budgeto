@@ -392,7 +392,7 @@ const ru: TranslationMap = {
   [I18nKey.VaultKeyUnlocked]: 'Ключ разблокирован',
   [I18nKey.VaultKeyRecoveryPhrase]: 'Ключ восстановления',
   [I18nKey.VaultKeyRecoveryWarning]:
-    'Сохраните эту строку вне Budgeto. Она показывается только сейчас и нужна для восстановления доступа.',
+    'Это ваш ключ восстановления. Скопируйте его и сохраните в менеджере паролей или другом безопасном месте до закрытия страницы. После обновления страницы приложение не сможет показать его снова.',
   [I18nKey.VaultKeyRecoveryInput]: 'Введите ключ восстановления',
   [I18nKey.VaultKeyRecoveryInvalid]: 'Ключ восстановления не подходит.',
   [I18nKey.VaultKeyRequired]: 'Разблокируйте ключ подписи перед подтверждением импорта.',
@@ -420,6 +420,11 @@ const ru: TranslationMap = {
   [I18nKey.VaultShowMore]: 'Показать ещё',
   [I18nKey.VaultKeySession]:
     'Ключ хранится в памяти этой вкладки. После обновления страницы его нужно разблокировать заново.',
+  [I18nKey.VaultKeySetupDescription]:
+    'Приложение само создаст ключ подписи и покажет ключ восстановления. Сохраните показанную строку: она понадобится после обновления страницы и при входе с другого устройства.',
+  [I18nKey.VaultKeyHelpTitle]: 'Где взять ключ восстановления?',
+  [I18nKey.VaultKeyWhereFind]:
+    'Приложение показывает эту строку при создании ключа подписи. Найдите её среди сохранённых вами ключей. Она отличается от пароля аккаунта и кодов 2FA. Если строка потеряна, приложение не сможет показать её повторно или открыть существующие зашифрованные копии.',
   [I18nKey.SecurityKicker]: 'Контроль доступа',
   [I18nKey.SecurityTitle]: 'Безопасность',
   [I18nKey.SecurityDescription]: 'Вход в аккаунт, активные сессии и ключ финансового журнала.',
@@ -937,7 +942,7 @@ const en: TranslationMap = {
   [I18nKey.VaultKeyUnlocked]: 'Key is unlocked',
   [I18nKey.VaultKeyRecoveryPhrase]: 'Recovery key',
   [I18nKey.VaultKeyRecoveryWarning]:
-    'Save this outside Budgeto. It is shown only now and is required to recover access.',
+    'This is your recovery key. Copy it and save it in a password manager or another safe place before closing the page. The app cannot show it again after a reload.',
   [I18nKey.VaultKeyRecoveryInput]: 'Enter recovery key',
   [I18nKey.VaultKeyRecoveryInvalid]: 'This recovery key is not valid.',
   [I18nKey.VaultKeyRequired]: 'Unlock the signing key before confirming the import.',
@@ -964,6 +969,11 @@ const en: TranslationMap = {
   [I18nKey.VaultShowMore]: 'Show more',
   [I18nKey.VaultKeySession]:
     'The key stays in this tab’s memory. Unlock it again after reloading the page.',
+  [I18nKey.VaultKeySetupDescription]:
+    'The app will generate a signing key and show a recovery key. Save that string: you will need it after reloading the page or signing in on another device.',
+  [I18nKey.VaultKeyHelpTitle]: 'Where do I find my recovery key?',
+  [I18nKey.VaultKeyWhereFind]:
+    'The app shows this string when you create your signing key. Look for it among your saved keys. It is separate from your account password and 2FA codes. If the string is lost, the app cannot show it again or open existing encrypted copies.',
   [I18nKey.SecurityKicker]: 'Access control',
   [I18nKey.SecurityTitle]: 'Security',
   [I18nKey.SecurityDescription]: 'Account authentication, active sessions and your journal key.',

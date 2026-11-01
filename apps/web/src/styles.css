@@ -2887,7 +2887,8 @@ textarea::placeholder {
   margin: 8px 0 0;
 }
 .journal-key-details > summary,
-.journal-technical > summary {
+.journal-technical > summary,
+.vault-key-help > summary {
   cursor: pointer;
   padding: 14px 0;
   color: var(--admiral-color-Primary_Primary60Main);
