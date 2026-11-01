@@ -3,9 +3,47 @@ import { I18nKey, Language } from './types';
 type TranslationMap = Record<I18nKey, string>;
 
 const ru: TranslationMap = {
+  [I18nKey.SidebarResize]: 'Изменить ширину меню',
+  [I18nKey.SkipToContent]: 'Перейти к содержимому',
+  [I18nKey.TransactionTypeIncome]: 'Доход',
+  [I18nKey.TransactionTypeExpense]: 'Расход',
+  [I18nKey.TransactionChooseAccount]: 'Выберите счёт',
+  [I18nKey.TransactionSaveError]:
+    'Не удалось сохранить операцию. Данные остались в форме. Попробуйте ещё раз.',
+  [I18nKey.TransactionVaultRequired]:
+    'Для сохранения разблокируйте Vault с помощью ключа восстановления.',
+  [I18nKey.TransactionInvalidTransfer]: 'Выберите два разных счёта для перевода.',
+  [I18nKey.TransactionSaving]: 'Сохранение…',
+  [I18nKey.TransactionSaved]: 'Операция сохранена',
+  [I18nKey.TransactionCancel]: 'Отмена',
+  [I18nKey.TransactionDateOrder]: 'Дата начала должна быть не позже даты окончания.',
+  [I18nKey.SecurityTwoFactor]: 'Двухфакторная аутентификация',
+  [I18nKey.SecurityEnabled]: 'Включена',
+  [I18nKey.SecurityDisabled]: 'Не включена',
+  [I18nKey.SecurityLoading]: 'Загружаем состояние безопасности…',
+  [I18nKey.SecurityLoadError]: 'Не удалось загрузить состояние безопасности. Повторите попытку.',
+  [I18nKey.SecurityTwoFactorDescription]:
+    'При входе используйте пароль и одноразовый код из приложения аутентификации.',
+  [I18nKey.SecurityActiveSessions]: 'Активные сессии',
+  [I18nKey.SecurityRevokeSessions]: 'Завершить все сессии',
+  [I18nKey.SecurityRevokeConfirm]:
+    'Завершить все сессии, включая текущую? Потребуется войти заново.',
+  [I18nKey.SecuritySessionsDescription]:
+    'Здесь учитываются только неистёкшие сессии, которые не были отозваны.',
+  [I18nKey.SecurityVaultDescription]:
+    'Ключ Vault нужен для подписи операций. Блокировка ключа не означает нарушения целостности журнала.',
+  [I18nKey.SecurityVaultUninitialized]: 'Ключ ещё не создан',
+  [I18nKey.SecurityRecovery]: 'Коды восстановления',
+  [I18nKey.SecurityRecoveryAvailable]: 'Доступны',
+  [I18nKey.SecurityRecoveryUnavailable]: 'Не настроены',
+  [I18nKey.SecurityRecoveryDescription]:
+    'Храните резервные коды в безопасном месте. Они понадобятся, если приложение с кодами входа недоступно.',
+  [I18nKey.SecurityManageVault]: 'Управление ключом и проверка журнала',
+  [I18nKey.AccountsNoSearchResults]: 'Счета не найдены. Измените поисковый запрос.',
+  [I18nKey.AccountsManual]: 'Ручной учёт',
   [I18nKey.BrandName]: 'Budgeto',
   [I18nKey.BrandTagline]: 'Личная финансовая история',
-  [I18nKey.Workspace]: 'Budgeto workspace',
+  [I18nKey.Workspace]: 'Личные финансы',
   [I18nKey.DemoVault]: 'Vault',
   [I18nKey.NavigationOverview]: 'Обзор',
   [I18nKey.NavigationAccounts]: 'Счета',
@@ -30,13 +68,13 @@ const ru: TranslationMap = {
     'Подключите счёт или импортируйте выписку, чтобы начать работу с данными.',
   [I18nKey.PreviewBadge]: 'Нет подключения',
   [I18nKey.OverviewKicker]: 'Финансовая история',
-  [I18nKey.OverviewTitle]: 'Одна история для всех ваших денег',
+  [I18nKey.OverviewTitle]: 'Ваши финансы',
   [I18nKey.OverviewDescription]:
-    'Импортируйте выписку, проверьте каждую строку и держите изменения в понятной истории.',
+    'Записывайте расходы и доходы вручную или загружайте банковские выписки.',
   [I18nKey.OverviewPrepareImport]: 'Подготовить импорт',
   [I18nKey.OverviewCurrentBalance]: 'Текущий баланс',
   [I18nKey.OverviewDemoAccount]: 'Счёт · RUB',
-  [I18nKey.OverviewExpenses]: 'Расходы за октябрь',
+  [I18nKey.OverviewExpenses]: 'Расходы',
   [I18nKey.OverviewDemoStatement]: 'Сумма из выписки',
   [I18nKey.OverviewLastImport]: 'Последний импорт',
   [I18nKey.OverviewNotConnected]: 'Не подключён',
@@ -178,7 +216,7 @@ const ru: TranslationMap = {
   [I18nKey.TransactionsKicker]: 'Финансовые записи',
   [I18nKey.TransactionsTitle]: 'Операции',
   [I18nKey.TransactionsDescription]:
-    'Здесь появится рабочая таблица операций с источником каждой строки и историей изменений.',
+    'Записывайте расходы, доходы и переводы. Фильтры помогут найти нужную операцию.',
   [I18nKey.TransactionsLoadError]:
     'Не удалось загрузить операции. Проверьте соединение и попробуйте снова.',
   [I18nKey.TransactionsRetry]: 'Повторить загрузку',
@@ -336,7 +374,7 @@ const ru: TranslationMap = {
   [I18nKey.VaultCopyId]: 'Скопировать идентификатор',
   [I18nKey.SecurityKicker]: 'Контроль доступа',
   [I18nKey.SecurityTitle]: 'Безопасность',
-  [I18nKey.SecurityDescription]: 'Здесь будут доступны сессии, доступ AI и события экспорта.',
+  [I18nKey.SecurityDescription]: 'Вход в аккаунт, активные сессии и ключ финансового журнала.',
   [I18nKey.SecurityAiAccess]: 'AI access',
   [I18nKey.SecurityGranted]: 'Доступ выдан на чтение',
   [I18nKey.SecurityRevoked]: 'Доступ отозван',
@@ -471,6 +509,43 @@ const ru: TranslationMap = {
 };
 
 const en: TranslationMap = {
+  [I18nKey.SidebarResize]: 'Resize navigation',
+  [I18nKey.SkipToContent]: 'Skip to content',
+  [I18nKey.TransactionTypeIncome]: 'Income',
+  [I18nKey.TransactionTypeExpense]: 'Expense',
+  [I18nKey.TransactionChooseAccount]: 'Choose an account',
+  [I18nKey.TransactionSaveError]:
+    'Could not save the transaction. Your entries are preserved. Try again.',
+  [I18nKey.TransactionVaultRequired]: 'Unlock Vault with your recovery key to save.',
+  [I18nKey.TransactionInvalidTransfer]: 'Choose two different accounts for the transfer.',
+  [I18nKey.TransactionSaving]: 'Saving…',
+  [I18nKey.TransactionSaved]: 'Transaction saved',
+  [I18nKey.TransactionCancel]: 'Cancel',
+  [I18nKey.TransactionDateOrder]: 'The start date must be on or before the end date.',
+  [I18nKey.SecurityTwoFactor]: 'Two-factor authentication',
+  [I18nKey.SecurityEnabled]: 'Enabled',
+  [I18nKey.SecurityDisabled]: 'Not enabled',
+  [I18nKey.SecurityLoading]: 'Loading security status…',
+  [I18nKey.SecurityLoadError]: 'Could not load security status. Try again.',
+  [I18nKey.SecurityTwoFactorDescription]:
+    'Sign in with your password and a one-time code from your authenticator app.',
+  [I18nKey.SecurityActiveSessions]: 'Active sessions',
+  [I18nKey.SecurityRevokeSessions]: 'End all sessions',
+  [I18nKey.SecurityRevokeConfirm]:
+    'End all sessions, including this one? You will need to sign in again.',
+  [I18nKey.SecuritySessionsDescription]:
+    'Only unexpired sessions that have not been revoked are counted.',
+  [I18nKey.SecurityVaultDescription]:
+    'The Vault key signs transactions. A locked key does not mean the journal integrity is broken.',
+  [I18nKey.SecurityVaultUninitialized]: 'Key not created yet',
+  [I18nKey.SecurityRecovery]: 'Recovery codes',
+  [I18nKey.SecurityRecoveryAvailable]: 'Available',
+  [I18nKey.SecurityRecoveryUnavailable]: 'Not configured',
+  [I18nKey.SecurityRecoveryDescription]:
+    'Keep your recovery codes somewhere safe. Use them if your authenticator is unavailable.',
+  [I18nKey.SecurityManageVault]: 'Manage key and verify journal',
+  [I18nKey.AccountsNoSearchResults]: 'No accounts match. Try another search.',
+  [I18nKey.AccountsManual]: 'Manual account',
   [I18nKey.BrandName]: 'Budgeto',
   [I18nKey.BrandTagline]: 'Personal financial history',
   [I18nKey.Workspace]: 'Budgeto workspace',
@@ -801,7 +876,7 @@ const en: TranslationMap = {
   [I18nKey.VaultCopyId]: 'Copy identifier',
   [I18nKey.SecurityKicker]: 'Access control',
   [I18nKey.SecurityTitle]: 'Security',
-  [I18nKey.SecurityDescription]: 'Sessions, AI access and export events will be available here.',
+  [I18nKey.SecurityDescription]: 'Account authentication, active sessions and your journal key.',
   [I18nKey.SecurityAiAccess]: 'AI access',
   [I18nKey.SecurityGranted]: 'Read-only access granted',
   [I18nKey.SecurityRevoked]: 'Access revoked',
