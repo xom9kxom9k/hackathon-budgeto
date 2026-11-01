@@ -21,6 +21,20 @@ export interface OverviewCashflowPoint {
 }
 
 export interface OverviewSummaryView {
+  currency: string;
+  availableCurrencies: string[];
+  expenseCategories: Array<{
+    id: string | null;
+    name: string | null;
+    amount: number;
+    count: number;
+  }>;
+  incomeCategories: Array<{
+    id: string | null;
+    name: string | null;
+    amount: number;
+    count: number;
+  }>;
   period: OverviewPeriod;
   accountsCount: number;
   totals: OverviewTotals;
@@ -28,7 +42,9 @@ export interface OverviewSummaryView {
   recentTransactions: TransactionView[];
 }
 
-export interface OverviewSummaryFilters extends OverviewPeriod {}
+export interface OverviewSummaryFilters extends OverviewPeriod {
+  currency?: string;
+}
 
 export class GetOverviewSummaryQuery {
   constructor(

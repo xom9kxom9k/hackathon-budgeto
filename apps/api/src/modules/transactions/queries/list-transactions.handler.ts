@@ -41,7 +41,7 @@ export class ListTransactionsHandler implements IQueryHandler<ListTransactionsQu
       .where('transaction.user_id = :userId', { userId: query.userId })
       .select([
         'transaction.id AS id',
-        'transaction.date AS date',
+        "TO_CHAR(transaction.date, 'YYYY-MM-DD') AS date",
         'transaction.kind AS kind',
         'transaction.amount AS amount',
         'transaction.note AS note',

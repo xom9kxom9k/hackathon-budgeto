@@ -13,6 +13,7 @@ import { ImportsModule } from './modules/imports/imports.module';
 import { OverviewModule } from './modules/overview/overview.module';
 import { VaultModule } from './modules/vault/vault.module';
 import { CsrfGuard } from './modules/auth/csrf.guard';
+import { SavingsModule } from './modules/savings/savings.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { CsrfGuard } from './modules/auth/csrf.guard';
     ImportsModule,
     OverviewModule,
     VaultModule,
+    SavingsModule,
   ],
   controllers: [HealthController],
   providers: [
