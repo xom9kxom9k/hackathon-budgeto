@@ -12,8 +12,8 @@ export class OverviewStore {
   income = 0;
   expenses = 0;
   net = 0;
-  currency = 'RUB';
-  availableCurrencies = ['RUB'];
+  currency: string | null = null;
+  availableCurrencies: string[] = [];
   expenseCategories: CategoryTotal[] = [];
   incomeCategories: CategoryTotal[] = [];
   transactions: Transaction[] = [];
@@ -47,10 +47,10 @@ export class OverviewStore {
           this.income = summary.totals.income;
           this.expenses = summary.totals.expenses;
           this.net = summary.totals.net;
-          this.currency = summary.currency ?? 'RUB';
-          this.availableCurrencies = summary.availableCurrencies ?? ['RUB'];
-          this.expenseCategories = summary.expenseCategories ?? [];
-          this.incomeCategories = summary.incomeCategories ?? [];
+          this.currency = summary.currency;
+          this.availableCurrencies = summary.availableCurrencies;
+          this.expenseCategories = summary.expenseCategories;
+          this.incomeCategories = summary.incomeCategories;
           this.cashflow = summary.cashflow;
           this.transactions = summary.recentTransactions;
           this.status =
