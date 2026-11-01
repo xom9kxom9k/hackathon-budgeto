@@ -45,20 +45,28 @@ export const VaultKeyPanel = observer(function VaultKeyPanel() {
         </div>
       ) : null}
       {vault.status === 'uninitialized' ? (
-        <Button
-          type="button"
-          appearance="primary"
-          dimension="m"
-          disabled={vault.keyBusy}
-          onClick={() => void vault.create()}
-        >
-          {t(I18nKey.VaultKeyCreate)}
-        </Button>
+        <div className="vault-key-unlock">
+          <p className="panel-copy">{t(I18nKey.VaultKeySetupDescription)}</p>
+          <Button
+            type="button"
+            appearance="primary"
+            dimension="m"
+            disabled={vault.keyBusy}
+            onClick={() => void vault.create()}
+          >
+            {t(I18nKey.VaultKeyCreate)}
+          </Button>
+        </div>
       ) : null}
 
       {vault.status === 'locked' ? (
         <div className="vault-key-unlock">
           <StatusIndicator dimension="s" text={t(I18nKey.VaultKeyLocked)} />
+          <p className="panel-copy">{t(I18nKey.VaultKeySession)}</p>
+          <details className="vault-key-help">
+            <summary>{t(I18nKey.VaultKeyHelpTitle)}</summary>
+            <p className="panel-copy">{t(I18nKey.VaultKeyWhereFind)}</p>
+          </details>
           <label className="form-field">
             <span>{t(I18nKey.VaultKeyRecoveryInput)}</span>
             <input

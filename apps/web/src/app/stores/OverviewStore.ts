@@ -1,7 +1,8 @@
-import { makeAutoObservable } from 'mobx';
+import { action, makeAutoObservable } from 'mobx';
 
 import type { CashflowPoint, Transaction } from '@/entities/transaction/model/types';
 import type { OverviewFilters, OverviewService } from '@/shared/services/OverviewService';
+import type { CategoryTotal } from '@/shared/services/OverviewService';
 import type { RequestStatus } from '@/shared/types/request';
 
 export class OverviewStore {
@@ -11,6 +12,10 @@ export class OverviewStore {
   income = 0;
   expenses = 0;
   net = 0;
+  currency = 'RUB';
+  availableCurrencies = ['RUB'];
+  expenseCategories: CategoryTotal[] = [];
+  incomeCategories: CategoryTotal[] = [];
   transactions: Transaction[] = [];
   cashflow: CashflowPoint[] = [];
   period: OverviewFilters | null = null;
@@ -34,26 +39,38 @@ export class OverviewStore {
     const version = ++this.requestVersion;
     const promise = this.overviewService
       .getSummary(filters)
-      .then((summary) => {
-        if (version !== this.requestVersion) return;
-        this.period = summary.period;
-        this.accountsCount = summary.accountsCount;
-        this.income = summary.totals.income;
-        this.expenses = summary.totals.expenses;
-        this.net = summary.totals.net;
-        this.cashflow = summary.cashflow;
-        this.transactions = summary.recentTransactions;
-        this.status =
-          summary.accountsCount || summary.recentTransactions.length ? 'success' : 'empty';
-      })
-      .catch((error: unknown) => {
-        if (version !== this.requestVersion) return;
-        this.status = 'error';
-        this.errorCode = error instanceof Error ? error.message : 'OVERVIEW_LOAD_FAILED';
-      })
-      .finally(() => {
-        if (version === this.requestVersion) this.requestPromise = null;
-      });
+      .then(
+        action((summary) => {
+          if (version !== this.requestVersion) return;
+          this.period = { ...filters, ...summary.period };
+          this.accountsCount = summary.accountsCount;
+          this.income = summary.totals.income;
+          this.expenses = summary.totals.expenses;
+          this.net = summary.totals.net;
+          this.currency = summary.currency ?? 'RUB';
+          this.availableCurrencies = summary.availableCurrencies ?? ['RUB'];
+          this.expenseCategories = summary.expenseCategories ?? [];
+          this.incomeCategories = summary.incomeCategories ?? [];
+          this.cashflow = summary.cashflow;
+          this.transactions = summary.recentTransactions;
+          this.status =
+            summary.accountsCount || summary.recentTransactions.length || summary.cashflow.length
+              ? 'success'
+              : 'empty';
+        }),
+      )
+      .catch(
+        action((error: unknown) => {
+          if (version !== this.requestVersion) return;
+          this.status = 'error';
+          this.errorCode = error instanceof Error ? error.message : 'OVERVIEW_LOAD_FAILED';
+        }),
+      )
+      .finally(
+        action(() => {
+          if (version === this.requestVersion) this.requestPromise = null;
+        }),
+      );
 
     this.requestPromise = promise;
     return promise;

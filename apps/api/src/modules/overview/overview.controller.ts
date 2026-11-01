@@ -17,8 +17,10 @@ export class OverviewController {
     @Query() query: Record<string, string | undefined>,
   ): Promise<OverviewSummaryView> {
     const period = this.parsePeriod(query);
+    const currency = query.currency?.toUpperCase();
+    if (currency && !/^[A-Z]{3}$/.test(currency)) throw new BadRequestException('Invalid currency');
     return this.queries.execute<GetOverviewSummaryQuery, OverviewSummaryView>(
-      new GetOverviewSummaryQuery(user.userId, period),
+      new GetOverviewSummaryQuery(user.userId, { ...period, ...(currency ? { currency } : {}) }),
     );
   }
 

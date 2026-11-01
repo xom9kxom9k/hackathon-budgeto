@@ -51,4 +51,11 @@ describe('OverviewStore', () => {
     expect(store.status).toBe('success');
     expect(getSummary).toHaveBeenCalledTimes(2);
   });
+  it('preserves the selected currency on refresh after a successful summary', async () => {
+    const getSummary = vi.fn().mockResolvedValue({ ...summary, currency: 'USD' });
+    const store = new OverviewStore({ getSummary } as unknown as OverviewService);
+    await store.load({ ...filters, currency: 'USD' });
+    await store.retry();
+    expect(getSummary).toHaveBeenLastCalledWith({ ...filters, currency: 'USD' });
+  });
 });

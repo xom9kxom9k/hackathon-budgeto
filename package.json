@@ -3,6 +3,8 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "demo:code": "node scripts/seed-demo.mjs --code",
     "dev:api": "nest start api --watch",
     "dev:worker": "node dist/apps/worker/worker/src/main.js",
     "dev:web": "vite --config apps/web/vite.config.ts",

@@ -12,7 +12,9 @@ function makeBuilder(result: unknown) {
     select: vi.fn().mockReturnThis(),
     addSelect: vi.fn().mockReturnThis(),
     leftJoin: vi.fn().mockReturnThis(),
+    innerJoin: vi.fn().mockReturnThis(),
     groupBy: vi.fn().mockReturnThis(),
+    addGroupBy: vi.fn().mockReturnThis(),
     orderBy: vi.fn().mockReturnThis(),
     addOrderBy: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
@@ -45,10 +47,16 @@ describe('GetOverviewSummaryHandler', () => {
         categoryKind: null,
       },
     ]);
-    const builders = [totalsBuilder, cashflowBuilder, recentBuilder];
+    const expenseBuilder = makeBuilder([{ id: 'rent', name: 'Rent', amount: '250', count: '2' }]);
+    const incomeBuilder = makeBuilder([{ id: null, name: null, amount: '1000', count: '1' }]);
+    const builders = [totalsBuilder, cashflowBuilder, expenseBuilder, incomeBuilder, recentBuilder];
     const createQueryBuilder = vi.fn(() => builders.shift());
     const accounts = {
-      count: vi.fn().mockResolvedValue(1),
+      find: vi.fn().mockResolvedValue([
+        { currency: 'RUB', archivedAt: null },
+        { currency: 'USD', archivedAt: null },
+        { currency: 'RUB', archivedAt: new Date() },
+      ]),
     } as unknown as Repository<AccountEntity>;
     const transactions = { createQueryBuilder } as unknown as Repository<TransactionEntity>;
     const handler = new GetOverviewSummaryHandler(accounts, transactions);
@@ -63,9 +71,38 @@ describe('GetOverviewSummaryHandler', () => {
     expect(result).toMatchObject({
       period: { from: '2025-01-01', to: '2025-01-31' },
       accountsCount: 1,
+      currency: 'RUB',
+      availableCurrencies: ['RUB', 'USD'],
+      expenseCategories: [{ id: 'rent', name: 'Rent', amount: 250, count: 2 }],
+      incomeCategories: [{ id: null, name: null, amount: 1000, count: 1 }],
       totals: { income: 1000, expenses: 250, net: 750 },
       cashflow: [{ period: '2025-01-10', income: 1000, expenses: 250 }],
     });
     expect(result.recentTransactions[0].amount).toBe(1000);
+    expect(cashflowBuilder.select).toHaveBeenCalledWith(
+      "TO_CHAR(transaction.date, 'YYYY-MM-DD')",
+      'period',
+    );
+    expect(recentBuilder.select).toHaveBeenCalledWith(
+      expect.arrayContaining(["TO_CHAR(transaction.date, 'YYYY-MM-DD') AS date"]),
+    );
+    for (const builder of [
+      totalsBuilder,
+      cashflowBuilder,
+      expenseBuilder,
+      incomeBuilder,
+      recentBuilder,
+    ]) {
+      expect(builder.andWhere).toHaveBeenCalledWith('transaction.reversed_at IS NULL');
+      expect(builder.andWhere).toHaveBeenCalledWith('account.currency = :currency', {
+        currency: 'RUB',
+      });
+    }
+    expect(expenseBuilder.andWhere).toHaveBeenCalledWith('transaction.kind = :kind', {
+      kind: 'expense',
+    });
+    expect(incomeBuilder.andWhere).toHaveBeenCalledWith('transaction.kind = :kind', {
+      kind: 'income',
+    });
   });
 });
