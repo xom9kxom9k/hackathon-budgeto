@@ -19,28 +19,24 @@ const transactionSchema = z.object({
     .nullable(),
 });
 const overviewResponseSchema = z.object({
-  currency: z.string().default('RUB'),
-  availableCurrencies: z.array(z.string()).default(['RUB']),
-  expenseCategories: z
-    .array(
-      z.object({
-        id: z.string().nullable(),
-        name: z.string().nullable(),
-        amount: z.number(),
-        count: z.number(),
-      }),
-    )
-    .default([]),
-  incomeCategories: z
-    .array(
-      z.object({
-        id: z.string().nullable(),
-        name: z.string().nullable(),
-        amount: z.number(),
-        count: z.number(),
-      }),
-    )
-    .default([]),
+  currency: z.string().regex(/^[A-Z]{3}$/),
+  availableCurrencies: z.array(z.string().regex(/^[A-Z]{3}$/)),
+  expenseCategories: z.array(
+    z.object({
+      id: z.string().nullable(),
+      name: z.string().nullable(),
+      amount: z.number(),
+      count: z.number(),
+    }),
+  ),
+  incomeCategories: z.array(
+    z.object({
+      id: z.string().nullable(),
+      name: z.string().nullable(),
+      amount: z.number(),
+      count: z.number(),
+    }),
+  ),
   period: z.object({ from: z.string(), to: z.string() }),
   accountsCount: z.number().int().nonnegative(),
   totals: z.object({ income: z.number(), expenses: z.number(), net: z.number() }),
@@ -55,10 +51,10 @@ export interface OverviewFilters {
 }
 
 export interface OverviewSummary {
-  currency?: string;
-  availableCurrencies?: string[];
-  expenseCategories?: CategoryTotal[];
-  incomeCategories?: CategoryTotal[];
+  currency: string;
+  availableCurrencies: string[];
+  expenseCategories: CategoryTotal[];
+  incomeCategories: CategoryTotal[];
   period: OverviewFilters;
   accountsCount: number;
   totals: { income: number; expenses: number; net: number };

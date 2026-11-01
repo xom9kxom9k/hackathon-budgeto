@@ -57,8 +57,9 @@ export const OverviewPage = observer(function OverviewPage() {
     void setPeriod({ [key]: value || null });
   };
 
+  const currency = overviewStore.currency;
   const money = (value: number) =>
-    formatMoney(value, overviewStore.currency, i18n.resolvedLanguage);
+    currency ? formatMoney(value, currency, i18n.resolvedLanguage) : '';
   const netLabel = `${overviewStore.net > 0 ? '+' : ''}${money(overviewStore.net)}`;
   const isEmpty = overviewStore.status === 'empty';
   const isError = overviewStore.status === 'error';
@@ -145,7 +146,7 @@ export const OverviewPage = observer(function OverviewPage() {
             <label className="form-field period-currency">
               <span>{t(I18nKey.AnalyticsCurrency)}</span>
               <select
-                value={period.currency ?? overviewStore.currency}
+                value={period.currency ?? currency ?? ''}
                 onChange={(event) => void setPeriod({ currency: event.target.value })}
               >
                 {overviewStore.availableCurrencies.map((currency) => (
@@ -183,7 +184,7 @@ export const OverviewPage = observer(function OverviewPage() {
             </Button>
           </div>
         </section>
-      ) : (
+      ) : currency ? (
         <>
           <section className="overview-summary-grid" aria-label={t(I18nKey.OverviewNetMovement)}>
             <article className="metric-card metric-card--primary overview-net-card">
@@ -206,25 +207,23 @@ export const OverviewPage = observer(function OverviewPage() {
               </strong>
             </article>
           </section>
-          <p className="analytics-scope">
-            {t(I18nKey.AnalyticsScope, { currency: overviewStore.currency })}
-          </p>
+          <p className="analytics-scope">{t(I18nKey.AnalyticsScope, { currency })}</p>
           <CashflowChart
             data={overviewStore.cashflow}
             from={period.from}
             to={period.to}
-            currency={overviewStore.currency}
+            currency={currency}
             compact
           />
           <div className="analytics-detail-grid">
             <CategoryBreakdown
               expenses={overviewStore.expenseCategories}
               income={overviewStore.incomeCategories}
-              currency={overviewStore.currency}
+              currency={currency}
             />
             <SavingsGoalPanel
-              key={overviewStore.currency}
-              currency={overviewStore.currency}
+              key={currency}
+              currency={currency}
               net={overviewStore.net}
               from={period.from}
               to={period.to}
@@ -246,7 +245,7 @@ export const OverviewPage = observer(function OverviewPage() {
             <TransactionTable transactions={overviewStore.transactions} />
           </section>
         </>
-      )}
+      ) : null}
     </div>
   );
 });
