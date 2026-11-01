@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -125,4 +125,110 @@ describe('ProfileEditPage', () => {
     resolveUpdate(profile);
     expect(await screen.findByText('Profile page')).toBeInTheDocument();
   });
+});
+
+describe('Profile edit submission boundaries', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage(Language.Ru);
+  });
+  it('shows load failure without a form', async () => {
+    const store = new RootStore();
+    vi.spyOn(store.services.profile, 'get').mockRejectedValue(new Error('offline'));
+    renderPage(store);
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Сохранить изменения' })).not.toBeInTheDocument();
+  });
+  it('ignores submit during loading and allows cancellation', async () => {
+    const store = new RootStore();
+    vi.spyOn(store.services.profile, 'get').mockReturnValue(new Promise(() => {}));
+    const update = vi.spyOn(store.services.profile, 'update');
+    const { container } = renderPage(store);
+    fireEvent.submit(container.querySelector('form')!);
+    expect(update).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Отмена' }));
+    expect(await screen.findByText('Profile page')).toBeInTheDocument();
+  });
+  it('normalizes input, toggles goals and prevents duplicate submission through both mutations', async () => {
+    const store = new RootStore();
+    vi.spyOn(store.services.profile, 'get').mockResolvedValue({ ...profile, displayName: null });
+    let finishUpdate!: (value: Profile) => void;
+    let finishPreferences!: (value: Profile) => void;
+    const update = vi.spyOn(store.services.profile, 'update').mockReturnValue(
+      new Promise((r) => {
+        finishUpdate = r;
+      }),
+    );
+    const preferences = vi.spyOn(store.services.profile, 'updatePreferences').mockReturnValue(
+      new Promise((r) => {
+        finishPreferences = r;
+      }),
+    );
+    const { container } = renderPage(store);
+    const name = await screen.findByLabelText('Имя');
+    await waitFor(() => expect(store.profile.status).toBe('success'));
+    fireEvent.change(name, { target: { value: '  Grace  ' } });
+    const boxes = screen.getAllByRole('checkbox');
+    fireEvent.click(boxes[0]);
+    fireEvent.click(boxes[1]);
+    fireEvent.change(screen.getByLabelText('Часовой пояс'), { target: { value: '  ' } });
+    const form = container.querySelector('form')!;
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    expect(update).toHaveBeenCalledWith('Grace', ['transactions']);
+    await act(async () =>
+      finishUpdate({ ...profile, displayName: 'Grace', goals: ['transactions'] }),
+    );
+    fireEvent.submit(form);
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(preferences).toHaveBeenCalledWith('ru', 'UTC');
+    await act(async () => finishPreferences(profile));
+    expect(await screen.findByText('Profile page')).toBeInTheDocument();
+  });
+  it('retains the form on preferences failure and permits a successful retry', async () => {
+    const store = new RootStore();
+    vi.spyOn(store.services.profile, 'get').mockResolvedValue(profile);
+    const update = vi.spyOn(store.services.profile, 'update').mockResolvedValue(profile);
+    const preferences = vi
+      .spyOn(store.services.profile, 'updatePreferences')
+      .mockRejectedValueOnce(new Error('failed'))
+      .mockResolvedValue(profile);
+    const { container } = renderPage(store);
+    await screen.findByLabelText('Имя');
+    fireEvent.submit(container.querySelector('form')!);
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByText('Profile page')).not.toBeInTheDocument();
+    fireEvent.submit(container.querySelector('form')!);
+    expect(await screen.findByText('Profile page')).toBeInTheDocument();
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(preferences).toHaveBeenCalledTimes(2);
+  });
+});
+
+it('saves through the real store, services and client after an expired CSRF token', async () => {
+  await i18n.changeLanguage(Language.Ru);
+  let csrf = 0;
+  let writes = 0;
+  const fetchImpl = vi.fn<typeof fetch>().mockImplementation(async (url, options) => {
+    if (String(url).endsWith('/auth/csrf'))
+      return new Response(JSON.stringify({ token: ++csrf === 1 ? 'expired' : 'fresh' }));
+    if (options?.method === 'PATCH' && ++writes === 1)
+      return new Response(JSON.stringify({ code: 'AUTH_CSRF_INVALID' }), { status: 403 });
+    return new Response(JSON.stringify(profile));
+  });
+  vi.stubGlobal('fetch', fetchImpl);
+  try {
+    const store = new RootStore();
+    const { container } = renderPage(store);
+    await screen.findByLabelText('Имя');
+    fireEvent.submit(container.querySelector('form')!);
+    expect(await screen.findByText('Profile page')).toBeInTheDocument();
+    expect(csrf).toBe(2);
+    expect(writes).toBe(3);
+    const patches = fetchImpl.mock.calls.filter(([, options]) => options?.method === 'PATCH');
+    expect(patches[0][1]?.body).toBe(patches[1][1]?.body);
+    expect(patches[1][1]?.headers).toMatchObject({ 'X-CSRF-Token': 'fresh' });
+    expect(patches[2][0]).toMatch(/profile\/preferences$/);
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

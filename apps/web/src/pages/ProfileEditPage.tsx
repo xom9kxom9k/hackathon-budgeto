@@ -1,6 +1,6 @@
 import { Button, InputField } from '@admiral-ds/react-ui';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,6 +26,7 @@ export const ProfileEditPage = observer(function ProfileEditPage() {
   const [locale, setLocale] = useState(Language.Ru);
   const [timezone, setTimezone] = useState('UTC');
   const [error, setError] = useState('');
+  const submitting = useRef(false);
 
   useEffect(() => {
     void profileStore.load();
@@ -41,12 +42,14 @@ export const ProfileEditPage = observer(function ProfileEditPage() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting.current || profileStore.status !== 'success') return;
     const normalizedName = displayName.trim();
     if (!normalizedName || normalizedName.length > 80) {
       setError(t(I18nKey.ProfileEditNameInvalid));
       return;
     }
     setError('');
+    submitting.current = true;
     try {
       await profileStore.update(normalizedName, selectedGoals);
       await profileStore.updatePreferences(locale, timezone.trim() || 'UTC');
@@ -54,6 +57,8 @@ export const ProfileEditPage = observer(function ProfileEditPage() {
       navigate('/profile', { replace: true, state: { saved: true } });
     } catch {
       setError(t(I18nKey.ProfileEditSaveError));
+    } finally {
+      submitting.current = false;
     }
   }
 

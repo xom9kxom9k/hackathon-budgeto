@@ -6,6 +6,7 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     include: ['src/**/*.test.ts'],
+    exclude: ['src/**/*.integration.test.ts'],
   },
   server: {
     deps: {

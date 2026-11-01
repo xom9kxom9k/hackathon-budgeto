@@ -1,8 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { randomUUID } from 'node:crypto';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { DataSource, IsNull, Repository } from 'typeorm';
 import { Workbook } from 'exceljs';
 import { createImportQueue } from './imports.queue';
@@ -13,7 +10,8 @@ import { TransactionEntity, TransactionKind } from '../transactions/entities/tra
 import type { ParsedImportPreview, ParsedImportRow } from '../../shared/import-parser/types';
 import { detectImportFormat, sha256 } from '../../shared/import-parser/document-parser';
 import { ImportError, ImportErrorCode } from '../../shared/import-parser/import-errors';
-import { assertImportStagingKey, encryptImportStaging } from '../../shared/import-staging-crypto';
+import { assertImportStagingKey } from '../../shared/import-staging-crypto';
+import { ImportStagingStore } from '../../shared/import-staging-store';
 import type { VaultProofDto } from '../vault/vault.dto';
 import { VaultService } from '../vault/vault.service';
 import { VaultEventType } from '../vault/entities/vault-event.entity';
@@ -21,9 +19,8 @@ import { canonicalize, sha256 as sha256Text } from '../vault/vault.crypto';
 import type { ImportEditableField, ImportRowEdit } from '../../shared/import-parser/types';
 
 @Injectable()
-export class ImportsService {
-  private readonly stagingDir =
-    process.env.IMPORT_STAGING_DIR ?? join(process.cwd(), '.data', 'imports');
+export class ImportsService implements OnModuleInit {
+  private readonly staging = new ImportStagingStore();
   private readonly queue = createImportQueue();
 
   constructor(
@@ -38,17 +35,19 @@ export class ImportsService {
     assertImportStagingKey();
   }
 
+  async onModuleInit(): Promise<void> {
+    await this.staging.prepare();
+  }
+
   async create(userId: string, fileName: string, content: Buffer): Promise<unknown> {
     if (!content.length) throw new ImportError(ImportErrorCode.IMPORT_FILE_EMPTY);
     if (content.length > 8 * 1024 * 1024)
       throw new ImportError(ImportErrorCode.IMPORT_FILE_TOO_LARGE);
     detectImportFormat(fileName, content);
-    await mkdir(this.stagingDir, { recursive: true, mode: 0o700 });
-    const filePath = join(this.stagingDir, `${randomUUID()}.upload`);
+    const filePath = await this.staging.write(content);
     const sourceSha256 = sha256(content);
     let job: ImportJobEntity | null = null;
     try {
-      await writeFile(filePath, encryptImportStaging(content), { flag: 'wx', mode: 0o600 });
       job = await this.jobs.save(
         this.jobs.create({
           userId,
@@ -66,7 +65,7 @@ export class ImportsService {
       return this.toView(job);
     } catch (error) {
       try {
-        await unlink(filePath);
+        await this.staging.remove(filePath);
       } catch (cleanupError) {
         if (!(
           cleanupError &&
@@ -110,6 +109,7 @@ export class ImportsService {
       job.errorCode !== ImportErrorCode.IMPORT_PARSE_FAILED
     )
       throw new ImportError(ImportErrorCode.IMPORT_NOT_RETRYABLE);
+    await this.staging.read(job.filePath);
     await this.jobs.update(job.id, { status: ImportJobStatus.Queued, errorCode: null });
     await this.queue.add(
       'parse',
@@ -304,7 +304,7 @@ export class ImportsService {
           })
           .orIgnore()
           .execute();
-        if (!insertResult.identifiers.length) {
+        if (!insertResult.raw.length) {
           skipped += 1;
           continue;
         }
@@ -344,14 +344,7 @@ export class ImportsService {
   }
 
   private async removeStagingFile(filePath: string): Promise<void> {
-    try {
-      await unlink(filePath);
-    } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') return;
-      throw new ImportError(ImportErrorCode.IMPORT_STAGING_CLEANUP_FAILED, undefined, {
-        cause: error,
-      });
-    }
+    await this.staging.remove(filePath);
   }
 
   async template(): Promise<Buffer> {

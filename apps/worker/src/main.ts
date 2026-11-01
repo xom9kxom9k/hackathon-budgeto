@@ -5,10 +5,8 @@ import { readFile } from 'node:fs/promises';
 import { parseImportDocument, sha256 } from '../../api/src/shared/import-parser/document-parser';
 import { ImportError, ImportErrorCode } from '../../api/src/shared/import-parser/import-errors';
 import { loadConfiguredImportProfiles } from '../../api/src/shared/import-parser/profiles/configuration';
-import {
-  assertImportStagingKey,
-  decryptImportStaging,
-} from '../../api/src/shared/import-staging-crypto';
+import { assertImportStagingKey } from '../../api/src/shared/import-staging-crypto';
+import { ImportStagingStore } from '../../api/src/shared/import-staging-store';
 import {
   ImportJobEntity,
   ImportJobStatus,
@@ -23,6 +21,7 @@ const dataSource = new DataSource({
   entities: [ImportJobEntity, AccountEntity, CategoryEntity],
   synchronize: false,
 });
+const staging = new ImportStagingStore();
 
 async function processJob(
   jobId: string,
@@ -30,9 +29,10 @@ async function processJob(
 ): Promise<void> {
   const jobs = dataSource.getRepository(ImportJobEntity);
   const job = await jobs.findOneByOrFail({ id: jobId });
+  if (job.status !== ImportJobStatus.Queued && job.status !== ImportJobStatus.Parsing) return;
   await jobs.update(job.id, { status: ImportJobStatus.Parsing, errorCode: null });
   try {
-    const content = decryptImportStaging(await readFile(job.filePath));
+    const content = await staging.read(job.filePath);
     if (!job.sourceSha256) {
       throw new ImportError(ImportErrorCode.IMPORT_SOURCE_HASH_REQUIRED);
     }
@@ -93,6 +93,10 @@ async function loadWorkerProfiles() {
 
 async function main(): Promise<void> {
   assertImportStagingKey();
+  await staging.removeExpired();
+  setInterval(() => {
+    void staging.removeExpired().catch(() => console.error('Import staging expiry cleanup failed'));
+  }, 60_000).unref();
   const profiles = await loadWorkerProfiles();
   await dataSource.initialize();
   const worker = new Worker(IMPORT_QUEUE, async (job) => processJob(job.data.jobId, profiles), {

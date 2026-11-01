@@ -1,22 +1,51 @@
 name: budgeto-prod
 
+x-app-environment: &app-environment
+  NODE_ENV: production
+  DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in the production env file}
+  REDIS_URL: redis://redis:6379
+  AUTH_ENCRYPTION_KEY: ${AUTH_ENCRYPTION_KEY:?Set a random AUTH_ENCRYPTION_KEY}
+  AUTH_ISSUER: ${AUTH_ISSUER:-Budgeto}
+  IMPORT_STAGING_DIR: /app/.data/imports
+  IMPORT_STAGING_KEY_VERSION: ${IMPORT_STAGING_KEY_VERSION:-1}
+  IMPORT_STAGING_TTL_SECONDS: ${IMPORT_STAGING_TTL_SECONDS:-86400}
+
+x-server: &server
+  image: budgeto-server:${BUDGETO_IMAGE_TAG:-local}
+  build:
+    context: ../..
+    dockerfile: infra/server.Dockerfile
+    target: runtime
+  read_only: true
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=64m,mode=1777
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+
 services:
   postgres:
     image: postgres:16-alpine
-    env_file:
-      - ../../.env
+    networks: [backend]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-budgeto}
+      POSTGRES_USER: ${POSTGRES_USER:-budgeto}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
       interval: 5s
       timeout: 3s
       retries: 10
 
   redis:
     image: redis:7-alpine
-    env_file:
-      - ../../.env
+    networks: [backend]
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes', '--appendfsync', 'everysec']
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
@@ -24,30 +53,48 @@ services:
       retries: 10
 
   migration:
-    build:
-      context: ../..
-      dockerfile: infra/server.Dockerfile
-      target: runtime
-    env_file:
-      - ../../.env
-    command: ['./node_modules/.bin/typeorm', 'migration:run', '-d', 'dist/apps/api/database/data-source.js']
+    <<: *server
+    networks: [backend]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL}
+    command:
+      [
+        './node_modules/.bin/typeorm',
+        'migration:run',
+        '-d',
+        'dist/apps/api/database/data-source.js',
+      ]
     depends_on:
       postgres:
         condition: service_healthy
     restart: 'no'
 
   api:
-    build:
-      context: ../..
-      dockerfile: infra/server.Dockerfile
-      target: runtime
-    env_file:
-      - ../../.env
+    <<: *server
+    networks: [backend, edge]
+    restart: unless-stopped
+    environment:
+      <<: *app-environment
+      PORT: '3000'
+      WEB_ORIGIN: ${WEB_ORIGIN:?Set the HTTPS WEB_ORIGIN}
+      SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-7}
     command: ['node', 'dist/apps/api/main.js']
-    expose:
-      - '3000'
+    expose: ['3000']
     volumes:
       - import_data:/app/.data
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/api/health').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 15s
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -55,12 +102,13 @@ services:
         condition: service_healthy
 
   worker:
-    build:
-      context: ../..
-      dockerfile: infra/server.Dockerfile
-      target: runtime
-    env_file:
-      - ../../.env
+    <<: *server
+    networks: [backend]
+    restart: unless-stopped
+    environment:
+      <<: *app-environment
+      IMPORT_PROFILES_JSON: ${IMPORT_PROFILES_JSON:-}
+      IMPORT_PROFILES_FILE: ${IMPORT_PROFILES_FILE:-}
     command: ['node', 'dist/apps/worker/worker/src/main.js']
     volumes:
       - import_data:/app/.data
@@ -71,14 +119,16 @@ services:
         condition: service_healthy
 
   caddy:
+    networks: [edge]
     build:
       context: ../..
       dockerfile: infra/web.Dockerfile
       target: production
       args:
         VITE_API_BASE_URL: /api
-    env_file:
-      - ../../.env
+    restart: unless-stopped
+    environment:
+      CADDY_DOMAIN: ${CADDY_DOMAIN:?Set CADDY_DOMAIN}
     ports:
       - '80:80'
       - '443:443'
@@ -88,10 +138,16 @@ services:
       - caddy_config:/config
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
+
+networks:
+  backend:
+    internal: true
+  edge:
 
 volumes:
   caddy_config:
   caddy_data:
   import_data:
   postgres_data:
+  redis_data:
