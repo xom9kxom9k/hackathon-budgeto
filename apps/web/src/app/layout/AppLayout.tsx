@@ -287,21 +287,21 @@ export const AppLayout = observer(function AppLayout() {
         </aside>
       )}
       <div className="app-main">
-        <header className="topbar">
+        <header className={`topbar${isCompactLayout ? ' topbar--compact' : ''}`}>
           <div className="topbar-heading">
             {isCompactLayout && (
               <button
                 type="button"
                 className="mobile-menu-button"
+                aria-label={t(I18nKey.NavigationMenu)}
                 onClick={() => setMobileMenuOpen(true)}
                 aria-expanded={mobileMenuOpen}
               >
                 <MenuIcon />
-                <span>{t(I18nKey.NavigationMenu)}</span>
               </button>
             )}
             <div>
-              <span className="eyebrow">{t(I18nKey.Workspace)}</span>
+              {!isCompactLayout && <span className="eyebrow">{t(I18nKey.Workspace)}</span>}
               <T font="Header/H4" as="h1" className="page-title">
                 {pageTitle}
               </T>

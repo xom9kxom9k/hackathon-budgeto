@@ -3,6 +3,38 @@ import { I18nKey, Language } from './types';
 type TranslationMap = Record<I18nKey, string>;
 
 const ru: TranslationMap = {
+  [I18nKey.AnalyticsCurrency]: 'Валюта',
+  [I18nKey.AnalyticsThisMonth]: 'Этот месяц',
+  [I18nKey.AnalyticsLastMonth]: 'Прошлый месяц',
+  [I18nKey.AnalyticsLast90]: '90 дней',
+  [I18nKey.AnalyticsDaily]: 'Доходы и расходы по дням, включая дни без операций.',
+  [I18nKey.AnalyticsGrouped]: 'Доходы и расходы объединены в интервалы по {{days}} дней.',
+  [I18nKey.AnalyticsTable]: 'Показать данные таблицей',
+  [I18nKey.AnalyticsExpenses]: 'На что уходят деньги',
+  [I18nKey.AnalyticsIncome]: 'Откуда поступают деньги',
+  [I18nKey.AnalyticsOperations]: 'Операций: {{count}}',
+  [I18nKey.AnalyticsNoCategories]: 'За этот период операций этого типа нет.',
+  [I18nKey.AnalyticsScope]:
+    'Суммы в {{currency}}. Переводы между своими счетами и отменённые операции не входят в доходы и расходы.',
+  [I18nKey.SavingsTitle]: 'Накопления с целью',
+  [I18nKey.SavingsEmpty]:
+    'Задайте сумму и отметьте, сколько уже отложено. Рассчитаем ориентир по вашим доходам и расходам.',
+  [I18nKey.SavingsName]: 'На что копите',
+  [I18nKey.SavingsTarget]: 'Нужно накопить',
+  [I18nKey.SavingsSaved]: 'Уже отложено (вручную)',
+  [I18nKey.SavingsEdit]: 'Изменить цель',
+  [I18nKey.SavingsRemaining]: 'Осталось {{amount}}',
+  [I18nKey.SavingsEstimate]: 'Ориентир: {{date}} · {{days}} дн.',
+  [I18nKey.SavingsAssumption]:
+    'Если направлять весь свободный остаток на цель. Средний остаток: {{amount}} в месяц, по выбранному периоду. Доходы и расходы могут измениться; это оценка, а не обещание.',
+  [I18nKey.SavingsPeriod]:
+    'Для прогноза выберите завершённый период не короче 14 дней, например прошлый месяц.',
+  [I18nKey.SavingsDeficit]:
+    'В выбранном периоде расходы не меньше доходов. Срок достижения пока не рассчитан.',
+  [I18nKey.SavingsComplete]: 'Цель достигнута',
+  [I18nKey.SavingsDistant]:
+    'При таком темпе срок превышает 100 лет. Измените цель или сумму накоплений.',
+  [I18nKey.SavingsError]: 'Не удалось загрузить или сохранить цель. Повторите попытку.',
   [I18nKey.SidebarResize]: 'Изменить ширину меню',
   [I18nKey.SkipToContent]: 'Перейти к содержимому',
   [I18nKey.TransactionTypeIncome]: 'Доход',
@@ -509,6 +541,38 @@ const ru: TranslationMap = {
 };
 
 const en: TranslationMap = {
+  [I18nKey.AnalyticsCurrency]: 'Currency',
+  [I18nKey.AnalyticsThisMonth]: 'This month',
+  [I18nKey.AnalyticsLastMonth]: 'Last month',
+  [I18nKey.AnalyticsLast90]: '90 days',
+  [I18nKey.AnalyticsDaily]: 'Daily income and expenses, including days without transactions.',
+  [I18nKey.AnalyticsGrouped]: 'Income and expenses grouped into {{days}}-day intervals.',
+  [I18nKey.AnalyticsTable]: 'Show data as a table',
+  [I18nKey.AnalyticsExpenses]: 'Where your money goes',
+  [I18nKey.AnalyticsIncome]: 'Where your money comes from',
+  [I18nKey.AnalyticsOperations]: 'Transactions: {{count}}',
+  [I18nKey.AnalyticsNoCategories]: 'No transactions of this type in this period.',
+  [I18nKey.AnalyticsScope]:
+    'Amounts in {{currency}}. Transfers between your accounts and reversed transactions are excluded from income and expenses.',
+  [I18nKey.SavingsTitle]: 'Savings goal',
+  [I18nKey.SavingsEmpty]:
+    'Set a target and enter what you have already saved. We will estimate progress using your income and expenses.',
+  [I18nKey.SavingsName]: 'What are you saving for?',
+  [I18nKey.SavingsTarget]: 'Target amount',
+  [I18nKey.SavingsSaved]: 'Already saved (manual)',
+  [I18nKey.SavingsEdit]: 'Edit goal',
+  [I18nKey.SavingsRemaining]: '{{amount}} remaining',
+  [I18nKey.SavingsEstimate]: 'Estimate: {{date}} · {{days}} days',
+  [I18nKey.SavingsAssumption]:
+    'Assumes all surplus goes to this goal. Average surplus: {{amount}} per month, based on the selected period. Income and expenses can change; this is an estimate, not a promise.',
+  [I18nKey.SavingsPeriod]:
+    'For an estimate, choose a completed period of at least 14 days, such as last month.',
+  [I18nKey.SavingsDeficit]:
+    'Expenses meet or exceed income in this period. A completion date cannot be estimated yet.',
+  [I18nKey.SavingsComplete]: 'Goal reached',
+  [I18nKey.SavingsDistant]:
+    'At this rate the estimate exceeds 100 years. Adjust the goal or saved amount.',
+  [I18nKey.SavingsError]: 'Could not load or save the goal. Please try again.',
   [I18nKey.SidebarResize]: 'Resize navigation',
   [I18nKey.SkipToContent]: 'Skip to content',
   [I18nKey.TransactionTypeIncome]: 'Income',
