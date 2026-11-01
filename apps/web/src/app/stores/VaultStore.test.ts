@@ -30,3 +30,24 @@ describe('VaultStore', () => {
     expect(store.status).toBe('uninitialized');
   });
 });
+
+it('keeps an unlocked key when loading journal events fails', async () => {
+  const store = new VaultStore({
+    listEvents: vi.fn().mockRejectedValue(new Error('offline')),
+  } as unknown as VaultService);
+  store.status = 'unlocked';
+  await store.loadEvents();
+  expect(store.status).toBe('unlocked');
+  expect(store.eventsStatus).toBe('error');
+});
+it('clears a stale integrity result when verification fails without locking the key', async () => {
+  const store = new VaultStore({
+    verifyIntegrity: vi.fn().mockRejectedValue(new Error('offline')),
+  } as unknown as VaultService);
+  store.status = 'unlocked';
+  store.integrity = { valid: true, checkedEvents: 0 };
+  await store.verify();
+  expect(store.status).toBe('unlocked');
+  expect(store.integrity).toBeNull();
+  expect(store.verificationStatus).toBe('error');
+});

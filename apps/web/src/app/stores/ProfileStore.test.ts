@@ -52,8 +52,7 @@ describe('ProfileStore', () => {
     'tracks %s success, errors and reset',
     async (method) => {
       const { service, store } = setup();
-      const mutate = () =>
-        method === 'update' ? store.update('Ada', []) : store.updatePreferences();
+      const mutate = () => store.update('Ada', [], 'ru', 'UTC');
       for (const error of [new Error('failed'), 'unknown']) {
         service[method].mockRejectedValueOnce(error);
         await expect(mutate()).rejects.toBe(error);
@@ -70,4 +69,27 @@ describe('ProfileStore', () => {
       expect(store.profile).toEqual(profile);
     },
   );
+
+  it('keeps saving and preserves the current profile until preferences succeed', async () => {
+    const { service, store } = setup();
+    await store.load();
+    service.update.mockResolvedValue({ ...profile, displayName: 'Grace' });
+    let rejectPreferences!: (error: Error) => void;
+    service.updatePreferences.mockReturnValue(
+      new Promise<Profile>((_, reject) => {
+        rejectPreferences = reject;
+      }),
+    );
+    const saving = store.update('Grace', ['imports'], 'en', 'Europe/Astrakhan');
+    await vi.waitFor(() =>
+      expect(service.updatePreferences).toHaveBeenCalledWith('en', 'Europe/Astrakhan'),
+    );
+    expect(store.mutationStatus).toBe('saving');
+    expect(store.profile).toEqual(profile);
+    const error = new Error('preferences failed');
+    rejectPreferences(error);
+    await expect(saving).rejects.toBe(error);
+    expect(store.mutationStatus).toBe('error');
+    expect(store.profile).toEqual(profile);
+  });
 });

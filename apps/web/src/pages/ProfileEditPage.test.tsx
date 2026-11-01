@@ -179,6 +179,8 @@ describe('Profile edit submission boundaries', () => {
       finishUpdate({ ...profile, displayName: 'Grace', goals: ['transactions'] }),
     );
     fireEvent.submit(form);
+    expect(store.profile.mutationStatus).toBe('saving');
+    expect(form.querySelector('button[type="submit"]')).toBeDisabled();
     expect(update).toHaveBeenCalledTimes(1);
     expect(preferences).toHaveBeenCalledWith('ru', 'UTC');
     await act(async () => finishPreferences(profile));

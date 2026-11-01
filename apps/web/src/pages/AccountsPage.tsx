@@ -9,7 +9,7 @@ import { StoreName } from '@/app/stores/StoreName';
 import { I18nKey } from '@/shared/i18n';
 import { FinanceBreadcrumbs } from '@/shared/ui/FinanceBreadcrumbs';
 import { AccountsExplorer } from '@/widgets/accounts/AccountsExplorer';
-import { ReferenceEditorDrawer } from '@/widgets/references/ReferenceEditorDrawer';
+import { ReferenceEditorModal } from '@/widgets/references/ReferenceEditorModal';
 import { ReferenceTabs } from '@/shared/ui/ReferenceTabs';
 import type { Account } from '@/entities/account/model/types';
 
@@ -51,6 +51,9 @@ export const AccountsPage = observer(function AccountsPage() {
           <p>{t(I18nKey.AccountsDescription)}</p>
         </div>
         <div className="page-intro-actions">
+          <Button appearance="secondary" dimension="m" onClick={() => navigate('/imports')}>
+            {t(I18nKey.OverviewOpenImports)}
+          </Button>
           <Button
             appearance="primary"
             dimension="m"
@@ -61,15 +64,12 @@ export const AccountsPage = observer(function AccountsPage() {
           >
             {t(I18nKey.AccountsAdd)}
           </Button>
-          <Button appearance="secondary" dimension="m" onClick={() => navigate('/imports')}>
-            {t(I18nKey.OverviewOpenImports)}
-          </Button>
         </div>
       </section>
 
       <ReferenceTabs />
 
-      <ReferenceEditorDrawer
+      <ReferenceEditorModal
         initial={editing ?? undefined}
         mode="account"
         onClose={() => {
@@ -80,6 +80,9 @@ export const AccountsPage = observer(function AccountsPage() {
           void submitForm(value);
         }}
         open={formOpen}
+        error={
+          accountsStore.mutationStatus === 'error' ? t(I18nKey.ReferencesMutationError) : undefined
+        }
         saving={accountsStore.mutationStatus === 'saving'}
       />
       {accountsStore.mutationStatus === 'error' ? (

@@ -61,7 +61,16 @@ export const VaultHistoryPage = observer(function VaultHistoryPage() {
     >
       <VaultKeyPanel />
       <section className="timeline-panel">
-        {vault.events.length === 0 ? (
+        {vault.eventsStatus === 'loading' ? (
+          <p role="status">{t(I18nKey.LoadingState)}</p>
+        ) : vault.eventsStatus === 'error' ? (
+          <div className="state-callout state-callout--error" role="alert">
+            <p>{t(I18nKey.SecurityLoadError)}</p>
+            <Button appearance="secondary" onClick={() => void vault.loadEvents()}>
+              {t(I18nKey.TransactionsRetry)}
+            </Button>
+          </div>
+        ) : vault.events.length === 0 ? (
           <div className="state-callout">{t(I18nKey.EmptyState)}</div>
         ) : (
           vault.events.map((event) => (
@@ -111,42 +120,56 @@ export const VaultHistoryPage = observer(function VaultHistoryPage() {
               : t(I18nKey.VaultIntegrityInvalid)}
           </div>
         ) : null}
-        <Button appearance="secondary" dimension="m" onClick={() => void vault.verify()}>
-          {t(I18nKey.VaultOpenCheck)}
+        {vault.verificationStatus === 'error' && (
+          <p className="form-error" role="alert">
+            {t(I18nKey.VaultIntegrityUnavailable)}
+          </p>
+        )}
+        <Button
+          appearance="secondary"
+          dimension="m"
+          disabled={vault.verificationStatus === 'loading'}
+          onClick={() => void vault.verify()}
+        >
+          {t(
+            vault.verificationStatus === 'loading' ? I18nKey.LoadingState : I18nKey.VaultOpenCheck,
+          )}
         </Button>
       </section>
-      <Drawer
-        backdrop
-        closeOnBackdropClick
-        closeOnEscapeKeyDown
-        displayCloseIcon
-        isOpen={Boolean(selectedEvent)}
-        locale={{ closeButtonAriaLabel: t(I18nKey.Close) }}
-        onClose={() => setSelectedEventId(null)}
-        position="right"
-      >
-        <DrawerTitle>{t(I18nKey.VaultTitle)}</DrawerTitle>
-        <DrawerContent>
-          {selectedEvent ? (
-            <div className="preview-drawer-content">
-              <T font="Header/H5" as="h2">
-                {t(I18nKey.VaultEventSequence, { sequence: selectedEvent.sequence })}
-              </T>
-              <dl className="detail-definition-list">
-                <div>
-                  <dt>{t(I18nKey.VaultEventHash)}</dt>
-                  <dd className="vault-event-hash">{selectedEvent.eventHash}</dd>
-                </div>
-                <div>
-                  <dt>{t(I18nKey.VaultEventSource, { row: selectedEvent.importRow ?? '—' })}</dt>
-                  <dd>{selectedEvent.importJobId ?? '—'}</dd>
-                </div>
-              </dl>
-              {snapshot ? <pre className="vault-event-snapshot">{snapshot}</pre> : null}
-            </div>
-          ) : null}
-        </DrawerContent>
-      </Drawer>
+      {selectedEvent && (
+        <Drawer
+          backdrop
+          closeOnBackdropClick
+          closeOnEscapeKeyDown
+          displayCloseIcon
+          isOpen={Boolean(selectedEvent)}
+          locale={{ closeButtonAriaLabel: t(I18nKey.Close) }}
+          onClose={() => setSelectedEventId(null)}
+          position="right"
+        >
+          <DrawerTitle>{t(I18nKey.VaultTitle)}</DrawerTitle>
+          <DrawerContent>
+            {selectedEvent ? (
+              <div className="preview-drawer-content">
+                <T font="Header/H5" as="h2">
+                  {t(I18nKey.VaultEventSequence, { sequence: selectedEvent.sequence })}
+                </T>
+                <dl className="detail-definition-list">
+                  <div>
+                    <dt>{t(I18nKey.VaultEventHash)}</dt>
+                    <dd className="vault-event-hash">{selectedEvent.eventHash}</dd>
+                  </div>
+                  <div>
+                    <dt>{t(I18nKey.VaultEventSource, { row: selectedEvent.importRow ?? '—' })}</dt>
+                    <dd>{selectedEvent.importJobId ?? '—'}</dd>
+                  </div>
+                </dl>
+                {snapshot ? <pre className="vault-event-snapshot">{snapshot}</pre> : null}
+              </div>
+            ) : null}
+          </DrawerContent>
+        </Drawer>
+      )}
     </PageIntro>
   );
 });

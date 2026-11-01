@@ -1,16 +1,11 @@
-import {
-  DarkThemeCssVars,
-  DropdownProvider,
-  FontsVTBGroup,
-  LightThemeCssVars,
-} from '@admiral-ds/react-ui';
+import { DropdownProvider } from '@admiral-ds/react-ui';
 import { MotionConfig } from 'framer-motion';
 import { observer } from 'mobx-react-lite';
 import { NuqsAdapter } from 'nuqs/adapters/react-router/v6';
 import { Suspense, useEffect, useState, type PropsWithChildren } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { RouterProvider } from 'react-router-dom';
-import { ThemeProvider } from 'styled-components';
+import { createGlobalStyle, ThemeProvider } from 'styled-components';
 
 import { GlobalLoader } from '@/app/ui/GlobalLoader';
 import { i18n } from '@/shared/i18n';
@@ -19,6 +14,20 @@ import { router } from '../router';
 import { RouteLoadingFallback } from '../routing/RouteLoadingFallback';
 import { RootStore } from '../stores/RootStore';
 import { StoreProvider } from '../stores/StoreProvider';
+
+const AppTheme = createGlobalStyle<{ $colors: Record<string, string> }>`
+  :root {
+    ${({ $colors }) =>
+      Object.entries($colors)
+        .map(
+          ([name, value]) =>
+            '--admiral-color-' + name.replace(/\//g, '_').replace(/ /g, '') + ': ' + value + ';',
+        )
+        .join('\n')}
+  }
+  html, body, #root { font-family: Arial, Helvetica, sans-serif; }
+  button, input, select, textarea { font-family: inherit; }
+`;
 
 export const AppProviders = observer(function AppProviders({ children }: PropsWithChildren) {
   const [rootStore] = useState(() => new RootStore());
@@ -50,12 +59,7 @@ export const AppProviders = observer(function AppProviders({ children }: PropsWi
           <DropdownProvider>
             <MotionConfig reducedMotion="user">
               <div className={`app-root admiral-theme-${themeMode}`}>
-                {themeMode === 'dark' ? (
-                  <DarkThemeCssVars key="dark-theme-vars" />
-                ) : (
-                  <LightThemeCssVars key="light-theme-vars" />
-                )}
-                <FontsVTBGroup />
+                <AppTheme $colors={theme.color} />
                 <GlobalLoader />
                 <div data-app-content>{children}</div>
               </div>

@@ -25,7 +25,7 @@ import {
   ReverseTransactionCommand,
   UpdateTransactionCommand,
 } from './transactions.commands';
-import { TransactionMutationDto } from './transactions.dto';
+import { TransactionClaimDto, TransactionMutationDto } from './transactions.dto';
 import { GetTransactionQuery, PrepareTransactionClaimQuery } from './queries/get-transaction.query';
 
 @Controller('transactions')
@@ -53,9 +53,8 @@ export class TransactionsController {
   }
 
   @Post('claims')
-  prepareClaim(@CurrentUser() user: AuthPrincipal, @Body() body: TransactionMutationDto) {
-    const { proof, ...input } = normalizeInput(body);
-    void proof;
+  prepareClaim(@CurrentUser() user: AuthPrincipal, @Body() body: TransactionClaimDto) {
+    const input = normalizeClaim(body);
     return this.queries.execute(new PrepareTransactionClaimQuery(user.userId, input));
   }
 
@@ -126,7 +125,7 @@ export class TransactionsController {
   }
 }
 
-function normalizeInput(body: TransactionMutationDto) {
+function normalizeClaim(body: TransactionClaimDto) {
   return {
     date: body.date,
     kind: body.kind,
@@ -136,6 +135,9 @@ function normalizeInput(body: TransactionMutationDto) {
     categoryId: body.categoryId ?? null,
     note: body.note ?? null,
     operationId: body.operationId,
-    proof: body.proof,
   };
+}
+
+function normalizeInput(body: TransactionMutationDto) {
+  return { ...normalizeClaim(body), proof: body.proof };
 }

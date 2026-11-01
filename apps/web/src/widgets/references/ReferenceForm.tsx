@@ -1,4 +1,4 @@
-import { Button, InputField, Option, Select } from '@admiral-ds/react-ui';
+import { Button } from '@admiral-ds/react-ui';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { I18nKey } from '@/shared/i18n';
@@ -6,6 +6,7 @@ import type { CategoryKind } from '@/shared/services/CategoriesService';
 
 interface ReferenceFormProps {
   initial?: { name: string; currency?: string; kind?: CategoryKind };
+  error?: string;
   mode: 'account' | 'category';
   onCancel: () => void;
   onSubmit: (value: { name: string; currency?: string; kind?: CategoryKind }) => void;
@@ -18,7 +19,14 @@ export type ReferenceFormValue = {
   kind?: CategoryKind;
 };
 
-export function ReferenceForm({ initial, mode, onCancel, onSubmit, saving }: ReferenceFormProps) {
+export function ReferenceForm({
+  initial,
+  error,
+  mode,
+  onCancel,
+  onSubmit,
+  saving,
+}: ReferenceFormProps) {
   const { t } = useTranslation();
   const [name, setName] = useState(initial?.name ?? '');
   const [currency, setCurrency] = useState(initial?.currency ?? 'RUB');
@@ -30,43 +38,53 @@ export function ReferenceForm({ initial, mode, onCancel, onSubmit, saving }: Ref
       className="reference-form"
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit(isAccount ? { name, currency } : { name, kind });
+        onSubmit(isAccount ? { name: name.trim(), currency } : { name: name.trim(), kind });
       }}
     >
-      <InputField
-        label={isAccount ? t(I18nKey.AccountsName) : t(I18nKey.CategoriesName)}
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        required
-      />
-      {isAccount ? (
-        <InputField
-          label={t(I18nKey.AccountsCurrency)}
-          value={currency}
-          maxLength={3}
-          onChange={(event) => setCurrency(event.target.value.toUpperCase())}
+      <label className="form-field">
+        <span>{t(isAccount ? I18nKey.AccountsName : I18nKey.CategoriesName)}</span>
+        <input
+          autoFocus
           required
-          disabled={Boolean(initial)}
+          maxLength={160}
+          pattern=".*[^ ].*"
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          disabled={saving}
         />
+      </label>
+      {isAccount ? (
+        <label className="form-field">
+          <span>{t(I18nKey.AccountsCurrency)}</span>
+          <input
+            required
+            minLength={3}
+            maxLength={3}
+            pattern="[A-Z]{3}"
+            value={currency}
+            onChange={(event) => setCurrency(event.target.value.toUpperCase())}
+            disabled={saving || Boolean(initial)}
+          />
+        </label>
       ) : (
-        <label className="filter-select">
+        <label className="form-field">
           <span>{t(I18nKey.CategoriesKind)}</span>
-          <Select
-            aria-label={t(I18nKey.CategoriesKind)}
+          <select
             value={kind}
-            onSelectedChange={(value) => setKind(value as CategoryKind)}
-            mode="select"
-            disabled={Boolean(initial)}
+            onChange={(event) => setKind(event.target.value as CategoryKind)}
+            disabled={saving || Boolean(initial)}
           >
-            <Option value="income">{t(I18nKey.CategoriesIncome)}</Option>
-            <Option value="expense">{t(I18nKey.CategoriesExpense)}</Option>
-          </Select>
+            <option value="income">{t(I18nKey.CategoriesIncome)}</option>
+            <option value="expense">{t(I18nKey.CategoriesExpense)}</option>
+          </select>
         </label>
       )}
-      <div className="reference-form-actions">
-        <Button type="submit" appearance="primary" dimension="m" disabled={saving || !name.trim()}>
-          {isAccount ? t(I18nKey.AccountsSave) : t(I18nKey.CategoriesSave)}
-        </Button>
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="form-actions">
         <Button
           type="button"
           appearance="secondary"
@@ -75,6 +93,9 @@ export function ReferenceForm({ initial, mode, onCancel, onSubmit, saving }: Ref
           disabled={saving}
         >
           {isAccount ? t(I18nKey.AccountsCancel) : t(I18nKey.CategoriesCancel)}
+        </Button>
+        <Button type="submit" appearance="primary" dimension="m" disabled={saving || !name.trim()}>
+          {isAccount ? t(I18nKey.AccountsSave) : t(I18nKey.CategoriesSave)}
         </Button>
       </div>
     </form>
