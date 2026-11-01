@@ -128,7 +128,12 @@ export class ImportsService implements OnModuleInit {
     await this.jobs.update(job.id, { filePath: '' });
   }
 
-  async updateRows(userId: string, jobId: string, rows: ParsedImportRow[]): Promise<unknown> {
+  async updateRows(
+    userId: string,
+    jobId: string,
+    rows: ParsedImportRow[],
+    reviewAcknowledged = false,
+  ): Promise<unknown> {
     const job = await this.get(userId, jobId);
     if (job.status !== ImportJobStatus.Preview)
       throw new ImportError(ImportErrorCode.IMPORT_NOT_EDITABLE);
@@ -194,7 +199,11 @@ export class ImportsService implements OnModuleInit {
       accounts,
       categories,
     );
-    if (resolved.reviewRequired && resolved.invalid === 0 && allRowsReviewed) {
+    if (
+      resolved.reviewRequired &&
+      resolved.invalid === 0 &&
+      (reviewAcknowledged || allRowsReviewed)
+    ) {
       resolved.reviewRequired = false;
       resolved.reviewReasons = [];
     }

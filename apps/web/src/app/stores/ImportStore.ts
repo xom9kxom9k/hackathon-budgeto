@@ -94,12 +94,12 @@ export class ImportStore {
     this.status = 'error';
     this.errorCode = 'IMPORT_TIMEOUT';
   }
-  async updateRows(rows: ImportRow[]): Promise<void> {
+  async updateRows(rows: ImportRow[], reviewAcknowledged = false): Promise<void> {
     if (!this.job) return;
     this.status = 'loading';
     this.errorCode = null;
     try {
-      this.job = await this.service.updateRows(this.job.id, rows);
+      this.job = await this.service.updateRows(this.job.id, rows, reviewAcknowledged);
       this.applyJobStatus(this.job);
     } catch (error) {
       this.setError(error);

@@ -284,7 +284,7 @@ export const ImportForm = observer(function ImportForm({
   };
 
   const saveRows = async () => {
-    await importStore.updateRows(rows);
+    await importStore.updateRows(rows, Boolean(preview?.reviewRequired));
     setIsDirty(false);
   };
 
@@ -918,10 +918,17 @@ export const ImportForm = observer(function ImportForm({
               <Button
                 appearance="secondary"
                 dimension="m"
-                disabled={!isDirty || isProcessing}
+                disabled={
+                  isProcessing ||
+                  (preview.reviewRequired ? invalidRows > 0 : !isDirty)
+                }
                 onClick={saveRows}
               >
-                {isProcessing ? t(I18nKey.ImportsSaving) : t(I18nKey.ImportsSaveRows)}
+                {isProcessing
+                  ? t(I18nKey.ImportsSaving)
+                  : preview.reviewRequired
+                    ? t(I18nKey.ImportsAcknowledgeReview)
+                    : t(I18nKey.ImportsSaveRows)}
               </Button>
               <Button
                 appearance="primary"

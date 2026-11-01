@@ -275,6 +275,7 @@ export enum I18nKey {
   ImportsValidationType = 'imports.validationType',
   ImportsValidationSize = 'imports.validationSize',
   ImportsSaveRows = 'imports.saveRows',
+  ImportsAcknowledgeReview = 'imports.acknowledgeReview',
   ImportsConfirm = 'imports.confirm',
   ImportsRowInvalid = 'imports.rowInvalid',
   ImportsFailed = 'imports.failed',
