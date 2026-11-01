@@ -92,8 +92,6 @@ export const ProfilePage = observer(function ProfilePage() {
           <T font="Header/H5" as="h2">
             {email}
           </T>
-          <p className="panel-copy">{t(I18nKey.ProfileSessionDescription)}</p>
-          <p className="panel-copy">{t(I18nKey.AuthSecurityNote)}</p>
           <Button
             appearance="secondary"
             dimension="m"

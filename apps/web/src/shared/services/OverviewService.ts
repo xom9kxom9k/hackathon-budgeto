@@ -19,6 +19,24 @@ const transactionSchema = z.object({
     .nullable(),
 });
 const overviewResponseSchema = z.object({
+  currency: z.string().regex(/^[A-Z]{3}$/),
+  availableCurrencies: z.array(z.string().regex(/^[A-Z]{3}$/)),
+  expenseCategories: z.array(
+    z.object({
+      id: z.string().nullable(),
+      name: z.string().nullable(),
+      amount: z.number(),
+      count: z.number(),
+    }),
+  ),
+  incomeCategories: z.array(
+    z.object({
+      id: z.string().nullable(),
+      name: z.string().nullable(),
+      amount: z.number(),
+      count: z.number(),
+    }),
+  ),
   period: z.object({ from: z.string(), to: z.string() }),
   accountsCount: z.number().int().nonnegative(),
   totals: z.object({ income: z.number(), expenses: z.number(), net: z.number() }),
@@ -27,16 +45,28 @@ const overviewResponseSchema = z.object({
 });
 
 export interface OverviewFilters {
+  currency?: string;
   from: string;
   to: string;
 }
 
 export interface OverviewSummary {
+  currency: string;
+  availableCurrencies: string[];
+  expenseCategories: CategoryTotal[];
+  incomeCategories: CategoryTotal[];
   period: OverviewFilters;
   accountsCount: number;
   totals: { income: number; expenses: number; net: number };
   cashflow: CashflowPoint[];
   recentTransactions: Transaction[];
+}
+
+export interface CategoryTotal {
+  id: string | null;
+  name: string | null;
+  amount: number;
+  count: number;
 }
 
 export class OverviewService extends BaseApiService {
@@ -46,6 +76,7 @@ export class OverviewService extends BaseApiService {
 
   async getSummary(filters: OverviewFilters, signal?: AbortSignal): Promise<OverviewSummary> {
     const params = new URLSearchParams({ from: filters.from, to: filters.to });
+    if (filters.currency) params.set('currency', filters.currency);
     return this.get<OverviewSummary>(`?${params.toString()}`, overviewResponseSchema, signal);
   }
 }

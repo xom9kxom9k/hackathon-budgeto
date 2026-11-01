@@ -3,6 +3,38 @@ import { I18nKey, Language } from './types';
 type TranslationMap = Record<I18nKey, string>;
 
 const ru: TranslationMap = {
+  [I18nKey.AnalyticsCurrency]: 'Валюта',
+  [I18nKey.AnalyticsThisMonth]: 'Этот месяц',
+  [I18nKey.AnalyticsLastMonth]: 'Прошлый месяц',
+  [I18nKey.AnalyticsLast90]: '90 дней',
+  [I18nKey.AnalyticsDaily]: 'Доходы и расходы по дням, включая дни без операций.',
+  [I18nKey.AnalyticsGrouped]: 'Доходы и расходы объединены в интервалы по {{days}} дней.',
+  [I18nKey.AnalyticsTable]: 'Показать данные таблицей',
+  [I18nKey.AnalyticsExpenses]: 'На что уходят деньги',
+  [I18nKey.AnalyticsIncome]: 'Откуда поступают деньги',
+  [I18nKey.AnalyticsOperations]: 'Операций: {{count}}',
+  [I18nKey.AnalyticsNoCategories]: 'За этот период операций этого типа нет.',
+  [I18nKey.AnalyticsScope]:
+    'Суммы в {{currency}}. Переводы между своими счетами и отменённые операции не входят в доходы и расходы.',
+  [I18nKey.SavingsTitle]: 'Накопления с целью',
+  [I18nKey.SavingsEmpty]:
+    'Задайте сумму и отметьте, сколько уже отложено. Рассчитаем ориентир по вашим доходам и расходам.',
+  [I18nKey.SavingsName]: 'На что копите',
+  [I18nKey.SavingsTarget]: 'Нужно накопить',
+  [I18nKey.SavingsSaved]: 'Уже отложено (вручную)',
+  [I18nKey.SavingsEdit]: 'Изменить цель',
+  [I18nKey.SavingsRemaining]: 'Осталось {{amount}}',
+  [I18nKey.SavingsEstimate]: 'Ориентир: {{date}} · {{days}} дн.',
+  [I18nKey.SavingsAssumption]:
+    'Если направлять весь свободный остаток на цель. Средний остаток: {{amount}} в месяц, по выбранному периоду. Доходы и расходы могут измениться; это оценка, а не обещание.',
+  [I18nKey.SavingsPeriod]:
+    'Для прогноза выберите завершённый период не короче 14 дней, например прошлый месяц.',
+  [I18nKey.SavingsDeficit]:
+    'В выбранном периоде расходы не меньше доходов. Срок достижения пока не рассчитан.',
+  [I18nKey.SavingsComplete]: 'Цель достигнута',
+  [I18nKey.SavingsDistant]:
+    'При таком темпе срок превышает 100 лет. Измените цель или сумму накоплений.',
+  [I18nKey.SavingsError]: 'Не удалось загрузить или сохранить цель. Повторите попытку.',
   [I18nKey.SidebarResize]: 'Изменить ширину меню',
   [I18nKey.SkipToContent]: 'Перейти к содержимому',
   [I18nKey.TransactionTypeIncome]: 'Доход',
@@ -11,7 +43,7 @@ const ru: TranslationMap = {
   [I18nKey.TransactionSaveError]:
     'Не удалось сохранить операцию. Данные остались в форме. Попробуйте ещё раз.',
   [I18nKey.TransactionVaultRequired]:
-    'Для сохранения разблокируйте Vault с помощью ключа восстановления.',
+    'Для сохранения разблокируйте ключ подписи с помощью ключа восстановления.',
   [I18nKey.TransactionInvalidTransfer]: 'Выберите два разных счёта для перевода.',
   [I18nKey.TransactionSaving]: 'Сохранение…',
   [I18nKey.TransactionSaved]: 'Операция сохранена',
@@ -31,7 +63,7 @@ const ru: TranslationMap = {
   [I18nKey.SecuritySessionsDescription]:
     'Здесь учитываются только неистёкшие сессии, которые не были отозваны.',
   [I18nKey.SecurityVaultDescription]:
-    'Ключ Vault нужен для подписи операций. Блокировка ключа не означает нарушения целостности журнала.',
+    'Ключ подписи нужен для сохранения операций и чтения их зашифрованных копий. Проверка журнала доступна без разблокировки ключа.',
   [I18nKey.SecurityVaultUninitialized]: 'Ключ ещё не создан',
   [I18nKey.SecurityRecovery]: 'Коды восстановления',
   [I18nKey.SecurityRecoveryAvailable]: 'Доступны',
@@ -44,12 +76,12 @@ const ru: TranslationMap = {
   [I18nKey.BrandName]: 'Budgeto',
   [I18nKey.BrandTagline]: 'Личная финансовая история',
   [I18nKey.Workspace]: 'Личные финансы',
-  [I18nKey.DemoVault]: 'Vault',
+  [I18nKey.DemoVault]: 'Журнал',
   [I18nKey.NavigationOverview]: 'Обзор',
   [I18nKey.NavigationAccounts]: 'Счета',
   [I18nKey.NavigationTransactions]: 'Операции',
   [I18nKey.NavigationImports]: 'Импорт',
-  [I18nKey.NavigationVaultHistory]: 'История Vault',
+  [I18nKey.NavigationVaultHistory]: 'Журнал операций',
   [I18nKey.NavigationSecurity]: 'Безопасность',
   [I18nKey.NavigationMoney]: 'Деньги',
   [I18nKey.NavigationActivity]: 'Активность',
@@ -92,7 +124,7 @@ const ru: TranslationMap = {
   [I18nKey.OverviewPrepareFirstImportDescription]:
     'Budgeto определит структуру выписки, покажет сопоставление колонок и даст проверить дубли до записи.',
   [I18nKey.OverviewOpenImport]: 'Открыть импорт',
-  [I18nKey.OverviewVaultHistory]: 'История Vault',
+  [I18nKey.OverviewVaultHistory]: 'Журнал операций',
   [I18nKey.OverviewHistoryTitle]: 'Изменения не теряются',
   [I18nKey.OverviewHistoryDescription]:
     'Каждая версия импорта останется в истории. Откат и проверка целостности подключим следующим срезом.',
@@ -211,7 +243,7 @@ const ru: TranslationMap = {
   [I18nKey.TrustStatus]: 'Проверка',
   [I18nKey.SecuritySessions]: 'Сессии',
   [I18nKey.SecurityDevices]: 'Устройства',
-  [I18nKey.SecurityVaultStatus]: 'Состояние Vault',
+  [I18nKey.SecurityVaultStatus]: 'Ключ подписи',
   [I18nKey.SecurityAccessReadOnly]: 'Только чтение',
   [I18nKey.TransactionsKicker]: 'Финансовые записи',
   [I18nKey.TransactionsTitle]: 'Операции',
@@ -336,13 +368,13 @@ const ru: TranslationMap = {
   [I18nKey.ImportsBulkCategory]: 'Категория',
   [I18nKey.ImportsBulkValue]: 'Новое значение',
   [I18nKey.ImportsApplyToSelected]: 'Применить к выбранным',
-  [I18nKey.VaultKicker]: 'Журнал операций',
-  [I18nKey.VaultTitle]: 'История Vault',
+  [I18nKey.VaultKicker]: 'История изменений',
+  [I18nKey.VaultTitle]: 'Журнал операций',
   [I18nKey.VaultDescription]:
-    'История подтверждённых операций и изменений. Проверьте журнал или откройте запись, чтобы увидеть детали.',
+    'Здесь сохраняются подписанные копии добавленных, изменённых и отменённых операций.',
   [I18nKey.VaultPreviewEvent]: 'Выписка подготовлена',
   [I18nKey.VaultPreviewEventDescription]: 'Формат выписки определён. Изменения ещё не применены.',
-  [I18nKey.VaultBaselineEvent]: 'Создан Vault',
+  [I18nKey.VaultBaselineEvent]: 'Создан журнал',
   [I18nKey.VaultBaselineEventDescription]:
     'Исходные данные используются только для проверки интерфейса.',
   [I18nKey.VaultIntegrityKicker]: 'Проверка целостности',
@@ -351,27 +383,48 @@ const ru: TranslationMap = {
     'Проверяем подписи записей и порядок изменений в финансовом журнале.',
   [I18nKey.VaultOpenCheck]: 'Проверить целостность',
   [I18nKey.VaultCheckOpened]: 'Проверка целостности запущена. Результат появится здесь.',
-  [I18nKey.VaultKeyTitle]: 'Ключ Vault',
+  [I18nKey.VaultKeyTitle]: 'Ключ подписи',
   [I18nKey.VaultKeyDescription]:
-    'Ключ подтверждает операции и открывает их зашифрованные копии. Сохраните ключ восстановления в безопасном месте.',
-  [I18nKey.VaultKeyCreate]: 'Создать ключ Vault',
-  [I18nKey.VaultKeyUnlock]: 'Разблокировать Vault',
-  [I18nKey.VaultKeyLocked]: 'Vault заблокирован',
-  [I18nKey.VaultKeyUnlocked]: 'Vault разблокирован',
+    'Нужен для сохранения операций и чтения их зашифрованных копий. Проверить журнал можно без этого ключа.',
+  [I18nKey.VaultKeyCreate]: 'Создать ключ подписи',
+  [I18nKey.VaultKeyUnlock]: 'Разблокировать ключ',
+  [I18nKey.VaultKeyLocked]: 'Ключ не разблокирован',
+  [I18nKey.VaultKeyUnlocked]: 'Ключ разблокирован',
   [I18nKey.VaultKeyRecoveryPhrase]: 'Ключ восстановления',
   [I18nKey.VaultKeyRecoveryWarning]:
-    'Сохраните эту строку вне Budgeto. Она показывается только сейчас и нужна для восстановления доступа.',
+    'Это ваш ключ восстановления. Скопируйте его и сохраните в менеджере паролей или другом безопасном месте до закрытия страницы. После обновления страницы приложение не сможет показать его снова.',
   [I18nKey.VaultKeyRecoveryInput]: 'Введите ключ восстановления',
   [I18nKey.VaultKeyRecoveryInvalid]: 'Ключ восстановления не подходит.',
-  [I18nKey.VaultKeyRequired]: 'Разблокируйте Vault перед подтверждением импорта.',
+  [I18nKey.VaultKeyRequired]: 'Разблокируйте ключ подписи перед подтверждением импорта.',
   [I18nKey.VaultProofCreated]: 'Операции подписаны и добавлены в зашифрованный журнал.',
   [I18nKey.VaultIntegrityValid]: 'Целостность журнала подтверждена.',
   [I18nKey.VaultIntegrityInvalid]: 'Проверка нашла несоответствие в журнале.',
   [I18nKey.VaultIntegrityUnavailable]: 'Не удалось проверить целостность журнала.',
-  [I18nKey.VaultEventSequence]: 'Событие {{sequence}}',
-  [I18nKey.VaultEventHash]: 'Hash события',
+  [I18nKey.VaultEventSequence]: 'Запись №{{sequence}}',
+  [I18nKey.VaultEventHash]: 'Контрольная сумма записи',
   [I18nKey.VaultEventSource]: 'Источник: импорт, строка {{row}}',
   [I18nKey.VaultCopyId]: 'Скопировать идентификатор',
+  [I18nKey.VaultNotChecked]: 'Журнал ещё не проверен.',
+  [I18nKey.VaultCheckedCount]: 'Проверено записей: {{count}}',
+  [I18nKey.VaultManualSource]: 'Ручной ввод',
+  [I18nKey.VaultImportedSource]: 'Импорт выписки',
+  [I18nKey.VaultAdded]: 'Операция добавлена',
+  [I18nKey.VaultUpdated]: 'Операция изменена',
+  [I18nKey.VaultReversed]: 'Операция отменена',
+  [I18nKey.VaultTechnicalDetails]: 'Технические сведения',
+  [I18nKey.VaultUnlockDetails]:
+    'Чтобы прочитать сохранённую копию операции, разблокируйте ключ подписи.',
+  [I18nKey.VaultDecryptError]:
+    'Не удалось прочитать зашифрованную копию. Попробуйте снова; если ошибка повторится, проверьте журнал.',
+  [I18nKey.VaultLatest]: 'Последние записи',
+  [I18nKey.VaultShowMore]: 'Показать ещё',
+  [I18nKey.VaultKeySession]:
+    'Ключ хранится в памяти этой вкладки. После обновления страницы его нужно разблокировать заново.',
+  [I18nKey.VaultKeySetupDescription]:
+    'Приложение само создаст ключ подписи и покажет ключ восстановления. Сохраните показанную строку: она понадобится после обновления страницы и при входе с другого устройства.',
+  [I18nKey.VaultKeyHelpTitle]: 'Где взять ключ восстановления?',
+  [I18nKey.VaultKeyWhereFind]:
+    'Приложение показывает эту строку при создании ключа подписи. Найдите её среди сохранённых вами ключей. Она отличается от пароля аккаунта и кодов 2FA. Если строка потеряна, приложение не сможет показать её повторно или открыть существующие зашифрованные копии.',
   [I18nKey.SecurityKicker]: 'Контроль доступа',
   [I18nKey.SecurityTitle]: 'Безопасность',
   [I18nKey.SecurityDescription]: 'Вход в аккаунт, активные сессии и ключ финансового журнала.',
@@ -395,8 +448,6 @@ const ru: TranslationMap = {
   [I18nKey.ProfilePreferencesDescription]:
     'Язык и тема меняются в меню приложения и сохраняются локально на этом устройстве.',
   [I18nKey.ProfileSession]: 'Текущая сессия',
-  [I18nKey.ProfileSessionDescription]:
-    'Сессия управляется сервером и может быть завершена в любой момент.',
   [I18nKey.ProfileEditTitle]: 'Изменить профиль',
   [I18nKey.ProfileEditDescription]: 'Обновите имя, цели и параметры отображения Budgeto.',
   [I18nKey.ProfileEditName]: 'Имя',
@@ -425,7 +476,7 @@ const ru: TranslationMap = {
   [I18nKey.LandingTraceabilityTitle]: 'Происхождение строк',
   [I18nKey.LandingTraceabilityDescription]:
     'У операции остаются источник, исходные значения и история обработки.',
-  [I18nKey.LandingVaultTitle]: 'Vault',
+  [I18nKey.LandingVaultTitle]: 'Журнал изменений',
   [I18nKey.LandingVaultDescription]:
     'Изменения собираются в журнал, который можно проверить и откатить.',
   [I18nKey.LandingPrivacyNote]:
@@ -482,8 +533,6 @@ const ru: TranslationMap = {
   [I18nKey.AuthErrorCsrfInvalid]: 'Сессия формы истекла. Повторите действие',
   [I18nKey.AuthSignOut]: 'Выйти',
   [I18nKey.AuthSessionActive]: 'Сессия активна',
-  [I18nKey.AuthSecurityNote]:
-    'Сессия хранится на сервере. Долговременный токен не сохраняется в браузере.',
   [I18nKey.AuthCopyKey]: 'Скопировать ключ',
   [I18nKey.AuthCopied]: 'Скопировано',
   [I18nKey.AuthCopyFailed]: 'Не удалось скопировать. Выделите и скопируйте вручную.',
@@ -509,6 +558,38 @@ const ru: TranslationMap = {
 };
 
 const en: TranslationMap = {
+  [I18nKey.AnalyticsCurrency]: 'Currency',
+  [I18nKey.AnalyticsThisMonth]: 'This month',
+  [I18nKey.AnalyticsLastMonth]: 'Last month',
+  [I18nKey.AnalyticsLast90]: '90 days',
+  [I18nKey.AnalyticsDaily]: 'Daily income and expenses, including days without transactions.',
+  [I18nKey.AnalyticsGrouped]: 'Income and expenses grouped into {{days}}-day intervals.',
+  [I18nKey.AnalyticsTable]: 'Show data as a table',
+  [I18nKey.AnalyticsExpenses]: 'Where your money goes',
+  [I18nKey.AnalyticsIncome]: 'Where your money comes from',
+  [I18nKey.AnalyticsOperations]: 'Transactions: {{count}}',
+  [I18nKey.AnalyticsNoCategories]: 'No transactions of this type in this period.',
+  [I18nKey.AnalyticsScope]:
+    'Amounts in {{currency}}. Transfers between your accounts and reversed transactions are excluded from income and expenses.',
+  [I18nKey.SavingsTitle]: 'Savings goal',
+  [I18nKey.SavingsEmpty]:
+    'Set a target and enter what you have already saved. We will estimate progress using your income and expenses.',
+  [I18nKey.SavingsName]: 'What are you saving for?',
+  [I18nKey.SavingsTarget]: 'Target amount',
+  [I18nKey.SavingsSaved]: 'Already saved (manual)',
+  [I18nKey.SavingsEdit]: 'Edit goal',
+  [I18nKey.SavingsRemaining]: '{{amount}} remaining',
+  [I18nKey.SavingsEstimate]: 'Estimate: {{date}} · {{days}} days',
+  [I18nKey.SavingsAssumption]:
+    'Assumes all surplus goes to this goal. Average surplus: {{amount}} per month, based on the selected period. Income and expenses can change; this is an estimate, not a promise.',
+  [I18nKey.SavingsPeriod]:
+    'For an estimate, choose a completed period of at least 14 days, such as last month.',
+  [I18nKey.SavingsDeficit]:
+    'Expenses meet or exceed income in this period. A completion date cannot be estimated yet.',
+  [I18nKey.SavingsComplete]: 'Goal reached',
+  [I18nKey.SavingsDistant]:
+    'At this rate the estimate exceeds 100 years. Adjust the goal or saved amount.',
+  [I18nKey.SavingsError]: 'Could not load or save the goal. Please try again.',
   [I18nKey.SidebarResize]: 'Resize navigation',
   [I18nKey.SkipToContent]: 'Skip to content',
   [I18nKey.TransactionTypeIncome]: 'Income',
@@ -516,7 +597,7 @@ const en: TranslationMap = {
   [I18nKey.TransactionChooseAccount]: 'Choose an account',
   [I18nKey.TransactionSaveError]:
     'Could not save the transaction. Your entries are preserved. Try again.',
-  [I18nKey.TransactionVaultRequired]: 'Unlock Vault with your recovery key to save.',
+  [I18nKey.TransactionVaultRequired]: 'Unlock the signing key with your recovery key to save.',
   [I18nKey.TransactionInvalidTransfer]: 'Choose two different accounts for the transfer.',
   [I18nKey.TransactionSaving]: 'Saving…',
   [I18nKey.TransactionSaved]: 'Transaction saved',
@@ -536,7 +617,7 @@ const en: TranslationMap = {
   [I18nKey.SecuritySessionsDescription]:
     'Only unexpired sessions that have not been revoked are counted.',
   [I18nKey.SecurityVaultDescription]:
-    'The Vault key signs transactions. A locked key does not mean the journal integrity is broken.',
+    'The signing key saves transactions and opens their encrypted copies. You can verify the journal without unlocking the key.',
   [I18nKey.SecurityVaultUninitialized]: 'Key not created yet',
   [I18nKey.SecurityRecovery]: 'Recovery codes',
   [I18nKey.SecurityRecoveryAvailable]: 'Available',
@@ -549,12 +630,12 @@ const en: TranslationMap = {
   [I18nKey.BrandName]: 'Budgeto',
   [I18nKey.BrandTagline]: 'Personal financial history',
   [I18nKey.Workspace]: 'Budgeto workspace',
-  [I18nKey.DemoVault]: 'Vault',
+  [I18nKey.DemoVault]: 'Journal',
   [I18nKey.NavigationOverview]: 'Overview',
   [I18nKey.NavigationAccounts]: 'Accounts',
   [I18nKey.NavigationTransactions]: 'Transactions',
   [I18nKey.NavigationImports]: 'Imports',
-  [I18nKey.NavigationVaultHistory]: 'Vault history',
+  [I18nKey.NavigationVaultHistory]: 'Transaction journal',
   [I18nKey.NavigationSecurity]: 'Security',
   [I18nKey.NavigationMoney]: 'Money',
   [I18nKey.NavigationActivity]: 'Activity',
@@ -595,7 +676,7 @@ const en: TranslationMap = {
   [I18nKey.OverviewPrepareFirstImportDescription]:
     'Budgeto will detect the statement structure, show column mapping and let you check duplicates before writing.',
   [I18nKey.OverviewOpenImport]: 'Open import',
-  [I18nKey.OverviewVaultHistory]: 'Vault history',
+  [I18nKey.OverviewVaultHistory]: 'Transaction journal',
   [I18nKey.OverviewHistoryTitle]: 'Changes are never lost',
   [I18nKey.OverviewHistoryDescription]:
     'Every import version will remain in history. Rollback and integrity checks come in the next slice.',
@@ -714,7 +795,7 @@ const en: TranslationMap = {
   [I18nKey.TrustStatus]: 'Verification',
   [I18nKey.SecuritySessions]: 'Sessions',
   [I18nKey.SecurityDevices]: 'Devices',
-  [I18nKey.SecurityVaultStatus]: 'Vault status',
+  [I18nKey.SecurityVaultStatus]: 'Signing key',
   [I18nKey.SecurityAccessReadOnly]: 'Read only',
   [I18nKey.TransactionsKicker]: 'Financial records',
   [I18nKey.TransactionsTitle]: 'Transactions',
@@ -838,14 +919,13 @@ const en: TranslationMap = {
   [I18nKey.ImportsBulkCategory]: 'Category',
   [I18nKey.ImportsBulkValue]: 'New value',
   [I18nKey.ImportsApplyToSelected]: 'Apply to selected',
-  [I18nKey.VaultKicker]: 'Transaction journal',
-  [I18nKey.VaultTitle]: 'Vault history',
-  [I18nKey.VaultDescription]:
-    'A history of confirmed transactions and changes. Verify the journal or open an entry to see its details.',
+  [I18nKey.VaultKicker]: 'Change history',
+  [I18nKey.VaultTitle]: 'Transaction journal',
+  [I18nKey.VaultDescription]: 'Signed copies of added, updated and reversed transactions.',
   [I18nKey.VaultPreviewEvent]: 'Statement prepared',
   [I18nKey.VaultPreviewEventDescription]:
     'Statement format detected. Changes have not been applied.',
-  [I18nKey.VaultBaselineEvent]: 'Vault created',
+  [I18nKey.VaultBaselineEvent]: 'Journal created',
   [I18nKey.VaultBaselineEventDescription]: 'Source data is used only to verify the interface.',
   [I18nKey.VaultIntegrityKicker]: 'Integrity check',
   [I18nKey.VaultIntegrityTitle]: 'Verify the journal',
@@ -853,27 +933,47 @@ const en: TranslationMap = {
     'Checks entry signatures and the order of changes in your financial journal.',
   [I18nKey.VaultOpenCheck]: 'Check integrity',
   [I18nKey.VaultCheckOpened]: 'The integrity check has started. The result will appear here.',
-  [I18nKey.VaultKeyTitle]: 'Vault key',
+  [I18nKey.VaultKeyTitle]: 'Signing key',
   [I18nKey.VaultKeyDescription]:
-    'The key signs transactions and opens their encrypted copies. Keep your recovery key somewhere safe.',
-  [I18nKey.VaultKeyCreate]: 'Create Vault key',
-  [I18nKey.VaultKeyUnlock]: 'Unlock Vault',
-  [I18nKey.VaultKeyLocked]: 'Vault is locked',
-  [I18nKey.VaultKeyUnlocked]: 'Vault is unlocked',
+    'Needed to save transactions and read their encrypted copies. You can verify the journal without this key.',
+  [I18nKey.VaultKeyCreate]: 'Create signing key',
+  [I18nKey.VaultKeyUnlock]: 'Unlock key',
+  [I18nKey.VaultKeyLocked]: 'Key is locked',
+  [I18nKey.VaultKeyUnlocked]: 'Key is unlocked',
   [I18nKey.VaultKeyRecoveryPhrase]: 'Recovery key',
   [I18nKey.VaultKeyRecoveryWarning]:
-    'Save this outside Budgeto. It is shown only now and is required to recover access.',
+    'This is your recovery key. Copy it and save it in a password manager or another safe place before closing the page. The app cannot show it again after a reload.',
   [I18nKey.VaultKeyRecoveryInput]: 'Enter recovery key',
   [I18nKey.VaultKeyRecoveryInvalid]: 'This recovery key is not valid.',
-  [I18nKey.VaultKeyRequired]: 'Unlock Vault before confirming the import.',
+  [I18nKey.VaultKeyRequired]: 'Unlock the signing key before confirming the import.',
   [I18nKey.VaultProofCreated]: 'Transactions were signed and added to the encrypted journal.',
   [I18nKey.VaultIntegrityValid]: 'Journal integrity verified.',
   [I18nKey.VaultIntegrityInvalid]: 'The check found a mismatch in the journal.',
   [I18nKey.VaultIntegrityUnavailable]: 'The journal integrity check failed.',
-  [I18nKey.VaultEventSequence]: 'Event {{sequence}}',
+  [I18nKey.VaultEventSequence]: 'Entry #{{sequence}}',
   [I18nKey.VaultEventHash]: 'Event hash',
   [I18nKey.VaultEventSource]: 'Source: import, row {{row}}',
   [I18nKey.VaultCopyId]: 'Copy identifier',
+  [I18nKey.VaultNotChecked]: 'The journal has not been checked yet.',
+  [I18nKey.VaultCheckedCount]: 'Entries checked: {{count}}',
+  [I18nKey.VaultManualSource]: 'Manual entry',
+  [I18nKey.VaultImportedSource]: 'Statement import',
+  [I18nKey.VaultAdded]: 'Transaction added',
+  [I18nKey.VaultUpdated]: 'Transaction updated',
+  [I18nKey.VaultReversed]: 'Transaction reversed',
+  [I18nKey.VaultTechnicalDetails]: 'Technical details',
+  [I18nKey.VaultUnlockDetails]: 'Unlock the signing key to read the saved transaction copy.',
+  [I18nKey.VaultDecryptError]:
+    'Could not read the encrypted copy. Try again; if the error persists, verify the journal.',
+  [I18nKey.VaultLatest]: 'Recent entries',
+  [I18nKey.VaultShowMore]: 'Show more',
+  [I18nKey.VaultKeySession]:
+    'The key stays in this tab’s memory. Unlock it again after reloading the page.',
+  [I18nKey.VaultKeySetupDescription]:
+    'The app will generate a signing key and show a recovery key. Save that string: you will need it after reloading the page or signing in on another device.',
+  [I18nKey.VaultKeyHelpTitle]: 'Where do I find my recovery key?',
+  [I18nKey.VaultKeyWhereFind]:
+    'The app shows this string when you create your signing key. Look for it among your saved keys. It is separate from your account password and 2FA codes. If the string is lost, the app cannot show it again or open existing encrypted copies.',
   [I18nKey.SecurityKicker]: 'Access control',
   [I18nKey.SecurityTitle]: 'Security',
   [I18nKey.SecurityDescription]: 'Account authentication, active sessions and your journal key.',
@@ -897,8 +997,6 @@ const en: TranslationMap = {
   [I18nKey.ProfilePreferencesDescription]:
     'Language and theme are changed from the app menu and stored locally on this device.',
   [I18nKey.ProfileSession]: 'Current session',
-  [I18nKey.ProfileSessionDescription]:
-    'The session is managed by the server and can be ended at any time.',
   [I18nKey.ProfileEditTitle]: 'Edit profile',
   [I18nKey.ProfileEditDescription]: 'Update your name, goals and Budgeto display preferences.',
   [I18nKey.ProfileEditName]: 'Name',
@@ -926,7 +1024,7 @@ const en: TranslationMap = {
   [I18nKey.LandingTraceabilityTitle]: 'Row provenance',
   [I18nKey.LandingTraceabilityDescription]:
     'Each transaction keeps its source, original values and processing history.',
-  [I18nKey.LandingVaultTitle]: 'Vault',
+  [I18nKey.LandingVaultTitle]: 'Change journal',
   [I18nKey.LandingVaultDescription]:
     'Changes are collected in a journal that can be checked and rolled back.',
   [I18nKey.LandingPrivacyNote]:
@@ -984,8 +1082,6 @@ const en: TranslationMap = {
   [I18nKey.AuthErrorCsrfInvalid]: 'The form session expired. Try again',
   [I18nKey.AuthSignOut]: 'Sign out',
   [I18nKey.AuthSessionActive]: 'Session is active',
-  [I18nKey.AuthSecurityNote]:
-    'The session stays on the server. No long-lived token is stored in the browser.',
   [I18nKey.AuthCopyKey]: 'Copy key',
   [I18nKey.AuthCopied]: 'Copied',
   [I18nKey.AuthCopyFailed]: 'Could not copy. Select and copy it manually.',
