@@ -11,12 +11,16 @@ export const VaultKeyPanel = observer(function VaultKeyPanel() {
   const { t } = useTranslation();
   const vault = useStore(StoreName.Vault);
   const [recoveryPhrase, setRecoveryPhrase] = useState('');
-  const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
 
   async function copyRecoveryPhrase() {
     if (!vault.recoveryPhrase) return;
-    await navigator.clipboard.writeText(vault.recoveryPhrase);
-    setCopyState('copied');
+    try {
+      await navigator.clipboard.writeText(vault.recoveryPhrase);
+      setCopyState('copied');
+    } catch {
+      setCopyState('error');
+    }
   }
 
   async function unlock() {
@@ -26,14 +30,28 @@ export const VaultKeyPanel = observer(function VaultKeyPanel() {
 
   return (
     <section className="plain-panel vault-key-panel" aria-labelledby="vault-key-title">
-      <span className="section-kicker">{t(I18nKey.VaultKeyTitle)}</span>
       <T font="Header/H5" as="h2" id="vault-key-title">
         {t(I18nKey.VaultKeyTitle)}
       </T>
       <p className="panel-copy">{t(I18nKey.VaultKeyDescription)}</p>
 
+      {vault.status === 'unknown' ? <p role="status">{t(I18nKey.SecurityLoading)}</p> : null}
+      {vault.status === 'error' ? (
+        <div className="state-callout state-callout--error" role="alert">
+          <p>{t(I18nKey.SecurityLoadError)}</p>
+          <Button type="button" appearance="secondary" onClick={() => void vault.retryBootstrap()}>
+            {t(I18nKey.TransactionsRetry)}
+          </Button>
+        </div>
+      ) : null}
       {vault.status === 'uninitialized' ? (
-        <Button appearance="primary" dimension="m" onClick={() => void vault.create()}>
+        <Button
+          type="button"
+          appearance="primary"
+          dimension="m"
+          disabled={vault.keyBusy}
+          onClick={() => void vault.create()}
+        >
           {t(I18nKey.VaultKeyCreate)}
         </Button>
       ) : null}
@@ -41,20 +59,31 @@ export const VaultKeyPanel = observer(function VaultKeyPanel() {
       {vault.status === 'locked' ? (
         <div className="vault-key-unlock">
           <StatusIndicator dimension="s" text={t(I18nKey.VaultKeyLocked)} />
-          <label>
+          <label className="form-field">
             <span>{t(I18nKey.VaultKeyRecoveryInput)}</span>
             <input
               autoComplete="off"
+              type="password"
               onChange={(event) => setRecoveryPhrase(event.target.value)}
               value={recoveryPhrase}
             />
           </label>
-          <Button appearance="secondary" dimension="m" onClick={() => void unlock()}>
+          <Button
+            type="button"
+            appearance="secondary"
+            dimension="m"
+            disabled={vault.keyBusy || !recoveryPhrase.trim()}
+            onClick={() => void unlock()}
+          >
             {t(I18nKey.VaultKeyUnlock)}
           </Button>
-          {vault.errorCode === 'VAULT_RECOVERY_INVALID' ? (
+          {vault.errorCode ? (
             <p className="form-error" role="alert">
-              {t(I18nKey.VaultKeyRecoveryInvalid)}
+              {t(
+                vault.errorCode === 'VAULT_RECOVERY_INVALID'
+                  ? I18nKey.VaultKeyRecoveryInvalid
+                  : I18nKey.SecurityLoadError,
+              )}
             </p>
           ) : null}
         </div>
@@ -66,8 +95,14 @@ export const VaultKeyPanel = observer(function VaultKeyPanel() {
           {vault.recoveryPhrase ? (
             <>
               <p className="panel-copy">{t(I18nKey.VaultKeyRecoveryWarning)}</p>
+              {copyState === 'error' && (
+                <p className="form-error" role="alert">
+                  {t(I18nKey.AuthCopyFailed)}
+                </p>
+              )}
               <code className="vault-recovery-key">{vault.recoveryPhrase}</code>
               <Button
+                type="button"
                 appearance="secondary"
                 dimension="m"
                 onClick={() => void copyRecoveryPhrase()}

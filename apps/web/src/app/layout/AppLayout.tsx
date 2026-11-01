@@ -1,13 +1,4 @@
-import {
-  Avatar,
-  Drawer,
-  DrawerContent,
-  DrawerTitle,
-  IconButton,
-  Option,
-  Select,
-  T,
-} from '@admiral-ds/react-ui';
+import { Avatar, Drawer, DrawerContent, DrawerTitle, IconButton, T } from '@admiral-ds/react-ui';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -89,7 +80,13 @@ function NavigationMenu({
   );
 }
 
-function SidebarSettings({ uiStore, collapsed }: { uiStore: UiStore; collapsed: boolean }) {
+const SidebarSettings = observer(function SidebarSettings({
+  uiStore,
+  collapsed,
+}: {
+  uiStore: UiStore;
+  collapsed: boolean;
+}) {
   const { t } = useTranslation();
   const currentLanguage = t(
     uiStore.locale === Language.Ru ? I18nKey.LanguageRussian : I18nKey.LanguageEnglish,
@@ -127,17 +124,15 @@ function SidebarSettings({ uiStore, collapsed }: { uiStore: UiStore; collapsed: 
 
   return (
     <div className="sidebar-settings">
-      <Select
+      <select
         className="sidebar-language-select"
         aria-label={t(I18nKey.LanguageSwitcher)}
-        dimension="s"
-        mode="select"
-        onSelectedChange={(value) => uiStore.setLocale(value as Language)}
         value={uiStore.locale}
+        onChange={(event) => uiStore.setLocale(event.target.value as Language)}
       >
-        <Option value={Language.Ru}>{t(I18nKey.LanguageRussian)}</Option>
-        <Option value={Language.En}>{t(I18nKey.LanguageEnglish)}</Option>
-      </Select>
+        <option value={Language.Ru}>{t(I18nKey.LanguageRussian)}</option>
+        <option value={Language.En}>{t(I18nKey.LanguageEnglish)}</option>
+      </select>
       <IconButton
         appearance="secondary"
         aria-label={themeLabel}
@@ -150,7 +145,7 @@ function SidebarSettings({ uiStore, collapsed }: { uiStore: UiStore; collapsed: 
       </IconButton>
     </div>
   );
-}
+});
 
 function SidebarFooter({ uiStore, collapsed }: { uiStore: UiStore; collapsed: boolean }) {
   return (
@@ -216,7 +211,7 @@ export const AppLayout = observer(function AppLayout() {
               <Link
                 to="/overview"
                 className="brand-wordmark"
-                aria-label={t(I18nKey.NavigationOverview)}
+                aria-label={`${t(I18nKey.BrandName)}: ${t(I18nKey.NavigationOverview)}`}
               >
                 {uiStore.sidebarCollapsed ? 'B' : t(I18nKey.BrandName)}
               </Link>
@@ -263,6 +258,7 @@ export const AppLayout = observer(function AppLayout() {
             onKeyDown={(event) => {
               if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
                 event.preventDefault();
+                uiStore.setSidebarCollapsed(false);
                 uiStore.setSidebarWidth(
                   uiStore.sidebarWidth + (event.key === 'ArrowRight' ? 8 : -8),
                 );
@@ -317,7 +313,7 @@ export const AppLayout = observer(function AppLayout() {
           </div>
         </main>
       </div>
-      {isCompactLayout && (
+      {isCompactLayout && mobileMenuOpen && (
         <Drawer
           backdrop
           closeOnBackdropClick

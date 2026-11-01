@@ -12,7 +12,7 @@ import { translateValidationError } from '@/shared/forms/validation';
 import { I18nKey } from '@/shared/i18n';
 import type { CategoryKind } from '@/shared/services/CategoriesService';
 import { VaultKeyPanel } from '@/shared/ui/VaultKeyPanel';
-import { ReferenceEditorDrawer } from '@/widgets/references/ReferenceEditorDrawer';
+import { ReferenceEditorModal } from '@/widgets/references/ReferenceEditorModal';
 import type { ReferenceFormValue } from '@/widgets/references/ReferenceForm';
 
 const maxFileSize = 8 * 1024 * 1024;
@@ -322,7 +322,11 @@ export const ImportForm = observer(function ImportForm({
           I18nKey.ImportsStepReview,
           I18nKey.ImportsStepApply,
         ].map((stepKey, index) => (
-          <li className={index === step ? 'is-current' : ''} key={stepKey}>
+          <li
+            aria-current={index === step ? 'step' : undefined}
+            className={index === step ? 'is-current' : ''}
+            key={stepKey}
+          >
             <span>{String(index + 1).padStart(2, '0')}</span>
             {t(stepKey)}
           </li>
@@ -368,6 +372,7 @@ export const ImportForm = observer(function ImportForm({
                   type="file"
                   aria-label={t(I18nKey.ImportsFileLabel)}
                   aria-invalid={errors.file ? 'true' : 'false'}
+                  aria-describedby="import-file-help"
                   onBlur={field.onBlur}
                   onChange={(event) => handleFile(event.target.files?.[0], field.onChange)}
                 />
@@ -376,7 +381,11 @@ export const ImportForm = observer(function ImportForm({
                 </span>
                 <span className="import-dropzone-hint">{t(I18nKey.ImportsDropzoneHint)}</span>
               </label>
-              <span className={`import-file-help${errors.file ? ' is-error' : ''}`}>
+              <span
+                id="import-file-help"
+                role={errors.file ? 'alert' : undefined}
+                className={`import-file-help${errors.file ? ' is-error' : ''}`}
+              >
                 {translateValidationError(
                   errors.file?.message,
                   t,
@@ -926,8 +935,14 @@ export const ImportForm = observer(function ImportForm({
           ) : null}
         </div>
       ) : null}
-      <ReferenceEditorDrawer
+      <ReferenceEditorModal
         mode={referenceEditor ?? 'account'}
+        error={
+          (referenceEditor === 'account' ? accountsStore : categoriesStore).mutationStatus ===
+          'error'
+            ? t(I18nKey.ReferencesMutationError)
+            : undefined
+        }
         onClose={() => setReferenceEditor(null)}
         onSubmit={(value) => {
           void submitReference(value);

@@ -1,4 +1,4 @@
-import { Button, InputField, StatusIndicator } from '@admiral-ds/react-ui';
+import { Button, StatusIndicator } from '@admiral-ds/react-ui';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -28,18 +28,22 @@ export function AccountsExplorer({ accounts, onArchive, onEdit, onImport }: Acco
     <section className="accounts-explorer" aria-label={t(I18nKey.AccountsTitle)}>
       <div className="section-heading accounts-explorer-heading">
         <span className="section-kicker">{t(I18nKey.AccountsAccounts)}</span>
-        <InputField
-          dimension="m"
-          label={t(I18nKey.Search)}
-          placeholder={t(I18nKey.AccountsSearch)}
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
+        <label className="form-field">
+          <span>{t(I18nKey.Search)}</span>
+          <input
+            type="search"
+            placeholder={t(I18nKey.AccountsSearch)}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
       </div>
 
       {visibleAccounts.length === 0 ? (
         <div className="state-callout">
-          <span>{t(I18nKey.AccountsEmpty)}</span>
+          <span>
+            {t(normalizedQuery ? I18nKey.AccountsNoSearchResults : I18nKey.AccountsEmpty)}
+          </span>
           <Button appearance="secondary" dimension="s" onClick={onImport}>
             {t(I18nKey.NavigationImports)}
           </Button>
@@ -53,7 +57,7 @@ export function AccountsExplorer({ accounts, onArchive, onEdit, onImport }: Acco
                 <span>{account.currency}</span>
               </div>
               <div className="real-account-actions">
-                <StatusIndicator dimension="s" text={t(I18nKey.Connected)} />
+                <StatusIndicator dimension="s" text={t(I18nKey.AccountsManual)} />
                 <Button appearance="secondary" dimension="s" onClick={() => onEdit(account)}>
                   {t(I18nKey.AccountsEdit)}
                 </Button>

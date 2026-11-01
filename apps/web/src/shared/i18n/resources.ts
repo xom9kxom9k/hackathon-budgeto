@@ -138,7 +138,7 @@ const ru: TranslationMap = {
   [I18nKey.BreadcrumbBack]: 'Назад',
   [I18nKey.AccountsKicker]: 'Деньги',
   [I18nKey.AccountsTitle]: 'Счета',
-  [I18nKey.AccountsDescription]: 'Реальные счета, доступные в вашем пространстве Budgeto.',
+  [I18nKey.AccountsDescription]: 'Счета для ручного учёта и импорта выписок.',
   [I18nKey.AccountsSearch]: 'Найти счёт или валюту',
   [I18nKey.AccountsBanks]: 'Банки',
   [I18nKey.AccountsAccounts]: 'Счета',

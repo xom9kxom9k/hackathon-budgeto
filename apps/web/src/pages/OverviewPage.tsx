@@ -64,8 +64,12 @@ export const OverviewPage = observer(function OverviewPage() {
           <Button appearance="secondary" dimension="m" onClick={() => navigate('/accounts')}>
             {t(I18nKey.OverviewOpenAccounts)}
           </Button>
-          <Button appearance="primary" dimension="m" onClick={() => navigate('/imports')}>
-            {t(I18nKey.OverviewOpenImports)}
+          <Button
+            appearance="primary"
+            dimension="m"
+            onClick={() => navigate('/transactions?new=1')}
+          >
+            {t(I18nKey.TransactionsNew)}
           </Button>
         </div>
       </section>

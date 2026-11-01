@@ -10,7 +10,7 @@ import type { Category, CategoryKind } from '@/shared/services/CategoriesService
 import { I18nKey } from '@/shared/i18n';
 import { FinanceBreadcrumbs } from '@/shared/ui/FinanceBreadcrumbs';
 import { ReferenceTabs } from '@/shared/ui/ReferenceTabs';
-import { ReferenceEditorDrawer } from '@/widgets/references/ReferenceEditorDrawer';
+import { ReferenceEditorModal } from '@/widgets/references/ReferenceEditorModal';
 
 export const CategoriesPage = observer(function CategoriesPage() {
   const { t } = useTranslation();
@@ -64,7 +64,7 @@ export const CategoriesPage = observer(function CategoriesPage() {
         </Button>
       </section>
       <ReferenceTabs />
-      <ReferenceEditorDrawer
+      <ReferenceEditorModal
         initial={editing ?? undefined}
         mode="category"
         onClose={() => {
@@ -75,6 +75,11 @@ export const CategoriesPage = observer(function CategoriesPage() {
           void submitForm(value);
         }}
         open={formOpen}
+        error={
+          categoriesStore.mutationStatus === 'error'
+            ? t(I18nKey.ReferencesMutationError)
+            : undefined
+        }
         saving={categoriesStore.mutationStatus === 'saving'}
       />
       {categoriesStore.mutationStatus === 'error' ? (

@@ -38,6 +38,9 @@ const darkTheme = {
   fontFamily: 'Arial, Helvetica, sans-serif',
   color: {
     ...DARK_THEME.color,
+    'Error/Error 60 Main': '#ff9696',
+    'Error/Error 70': '#ffb2b2',
+    'Error/Error 80': '#ffd0d0',
     'Primary/Primary 10': '#142e22',
     'Primary/Primary 20': '#1d3b2c',
     'Primary/Primary 30': '#2d5540',

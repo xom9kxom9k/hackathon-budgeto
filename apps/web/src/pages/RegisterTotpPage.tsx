@@ -1,4 +1,4 @@
-import { Badge, Button, StatusIndicator, T } from '@admiral-ds/react-ui';
+import { Button, StatusIndicator, T } from '@admiral-ds/react-ui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import QRCode from 'qrcode';
 import { observer } from 'mobx-react-lite';
@@ -185,9 +185,7 @@ export const RegisterTotpPage = observer(function RegisterTotpPage() {
                 </Button>
               </div>
             ) : null}
-            <Badge appearance="info" dimension="m">
-              {authStore.user?.email}
-            </Badge>
+            <p className="recovery-email">{authStore.user?.email}</p>
             <Button appearance="primary" dimension="m" onClick={() => navigate('/overview')}>
               {t(I18nKey.AuthContinueAction)}
             </Button>

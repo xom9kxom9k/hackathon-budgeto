@@ -9,6 +9,9 @@ export type VaultStatus = 'unknown' | 'uninitialized' | 'locked' | 'unlocked' | 
 
 export class VaultStore {
   status: VaultStatus = 'unknown';
+  keyBusy = false;
+  eventsStatus: 'idle' | 'loading' | 'success' | 'error' = 'idle';
+  verificationStatus: 'idle' | 'loading' | 'success' | 'error' = 'idle';
   errorCode: string | null = null;
   recoveryPhrase: string | null = null;
   events: VaultEvent[] = [];
@@ -36,7 +39,14 @@ export class VaultStore {
     }
   }
 
+  async retryBootstrap(): Promise<void> {
+    this.status = 'unknown';
+    await this.bootstrap();
+  }
+
   async create(): Promise<string | null> {
+    if (this.keyBusy) return null;
+    this.keyBusy = true;
     try {
       const bundle = await this.crypto.createBundle();
       await this.service.registerKey(bundle);
@@ -49,10 +59,16 @@ export class VaultStore {
     } catch (error) {
       this.setError(error);
       return null;
+    } finally {
+      runInAction(() => {
+        this.keyBusy = false;
+      });
     }
   }
 
   async unlock(recoveryPhrase: string): Promise<boolean> {
+    if (this.keyBusy) return false;
+    this.keyBusy = true;
     try {
       const bundle = await this.service.getKey();
       if (!bundle) throw new Error('VAULT_NOT_INITIALIZED');
@@ -64,8 +80,15 @@ export class VaultStore {
       });
       return true;
     } catch (error) {
-      this.setError(error);
+      runInAction(() => {
+        this.status = 'locked';
+        this.errorCode = error instanceof Error ? error.message : 'VAULT_FAILED';
+      });
       return false;
+    } finally {
+      runInAction(() => {
+        this.keyBusy = false;
+      });
     }
   }
 
@@ -77,26 +100,36 @@ export class VaultStore {
   }
 
   async loadEvents(): Promise<void> {
+    this.eventsStatus = 'loading';
     try {
       const events = await this.service.listEvents();
       runInAction(() => {
         this.events = events;
+        this.eventsStatus = 'success';
         this.errorCode = null;
       });
-    } catch (error) {
-      this.setError(error);
+    } catch {
+      runInAction(() => {
+        this.eventsStatus = 'error';
+      });
     }
   }
 
   async verify(): Promise<void> {
+    if (this.verificationStatus === 'loading') return;
+    this.verificationStatus = 'loading';
     try {
       const result = await this.service.verifyIntegrity();
       runInAction(() => {
         this.integrity = result;
+        this.verificationStatus = 'success';
         this.errorCode = null;
       });
-    } catch (error) {
-      this.setError(error);
+    } catch {
+      runInAction(() => {
+        this.integrity = null;
+        this.verificationStatus = 'error';
+      });
     }
   }
 
@@ -106,6 +139,11 @@ export class VaultStore {
 
   lock(): void {
     this.crypto.lock();
+    this.events = [];
+    this.integrity = null;
+    this.eventsStatus = 'idle';
+    this.verificationStatus = 'idle';
+    this.errorCode = null;
     this.recoveryPhrase = null;
     this.status = 'unknown';
   }

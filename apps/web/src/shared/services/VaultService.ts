@@ -18,7 +18,7 @@ const keyPayloadSchema = z.object({
   encryptedPrivateKey: encryptedPrivateKeyBundleSchema,
   keyVersion: z.number(),
 });
-const keySchema = keyPayloadSchema.nullable();
+const keySchema = keyPayloadSchema.nullish().transform((value) => value ?? null);
 const eventSchema = z.object({
   id: z.string(),
   userId: z.string(),
@@ -68,7 +68,7 @@ export class VaultService extends BaseApiService {
   }
 
   getKey(): Promise<VaultKeyBundle | null> {
-    return this.get(keySchema).then((value) => value as VaultKeyBundle | null);
+    return this.get('/key', keySchema).then((value) => value as VaultKeyBundle | null);
   }
 
   registerKey(bundle: {
