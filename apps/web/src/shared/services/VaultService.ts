@@ -76,7 +76,15 @@ export class VaultService extends BaseApiService {
     encryptedPrivateKey: EncryptedPrivateKeyBundle;
     keyVersion: number;
   }): Promise<NonNullable<VaultKeyBundle>> {
-    return this.post('/key/public', bundle, keyPayloadSchema);
+    return this.post(
+      '/key/public',
+      {
+        publicKey: bundle.publicKey,
+        encryptedPrivateKey: bundle.encryptedPrivateKey,
+        keyVersion: bundle.keyVersion,
+      },
+      keyPayloadSchema,
+    );
   }
 
   listEvents(): Promise<VaultEvent[]> {
