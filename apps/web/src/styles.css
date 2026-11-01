@@ -2873,6 +2873,66 @@ textarea::placeholder {
 .savings-panel .reference-form {
   margin-top: 20px;
 }
+.journal-verification {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.journal-verification h2 {
+  margin: 0;
+}
+.journal-verification p {
+  margin: 8px 0 0;
+}
+.journal-key-details > summary,
+.journal-technical > summary {
+  cursor: pointer;
+  padding: 14px 0;
+  color: var(--admiral-color-Primary_Primary60Main);
+}
+.journal-list h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+.journal-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--admiral-color-Neutral_Neutral20);
+  padding: 18px 0;
+}
+.journal-entry p {
+  margin: 6px 0 0;
+}
+.journal-entry > button {
+  flex-shrink: 0;
+}
+.journal-list > button:last-child {
+  margin-top: 20px;
+}
+.journal-entry-details {
+  display: grid;
+  gap: 16px;
+}
+.journal-entry-details > p {
+  margin: 0;
+}
+#journal-entry-title {
+  padding-right: 64px;
+}
+.journal-entry-details dd {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .journal-entry {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
 @media (max-width: 1100px) {
   .analytics-detail-grid {
     grid-template-columns: minmax(0, 1fr);

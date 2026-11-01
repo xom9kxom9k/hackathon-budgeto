@@ -59,6 +59,7 @@ export const VaultKeyPanel = observer(function VaultKeyPanel() {
       {vault.status === 'locked' ? (
         <div className="vault-key-unlock">
           <StatusIndicator dimension="s" text={t(I18nKey.VaultKeyLocked)} />
+          <p className="panel-copy">{t(I18nKey.VaultKeySession)}</p>
           <label className="form-field">
             <span>{t(I18nKey.VaultKeyRecoveryInput)}</span>
             <input
