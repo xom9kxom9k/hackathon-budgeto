@@ -1,116 +1,96 @@
-import { Table } from '@admiral-ds/react-ui';
-import type { Column, TableRow } from '@admiral-ds/react-ui';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-
 import { I18nKey } from '@/shared/i18n';
-import { formatMoney } from '@/shared/lib/formatMoney';
 import type { Transaction } from '@/entities/transaction/model/types';
+import { TransactionAmount } from '@/shared/ui/TransactionAmount';
 
 interface TransactionTableProps {
   onSelect?: (transaction: Transaction) => void;
   transactions: Transaction[];
 }
-
 export function TransactionTable({ onSelect, transactions }: TransactionTableProps) {
   const { t } = useTranslation();
-  const operationLabel = useCallback(
-    (transaction: Transaction) => transaction.note || t(I18nKey.TransactionNoDescription),
-    [t],
-  );
-  const categoryLabel = useCallback(
-    (transaction: Transaction) => transaction.category?.name || t(I18nKey.TransactionNoCategory),
-    [t],
-  );
-  const columns = useMemo<Column[]>(
-    () => [
-      { name: 'date', title: t(I18nKey.Date), width: 100 },
-      { name: 'merchant', title: t(I18nKey.Operation), width: '36%' },
-      { name: 'category', title: t(I18nKey.Category), width: '24%' },
-      { name: 'accountName', title: t(I18nKey.Account), width: '24%' },
-      {
-        name: 'amount',
-        title: t(I18nKey.Amount),
-        width: 150,
-        cellAlign: 'right',
-        renderCell: (value: number, row: TableRow) => {
-          const transaction = row as TableRow & { currency: string };
-          return (
-            <span className={`amount ${value >= 0 ? 'amount--positive' : 'amount--negative'}`}>
-              {value >= 0 ? '+' : ''}
-              {formatMoney(value, transaction.currency)}
-            </span>
-          );
-        },
-      },
-    ],
-    [t],
-  );
-  const rows = useMemo<TableRow[]>(
-    () =>
-      transactions.map((transaction) => ({
-        ...transaction,
-        accountName: transaction.account.name,
-        category: categoryLabel(transaction),
-        currency: transaction.account.currency,
-        hover: Boolean(onSelect),
-        merchant: operationLabel(transaction),
-      })),
-    [categoryLabel, onSelect, operationLabel, transactions],
-  );
-
-  if (transactions.length === 0) {
-    return <div className="state-callout">{t(I18nKey.EmptyState)}</div>;
-  }
-
+  const typeLabel = (kind: Transaction['kind']) =>
+    t(
+      kind === 'income'
+        ? I18nKey.TransactionTypeIncome
+        : kind === 'expense'
+          ? I18nKey.TransactionTypeExpense
+          : I18nKey.ActivityTransfer,
+    );
+  const accountLabel = (transaction: Transaction) =>
+    transaction.destinationAccount
+      ? `${transaction.account.name} → ${transaction.destinationAccount.name}`
+      : transaction.account.name;
+  const noteLabel = (transaction: Transaction) => transaction.note || typeLabel(transaction.kind);
+  if (!transactions.length) return <div className="state-callout">{t(I18nKey.EmptyState)}</div>;
   return (
     <div className="transaction-table-wrap">
-      <div className="transaction-table" aria-label={t(I18nKey.OverviewLatestTransactions)}>
-        <Table
-          columnList={columns}
-          dimension="m"
-          disableColumnResize
-          greyHeader
-          rowList={rows}
-          onRowClick={
-            onSelect
-              ? (rowId) => {
-                  const transaction = transactions.find((item) => item.id === rowId);
-                  if (transaction) onSelect(transaction);
-                }
-              : undefined
-          }
-          showLastRowUnderline
-        />
-      </div>
-      <div className="transaction-list-mobile" aria-label={t(I18nKey.OverviewLatestTransactions)}>
-        <AnimatePresence initial={false}>
+      <table className="transaction-table finance-table">
+        <caption className="sr-only">{t(I18nKey.OverviewLatestTransactions)}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{t(I18nKey.Date)}</th>
+            <th scope="col">{t(I18nKey.Operation)}</th>
+            <th scope="col">{t(I18nKey.Category)}</th>
+            <th scope="col">{t(I18nKey.Account)}</th>
+            <th scope="col">{t(I18nKey.Amount)}</th>
+          </tr>
+        </thead>
+        <tbody>
           {transactions.map((transaction) => (
-            <motion.button
-              animate={{ opacity: 1, y: 0 }}
-              className="transaction-mobile-row"
-              initial={{ opacity: 0, y: 4 }}
-              key={transaction.id}
-              layout
-              onClick={() => onSelect?.(transaction)}
-              type="button"
-            >
+            <tr key={transaction.id}>
+              <td>
+                <time dateTime={transaction.date}>{transaction.date}</time>
+              </td>
+              <td>
+                {onSelect ? (
+                  <button className="transaction-link" onClick={() => onSelect(transaction)}>
+                    {noteLabel(transaction)}
+                  </button>
+                ) : (
+                  <strong>{noteLabel(transaction)}</strong>
+                )}
+                <span className="transaction-kind">{typeLabel(transaction.kind)}</span>
+              </td>
+              <td>{transaction.category?.name || t(I18nKey.TransactionNoCategory)}</td>
+              <td>{accountLabel(transaction)}</td>
+              <td>
+                <TransactionAmount transaction={transaction} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="transaction-list-mobile">
+        {transactions.map((transaction) => {
+          const content = (
+            <>
               <div>
-                <strong>{operationLabel(transaction)}</strong>
+                <strong>{noteLabel(transaction)}</strong>
                 <span>
-                  {transaction.date} · {categoryLabel(transaction)} · {transaction.account.name}
+                  {typeLabel(transaction.kind)} · {transaction.date} ·{' '}
+                  {transaction.category?.name || t(I18nKey.TransactionNoCategory)} ·{' '}
+                  {accountLabel(transaction)}
                 </span>
               </div>
-              <span
-                className={`amount ${transaction.amount >= 0 ? 'amount--positive' : 'amount--negative'}`}
-              >
-                {transaction.amount >= 0 ? '+' : ''}
-                {formatMoney(transaction.amount, transaction.account.currency)}
-              </span>
-            </motion.button>
-          ))}
-        </AnimatePresence>
+              <TransactionAmount transaction={transaction} />
+            </>
+          );
+          return onSelect ? (
+            <button
+              className="transaction-mobile-row"
+              key={transaction.id}
+              onClick={() => onSelect(transaction)}
+              type="button"
+            >
+              {content}
+            </button>
+          ) : (
+            <article className="transaction-mobile-row" key={transaction.id}>
+              {content}
+            </article>
+          );
+        })}
       </div>
     </div>
   );

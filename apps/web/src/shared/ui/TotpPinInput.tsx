@@ -35,10 +35,11 @@ export const TotpPinInput = forwardRef<HTMLInputElement, TotpPinInputProps>(func
           type="text"
           value={value}
           aria-invalid={Boolean(error)}
+          aria-describedby={error && props.id ? `${props.id}-error` : props['aria-describedby']}
         />
       </div>
       {error && (
-        <span className="form-error" role="alert">
+        <span id={props.id ? `${props.id}-error` : undefined} className="form-error" role="alert">
           {error}
         </span>
       )}

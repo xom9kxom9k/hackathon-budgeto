@@ -1,64 +1,25 @@
-import { AnimatePresence, motion } from 'framer-motion';
 import { observer } from 'mobx-react-lite';
-import { Spinner } from '@admiral-ds/react-ui';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
 import { useStore } from '@/app/hooks/useStores';
 import { StoreName } from '@/app/stores/StoreName';
 import { I18nKey } from '@/shared/i18n';
 
 export const GlobalLoader = observer(function GlobalLoader() {
-  const loaderStore = useStore(StoreName.Loader);
+  const loader = useStore(StoreName.Loader);
   const { t } = useTranslation();
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
-
+  const [visible, setVisible] = useState(false);
   useEffect(() => {
-    const content = document.querySelector<HTMLElement>('[data-app-content]');
-
-    if (loaderStore.isLoading) {
-      previousFocusRef.current =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      if (content) {
-        content.inert = true;
-        content.setAttribute('aria-busy', 'true');
-      }
-      requestAnimationFrame(() => overlayRef.current?.focus());
+    if (!loader.isLoading) {
+      setVisible(false);
       return;
     }
-
-    if (content) {
-      content.inert = false;
-      content.setAttribute('aria-busy', 'false');
-    }
-    previousFocusRef.current?.focus();
-    previousFocusRef.current = null;
-  }, [loaderStore.isLoading]);
-
-  return (
-    <AnimatePresence>
-      {loaderStore.isLoading ? (
-        <motion.div
-          animate={{ opacity: 1 }}
-          aria-live="polite"
-          aria-label={t(I18nKey.LoadingState)}
-          aria-busy="true"
-          className="global-loader"
-          data-testid="global-loader"
-          exit={{ opacity: 0 }}
-          initial={{ opacity: 0 }}
-          onKeyDown={(event) => {
-            if (event.key === 'Tab' || event.key === 'Escape') event.preventDefault();
-          }}
-          ref={overlayRef}
-          role="status"
-          tabIndex={0}
-        >
-          <Spinner dimension="l" />
-          <span>{t(I18nKey.LoadingState)}</span>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
-  );
+    const timeout = window.setTimeout(() => setVisible(true), 350);
+    return () => window.clearTimeout(timeout);
+  }, [loader.isLoading]);
+  return visible ? (
+    <div className="request-status" role="status" data-testid="global-loader">
+      {t(I18nKey.LoadingState)}
+    </div>
+  ) : null;
 });

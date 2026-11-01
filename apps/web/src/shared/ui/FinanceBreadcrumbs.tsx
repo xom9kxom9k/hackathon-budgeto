@@ -1,24 +1,25 @@
-import { Breadcrumbs } from '@admiral-ds/react-ui';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-
 import { I18nKey } from '@/shared/i18n';
-import { useIsCompactLayout } from '@/shared/hooks/useMediaQuery';
 
 interface FinanceBreadcrumbsProps {
   items: Array<{ text: string; url?: string }>;
 }
-
 export function FinanceBreadcrumbs({ items }: FinanceBreadcrumbsProps) {
   const { t } = useTranslation();
-  const isCompactLayout = useIsCompactLayout();
-
   return (
-    <Breadcrumbs
-      aria-label={t(I18nKey.BreadcrumbBack)}
-      className="finance-breadcrumbs"
-      dimension="m"
-      items={items}
-      mobile={isCompactLayout}
-    />
+    <nav className="finance-breadcrumbs" aria-label={t(I18nKey.BreadcrumbBack)}>
+      <ol>
+        {items.map((item, index) => (
+          <li key={`${item.text}-${index}`}>
+            {item.url ? (
+              <Link to={item.url}>{item.text}</Link>
+            ) : (
+              <span aria-current="page">{item.text}</span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }
