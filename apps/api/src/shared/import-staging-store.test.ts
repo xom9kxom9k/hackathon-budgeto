@@ -1,5 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import { lstat, mkdtemp, readFile, rm, symlink, utimes, writeFile } from 'node:fs/promises';
+import {
+  lstat,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  symlink,
+  utimes,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -33,6 +42,22 @@ describe('import staging storage', () => {
     await store.remove(path);
     await store.remove(path);
     await expect(readFile(path)).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('removes the upload after an encryption failure', async () => {
+    vi.stubEnv('AUTH_ENCRYPTION_KEY', '');
+    await expect(store.write(Buffer.from('private statement'))).rejects.toThrow(
+      'IMPORT_STAGING_KEY_REQUIRED',
+    );
+    expect(await readdir(store.directory)).toEqual([]);
+  });
+
+  it('allows cleanup after a decryption failure', async () => {
+    const path = await store.write(Buffer.from('private statement'));
+    await writeFile(path, 'invalid envelope');
+    await expect(store.read(path)).rejects.toThrow('IMPORT_STAGING_DECRYPT_FAILED');
+    await store.remove(path);
+    expect(await readdir(store.directory)).toEqual([]);
   });
 
   it('refuses reads and deletes outside the staging directory', async () => {

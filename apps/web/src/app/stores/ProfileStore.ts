@@ -37,29 +37,16 @@ export class ProfileStore {
       });
     return this.promise;
   }
-  async update(displayName: string, goals: string[]): Promise<void> {
+  async update(
+    displayName: string,
+    goals: string[],
+    locale: string,
+    timezone: string,
+  ): Promise<void> {
     this.mutationStatus = 'saving';
     this.mutationErrorCode = null;
     try {
-      const profile = await this.service.update(displayName, goals);
-      runInAction(() => {
-        this.profile = profile;
-        this.status = 'success';
-        this.mutationStatus = 'success';
-      });
-    } catch (error: unknown) {
-      runInAction(() => {
-        this.mutationStatus = 'error';
-        this.mutationErrorCode = error instanceof Error ? error.message : 'PROFILE_UPDATE_FAILED';
-      });
-      throw error;
-    }
-  }
-
-  async updatePreferences(locale?: string, timezone?: string): Promise<void> {
-    this.mutationStatus = 'saving';
-    this.mutationErrorCode = null;
-    try {
+      await this.service.update(displayName, goals);
       const profile = await this.service.updatePreferences(locale, timezone);
       runInAction(() => {
         this.profile = profile;

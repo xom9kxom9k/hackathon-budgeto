@@ -42,13 +42,12 @@ export class ImportStagingStore {
     const filePath = join(this.directory, `${randomUUID()}.upload`);
     const file = await open(filePath, 'wx', 0o600);
     try {
-      await file.writeFile(encryptImportStaging(content));
+      await using handle = file;
+      await handle.writeFile(encryptImportStaging(content));
     } catch (error) {
-      await file.close();
       await this.remove(filePath);
       throw error;
     }
-    await file.close();
     return filePath;
   }
 
@@ -62,19 +61,15 @@ export class ImportStagingStore {
     if (!info.isFile() || info.isSymbolicLink()) {
       throw new ImportError(ImportErrorCode.IMPORT_STAGING_DECRYPT_FAILED);
     }
-    const file = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
-    try {
-      const stat = await file.stat();
-      if (!stat.isFile() || stat.size > maxEnvelopeBytes) {
-        throw new ImportError(ImportErrorCode.IMPORT_FILE_TOO_LARGE);
-      }
-      if (stat.mtimeMs + this.ttlSeconds * 1000 <= Date.now()) {
-        throw new ImportError(ImportErrorCode.IMPORT_NOT_RETRYABLE);
-      }
-      return decryptImportStaging(await file.readFile());
-    } finally {
-      await file.close();
+    await using file = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+    const stat = await file.stat();
+    if (!stat.isFile() || stat.size > maxEnvelopeBytes) {
+      throw new ImportError(ImportErrorCode.IMPORT_FILE_TOO_LARGE);
     }
+    if (stat.mtimeMs + this.ttlSeconds * 1000 <= Date.now()) {
+      throw new ImportError(ImportErrorCode.IMPORT_NOT_RETRYABLE);
+    }
+    return decryptImportStaging(await file.readFile());
   }
 
   async remove(filePath: string): Promise<void> {

@@ -51,8 +51,7 @@ export const ProfileEditPage = observer(function ProfileEditPage() {
     setError('');
     submitting.current = true;
     try {
-      await profileStore.update(normalizedName, selectedGoals);
-      await profileStore.updatePreferences(locale, timezone.trim() || 'UTC');
+      await profileStore.update(normalizedName, selectedGoals, locale, timezone.trim() || 'UTC');
       uiStore.setLocale(locale);
       navigate('/profile', { replace: true, state: { saved: true } });
     } catch {
