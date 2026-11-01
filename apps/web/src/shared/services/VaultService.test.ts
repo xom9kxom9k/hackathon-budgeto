@@ -24,4 +24,38 @@ describe('VaultService', () => {
     );
     await expect(service.getKey()).rejects.toThrow();
   });
+
+  it('sends only the API key payload when the bundle has local recovery data', async () => {
+    const bundle = {
+      publicKey: 'cfsMfVkpAHmjAe44KThkhWYCiQ1SJpBnJKw2XKseTrc=',
+      encryptedPrivateKey: {
+        encryptedVaultKey: { ciphertext: 'x', iv: 'x', authTag: 'x' },
+        encryptedPrivateKey: { ciphertext: 'x', iv: 'x', authTag: 'x' },
+        recoveryVerifier: 'x',
+      },
+      keyVersion: 1,
+      recoveryPhrase: 'local-only recovery phrase',
+    };
+    const fetchImpl = vi.fn().mockImplementation((input: string) => {
+      if (input === '/api/auth/csrf') {
+        return Promise.resolve(
+          new Response(JSON.stringify({ token: 'csrf-token' }), { status: 200 }),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify(bundle), { status: 200 }));
+    });
+    const service = new VaultService(
+      new BaseApiClient({ baseUrl: '/api', loaderStore: new LoaderStore(), fetchImpl }),
+    );
+
+    await service.registerKey(bundle);
+
+    const postCall = fetchImpl.mock.calls.find((call) => call[0] === '/api/vault/key/public');
+    const request = postCall?.[1] as RequestInit;
+    expect(JSON.parse(request.body as string)).toEqual({
+      publicKey: bundle.publicKey,
+      encryptedPrivateKey: bundle.encryptedPrivateKey,
+      keyVersion: bundle.keyVersion,
+    });
+  });
 });
