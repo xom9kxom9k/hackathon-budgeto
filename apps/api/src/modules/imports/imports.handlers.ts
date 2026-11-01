@@ -30,7 +30,12 @@ export class UpdateImportRowsHandler implements ICommandHandler<UpdateImportRows
   constructor(private readonly imports: ImportsService) {}
 
   execute(command: UpdateImportRowsCommand) {
-    return this.imports.updateRows(command.userId, command.jobId, command.rows);
+    return this.imports.updateRows(
+      command.userId,
+      command.jobId,
+      command.rows,
+      command.reviewAcknowledged,
+    );
   }
 }
 

@@ -65,7 +65,7 @@ describe('imports CQRS boundary', () => {
     await new GetImportTemplateHandler(service as never).execute();
 
     expect(service.create).toHaveBeenCalledWith('user-1', 'statement.xlsx', content);
-    expect(service.updateRows).toHaveBeenCalledWith('user-1', 'job-1', rows);
+    expect(service.updateRows).toHaveBeenCalledWith('user-1', 'job-1', rows, false);
     expect(service.confirm).toHaveBeenCalledWith('user-1', 'job-1');
     expect(service.getView).toHaveBeenCalledWith('user-1', 'job-1');
     expect(service.template).toHaveBeenCalledOnce();

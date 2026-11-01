@@ -14,6 +14,7 @@ export class UpdateImportRowsCommand {
     public readonly userId: string,
     public readonly jobId: string,
     public readonly rows: ParsedImportRow[],
+    public readonly reviewAcknowledged = false,
   ) {}
 }
 

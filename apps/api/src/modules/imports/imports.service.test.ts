@@ -222,6 +222,21 @@ describe('ImportsService confirmation', () => {
     expect((job.preview as { reviewRequired: boolean }).reviewRequired).toBe(true);
   });
 
+  it('clears manual review after an explicit acknowledgement', async () => {
+    const { service, job } = createService();
+    job.preview = {
+      ...(job.preview as Record<string, unknown>),
+      reviewRequired: true,
+      reviewReasons: ['PROFILE_REVIEW_REQUIRED'],
+    };
+    const row = (job.preview as { rows: unknown[] }).rows[0];
+
+    await service.updateRows('user-1', 'job-1', [row] as never, true);
+
+    expect((job.preview as { reviewRequired: boolean }).reviewRequired).toBe(false);
+    expect((job.preview as { reviewReasons: string[] }).reviewReasons).toEqual([]);
+  });
+
   it('keeps the parsed row and a hashed diff when a row is corrected', async () => {
     const { service, job } = createService();
     const row = (job.preview as { rows: Array<Record<string, unknown>> }).rows[0];

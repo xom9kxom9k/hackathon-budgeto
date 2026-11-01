@@ -88,6 +88,7 @@ export class ImportsController {
           ...row,
           sourceRef: row.sourceRef ?? { kind: 'xlsx', record: row.sourceRow },
         })),
+        body.reviewAcknowledged,
       ),
     );
   }

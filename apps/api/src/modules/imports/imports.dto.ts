@@ -101,4 +101,8 @@ export class UpdateImportRowsDto {
   @ValidateNested({ each: true })
   @Type(() => ImportRowDto)
   rows!: ImportRowDto[];
+
+  @IsOptional()
+  @IsBoolean()
+  reviewAcknowledged?: boolean;
 }

@@ -94,8 +94,8 @@ export class ImportService extends BaseApiService {
   getJob(jobId: string, signal?: AbortSignal): Promise<ImportJob> {
     return super.get(`/${jobId}`, jobSchema, signal);
   }
-  updateRows(jobId: string, rows: ImportRow[]): Promise<ImportJob> {
-    return this.patchRows(`/${jobId}/rows`, { rows }, jobSchema);
+  updateRows(jobId: string, rows: ImportRow[], reviewAcknowledged = false): Promise<ImportJob> {
+    return this.patchRows(`/${jobId}/rows`, { rows, reviewAcknowledged }, jobSchema);
   }
   getConfirmationClaims(jobId: string): Promise<ImportConfirmationClaims> {
     return super.get(`/${jobId}/confirmation-claims`, claimsSchema);
