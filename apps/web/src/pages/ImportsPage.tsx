@@ -14,6 +14,8 @@ import { Button, T } from '@admiral-ds/react-ui';
 export const ImportsPage = observer(function ImportsPage() {
   const { t } = useTranslation();
   const importStore = useStore(StoreName.Import);
+  const overviewStore = useStore(StoreName.Overview);
+  const transactionsStore = useStore(StoreName.Transactions);
   const [jobId, setJobId] = useQueryState('job', parseAsString);
 
   useEffect(() => {
@@ -25,6 +27,12 @@ export const ImportsPage = observer(function ImportsPage() {
     if (jobId) void importStore.restoreJob(jobId);
     void importStore.loadHistory();
   }, [importStore, jobId]);
+
+  useEffect(() => {
+    if (!importStore.result) return;
+    void overviewStore.retry();
+    void transactionsStore.retry();
+  }, [importStore.result, overviewStore, transactionsStore]);
 
   const startNewImport = () => {
     importStore.clear();
