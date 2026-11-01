@@ -104,11 +104,43 @@ export const OverviewPage = observer(function OverviewPage() {
       </section>
 
       <section className="overview-period-panel" aria-labelledby="overview-period-title">
-        <div className="period-context">
-          <span className="section-kicker">{t(I18nKey.OverviewPeriod)}</span>
-          <T font="Header/H4" as="h2" id="overview-period-title">
-            {t(I18nKey.OverviewAccountsCount, { count: overviewStore.accountsCount })}
-          </T>
+        <fieldset className="period-filter">
+          <legend id="overview-period-title">{t(I18nKey.OverviewPeriod)}</legend>
+          <div className="overview-period-controls">
+            <label>
+              <span>{t(I18nKey.OverviewPeriodFrom)}</span>
+              <input
+                aria-label={t(I18nKey.OverviewPeriodFrom)}
+                max={period.to}
+                onChange={(event) => updatePeriod('from', event.target.value)}
+                type="date"
+                value={period.from}
+              />
+            </label>
+            <label>
+              <span>{t(I18nKey.OverviewPeriodTo)}</span>
+              <input
+                aria-label={t(I18nKey.OverviewPeriodTo)}
+                min={period.from}
+                onChange={(event) => updatePeriod('to', event.target.value)}
+                type="date"
+                value={period.to}
+              />
+            </label>
+          </div>
+          <div className="period-presets">
+            <button type="button" onClick={() => preset('current')}>
+              {t(I18nKey.AnalyticsThisMonth)}
+            </button>
+            <button type="button" onClick={() => preset('previous')}>
+              {t(I18nKey.AnalyticsLastMonth)}
+            </button>
+            <button type="button" onClick={() => preset('90')}>
+              {t(I18nKey.AnalyticsLast90)}
+            </button>
+          </div>
+        </fieldset>
+        <div className="currency-filter">
           {overviewStore.availableCurrencies.length > 1 && (
             <label className="form-field period-currency">
               <span>{t(I18nKey.AnalyticsCurrency)}</span>
@@ -124,39 +156,9 @@ export const OverviewPage = observer(function OverviewPage() {
               </select>
             </label>
           )}
-          <div className="period-presets">
-            <button type="button" onClick={() => preset('current')}>
-              {t(I18nKey.AnalyticsThisMonth)}
-            </button>
-            <button type="button" onClick={() => preset('previous')}>
-              {t(I18nKey.AnalyticsLastMonth)}
-            </button>
-            <button type="button" onClick={() => preset('90')}>
-              {t(I18nKey.AnalyticsLast90)}
-            </button>
-          </div>
-        </div>
-        <div className="overview-period-controls">
-          <label>
-            <span>{t(I18nKey.OverviewPeriodFrom)}</span>
-            <input
-              aria-label={t(I18nKey.OverviewPeriodFrom)}
-              max={period.to}
-              onChange={(event) => updatePeriod('from', event.target.value)}
-              type="date"
-              value={period.from}
-            />
-          </label>
-          <label>
-            <span>{t(I18nKey.OverviewPeriodTo)}</span>
-            <input
-              aria-label={t(I18nKey.OverviewPeriodTo)}
-              min={period.from}
-              onChange={(event) => updatePeriod('to', event.target.value)}
-              type="date"
-              value={period.to}
-            />
-          </label>
+          <span className="metric-note">
+            {t(I18nKey.OverviewAccountsCount, { count: overviewStore.accountsCount })}
+          </span>
         </div>
       </section>
 

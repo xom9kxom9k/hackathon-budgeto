@@ -904,6 +904,7 @@ textarea:focus-visible,
 .chart-frame {
   width: 100%;
   min-height: 280px;
+  overflow: clip;
 }
 .chart-panel .recharts-default-tooltip,
 .chart-panel .recharts-tooltip-wrapper {
@@ -2735,12 +2736,33 @@ textarea::placeholder {
   font-size: clamp(26px, 3vw, 42px);
   overflow-wrap: anywhere;
 }
-.period-context {
+.overview-period-panel {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.period-filter {
   display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: end;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
   gap: 12px;
 }
+.period-filter legend {
+  padding: 0;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.currency-filter {
+  display: grid;
+  gap: 8px;
+  padding-top: 34px;
+}
 .period-currency {
-  max-width: 160px;
+  width: 140px;
 }
 .period-presets,
 .analytics-tabs {
@@ -2855,6 +2877,9 @@ textarea::placeholder {
   .analytics-detail-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+  .period-filter {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 @media (max-width: 640px) {
   .overview-summary-grid {
@@ -2862,5 +2887,18 @@ textarea::placeholder {
   }
   .period-presets button {
     flex: 1 1 auto;
+  }
+  .period-filter {
+    width: 100%;
+  }
+  .currency-filter {
+    width: 100%;
+    display: flex;
+    align-items: end;
+    gap: 16px;
+    padding-top: 0;
+  }
+  .currency-filter > .metric-note {
+    padding-bottom: 12px;
   }
 }
