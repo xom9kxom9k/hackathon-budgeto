@@ -19,6 +19,7 @@ const lightTheme = {
   fontFamily: 'Arial, Helvetica, sans-serif',
   color: {
     ...LIGHT_THEME.color,
+    'Neutral/Neutral 40': '#78847c',
     'Primary/Primary 10': '#edf6f1',
     'Primary/Primary 20': '#d6ecdf',
     'Primary/Primary 30': '#aed6bf',
@@ -38,6 +39,7 @@ const darkTheme = {
   fontFamily: 'Arial, Helvetica, sans-serif',
   color: {
     ...DARK_THEME.color,
+    'Neutral/Neutral 40': '#7c8980',
     'Error/Error 60 Main': '#ff9696',
     'Error/Error 70': '#ffb2b2',
     'Error/Error 80': '#ffd0d0',

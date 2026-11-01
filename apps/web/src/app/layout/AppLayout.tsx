@@ -124,15 +124,17 @@ const SidebarSettings = observer(function SidebarSettings({
 
   return (
     <div className="sidebar-settings">
-      <select
-        className="sidebar-language-select"
-        aria-label={t(I18nKey.LanguageSwitcher)}
-        value={uiStore.locale}
-        onChange={(event) => uiStore.setLocale(event.target.value as Language)}
-      >
-        <option value={Language.Ru}>{t(I18nKey.LanguageRussian)}</option>
-        <option value={Language.En}>{t(I18nKey.LanguageEnglish)}</option>
-      </select>
+      <div className="sidebar-language-control">
+        <select
+          className="sidebar-language-select"
+          aria-label={t(I18nKey.LanguageSwitcher)}
+          value={uiStore.locale}
+          onChange={(event) => uiStore.setLocale(event.target.value as Language)}
+        >
+          <option value={Language.Ru}>{t(I18nKey.LanguageRussian)}</option>
+          <option value={Language.En}>{t(I18nKey.LanguageEnglish)}</option>
+        </select>
+      </div>
       <IconButton
         appearance="secondary"
         aria-label={themeLabel}
@@ -166,11 +168,17 @@ export const AppLayout = observer(function AppLayout() {
   const selectedItem = getSelectedMenuItem(location.pathname);
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b' && !event.altKey) {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === 'b' &&
+        !event.altKey &&
+        !event.shiftKey
+      ) {
         const target = event.target;
         if (
           target instanceof HTMLElement &&
-          target.closest('input, textarea, select, [contenteditable="true"]')
+          (target.isContentEditable ||
+            target.closest('input, textarea, select, [aria-modal="true"]'))
         )
           return;
         event.preventDefault();
@@ -281,6 +289,7 @@ export const AppLayout = observer(function AppLayout() {
           <div className="topbar-heading">
             {isCompactLayout && (
               <button
+                type="button"
                 className="mobile-menu-button"
                 onClick={() => setMobileMenuOpen(true)}
                 aria-expanded={mobileMenuOpen}

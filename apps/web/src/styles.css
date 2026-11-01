@@ -1,6 +1,8 @@
 :root {
   --panel-radius: 8px;
   --control-radius: 6px;
+  --field-height: 48px;
+  --field-icon-inset: 20px;
   --admiral-border-radius-Medium: var(--control-radius);
   font-family: Arial, Helvetica, sans-serif;
   font-size: 16px;
@@ -2646,4 +2648,55 @@ select.sidebar-language-select {
   color: var(--admiral-color-Neutral_Neutral90);
   background: var(--admiral-color-Neutral_Neutral00);
   font-size: 14px;
+}
+.sidebar-language-control {
+  --field-height: 44px;
+  flex: 1;
+  min-width: 0;
+}
+.sidebar-language-control > select {
+  width: 100%;
+}
+.form-field:has(> select),
+.filter-select:has(> select),
+.sidebar-language-control {
+  position: relative;
+}
+.form-field > select,
+.filter-select > select,
+.sidebar-language-control > select {
+  appearance: none;
+  padding-right: var(--field-height);
+}
+.form-field:has(> select)::after,
+.filter-select:has(> select)::after,
+.sidebar-language-control::after {
+  content: '';
+  position: absolute;
+  right: var(--field-icon-inset);
+  bottom: calc(var(--field-height) / 2);
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(50%) rotate(45deg);
+  pointer-events: none;
+}
+.form-field input[type='date']::-webkit-calendar-picker-indicator,
+.filter-date input::-webkit-calendar-picker-indicator,
+.overview-period-controls input::-webkit-calendar-picker-indicator {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+html[data-theme='dark'] button[data-appearance='primary']:not(:disabled) {
+  --admiral-color-Special_StaticWhite: #10251a;
+  color: #10251a;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--admiral-color-Neutral_Neutral60);
+  opacity: 1;
 }
