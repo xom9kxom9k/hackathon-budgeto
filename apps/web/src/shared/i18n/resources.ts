@@ -427,8 +427,6 @@ const ru: TranslationMap = {
   [I18nKey.ProfilePreferencesDescription]:
     'Язык и тема меняются в меню приложения и сохраняются локально на этом устройстве.',
   [I18nKey.ProfileSession]: 'Текущая сессия',
-  [I18nKey.ProfileSessionDescription]:
-    'Сессия управляется сервером и может быть завершена в любой момент.',
   [I18nKey.ProfileEditTitle]: 'Изменить профиль',
   [I18nKey.ProfileEditDescription]: 'Обновите имя, цели и параметры отображения Budgeto.',
   [I18nKey.ProfileEditName]: 'Имя',
@@ -514,8 +512,6 @@ const ru: TranslationMap = {
   [I18nKey.AuthErrorCsrfInvalid]: 'Сессия формы истекла. Повторите действие',
   [I18nKey.AuthSignOut]: 'Выйти',
   [I18nKey.AuthSessionActive]: 'Сессия активна',
-  [I18nKey.AuthSecurityNote]:
-    'Сессия хранится на сервере. Долговременный токен не сохраняется в браузере.',
   [I18nKey.AuthCopyKey]: 'Скопировать ключ',
   [I18nKey.AuthCopied]: 'Скопировано',
   [I18nKey.AuthCopyFailed]: 'Не удалось скопировать. Выделите и скопируйте вручную.',
@@ -961,8 +957,6 @@ const en: TranslationMap = {
   [I18nKey.ProfilePreferencesDescription]:
     'Language and theme are changed from the app menu and stored locally on this device.',
   [I18nKey.ProfileSession]: 'Current session',
-  [I18nKey.ProfileSessionDescription]:
-    'The session is managed by the server and can be ended at any time.',
   [I18nKey.ProfileEditTitle]: 'Edit profile',
   [I18nKey.ProfileEditDescription]: 'Update your name, goals and Budgeto display preferences.',
   [I18nKey.ProfileEditName]: 'Name',
@@ -1048,8 +1042,6 @@ const en: TranslationMap = {
   [I18nKey.AuthErrorCsrfInvalid]: 'The form session expired. Try again',
   [I18nKey.AuthSignOut]: 'Sign out',
   [I18nKey.AuthSessionActive]: 'Session is active',
-  [I18nKey.AuthSecurityNote]:
-    'The session stays on the server. No long-lived token is stored in the browser.',
   [I18nKey.AuthCopyKey]: 'Copy key',
   [I18nKey.AuthCopied]: 'Copied',
   [I18nKey.AuthCopyFailed]: 'Could not copy. Select and copy it manually.',
